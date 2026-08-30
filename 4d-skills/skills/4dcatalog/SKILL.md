@@ -445,8 +445,9 @@ Do NOT change the `uuid` when renaming.
 
 ### Changing a field type
 
-- Check whether the field is used in any relation. The foreign key field
-  must be the same type as the primary key it references.
+- Fields at both ends of a relation must be the same type. If the field
+  is used in a relation, remove the relation first, change the field type,
+  then recreate the relation if both fields are now the same type.
 - Check whether the field has an index. Some index types are not compatible
   with all field types (e.g., keyword indexes only work with Alpha, Text,
   Picture).
