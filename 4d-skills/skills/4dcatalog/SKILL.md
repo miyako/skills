@@ -24,7 +24,7 @@ but is not sufficient to establish that the artifact is a valid 4D Catalog.
 **Always** validate with this exact command:
 
 ```sh
-tools/xmllint --noout --nonet --dtdvalid schemas/4dcatalog/base_core.dtd <file>
+tools/xmllint --noout --nonet --dtdvalid schemas/4dcatalog/base.dtd <file>
 ```
 
 Prefer `tools/xmllint` (or `tools\xmllint.exe` on Windows) over any
