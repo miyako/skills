@@ -596,19 +596,39 @@ jobs:
             --sign "$IDENTITY" \
             build/libxslt/xsltproc
 
-      - name: Notarize binaries
+      - name: Notarize xmllint
         env:
           APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
           TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
         run: |
-          ZIP_FILE=$(mktemp /tmp/xml-tools.XXXXXX.zip)
+          ZIP_FILE=$(mktemp /tmp/xmllint.XXXXXX.zip)
 
           ditto \
             -c \
             -k \
             --keepParent \
             build/libxml2/xmllint \
+            "$ZIP_FILE"
+
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+      - name: Notarize xsltproc
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE=$(mktemp /tmp/xsltproc.XXXXXX.zip)
+
+          ditto \
+            -c \
+            -k \
+            --keepParent \
             build/libxslt/xsltproc \
             "$ZIP_FILE"
 
