@@ -34,6 +34,10 @@ xmllint --noout --nonet --dtdvalid schemas/4dcatalog/base_core.dtd <file>
 - Do NOT use `--valid` or `--postvalid` -- they will attempt remote fetch.
 - Do NOT try Python lxml, catalog files, or other workarounds. The command
   above is the correct and complete validation method.
+- **Expected warning you can ignore:** xmllint will print
+  `I/O warning : failed to load "http://www.4d.com/dtd/2007/base.dtd"`.
+  This is normal and harmless. The `--dtdvalid` flag provides the real DTD.
+  Check the exit code: 0 means validation passed.
 
 If `xmllint` is not available, provision it first by reading
 `skills/4dtools/SKILL.md`.
