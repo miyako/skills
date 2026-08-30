@@ -762,10 +762,274 @@ jobs:
           retention-days: 5
 
   # ---------------------------------------------------------------------------
+  # boon (JSON Schema validator) - Linux
+  # ---------------------------------------------------------------------------
+  boon-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-unknown-linux-musl
+            runner: ubuntu-24.04
+          - arch: arm64
+            target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      ARTIFACT: boon-linux-${{ matrix.arch }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Configure linker for cross-compilation
+        if: matrix.arch == 'arm64'
+        run: |
+          mkdir -p .cargo
+          cat > .cargo/config.toml <<'EOF'
+          [target.aarch64-unknown-linux-musl]
+          linker = "aarch64-linux-gnu-gcc"
+          EOF
+
+      - name: Install musl tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Build boon
+        working-directory: vendor/boon/cli
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+          strip ../target/${{ matrix.target }}/release/boon || true
+          file ../target/${{ matrix.target }}/release/boon
+
+      - name: Archive
+        run: |
+          mkdir -p staging
+          cp vendor/boon/target/${{ matrix.target }}/release/boon staging/boon
+          tar -cJf "${{ env.ARTIFACT }}.tar.xz" -C staging boon
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # boon (JSON Schema validator) - macOS (signed + notarized)
+  # ---------------------------------------------------------------------------
+  boon-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-apple-darwin
+          - arch: arm64
+            target: aarch64-apple-darwin
+
+    runs-on: macos-14
+
+    env:
+      ARTIFACT: boon-macos-${{ matrix.arch }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build boon
+        working-directory: vendor/boon/cli
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+          strip ../target/${{ matrix.target }}/release/boon
+          file ../target/${{ matrix.target }}/release/boon
+
+      - name: Import signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          TMP_DIR=$(mktemp -d)
+          CERT_FILE="$TMP_DIR/cert.p12"
+          KEYCHAIN_FILE="$TMP_DIR/build.keychain-db"
+
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
+
+          security create-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security set-keychain-settings \
+            -lut 21600 \
+            "$KEYCHAIN_FILE"
+
+          security unlock-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security import "$CERT_FILE" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_FILE"
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security list-keychains \
+            -d user \
+            -s "$KEYCHAIN_FILE" login.keychain-db
+
+          echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
+          echo "TMP_DIR=$TMP_DIR" >> "$GITHUB_ENV"
+
+      - name: Sign binary
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" |
+            head -1 |
+            sed 's/.*"\(.*\)".*/\1/')
+
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$IDENTITY" \
+            vendor/boon/target/${{ matrix.target }}/release/boon
+
+      - name: Notarize binary
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE=$(mktemp /tmp/boon.XXXXXX.zip)
+
+          ditto \
+            -c \
+            -k \
+            --keepParent \
+            vendor/boon/target/${{ matrix.target }}/release/boon \
+            "$ZIP_FILE"
+
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+      - name: Archive
+        run: |
+          mkdir -p staging
+          cp vendor/boon/target/${{ matrix.target }}/release/boon staging/boon
+          tar -cJf "${{ env.ARTIFACT }}.tar.xz" -C staging boon
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_FILE:-}" ]; then
+            security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+          fi
+
+          if [ -n "${TMP_DIR:-}" ]; then
+            rm -rf "$TMP_DIR"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # boon (JSON Schema validator) - Windows
+  # ---------------------------------------------------------------------------
+  boon-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-pc-windows-msvc
+            runner: windows-2022
+          - arch: arm64
+            target: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      ARTIFACT: boon-windows-${{ matrix.arch }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build boon
+        working-directory: vendor/boon/cli
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+
+      - name: Archive
+        shell: bash
+        run: |
+          mkdir -p staging
+          cp vendor/boon/target/${{ matrix.target }}/release/boon.exe staging/boon.exe
+          tar -cJf "${{ env.ARTIFACT }}.tar.xz" -C staging boon.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
   # Create GitHub Release
   # ---------------------------------------------------------------------------
   release:
-    needs: [jq-linux, jq-macos, jq-windows, xml-linux, xml-macos, xml-windows]
+    needs: [jq-linux, jq-macos, jq-windows, xml-linux, xml-macos, xml-windows, boon-linux, boon-macos, boon-windows]
     runs-on: ubuntu-latest
 
     steps:

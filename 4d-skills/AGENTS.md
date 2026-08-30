@@ -49,6 +49,7 @@ The `4dtools` skill currently provisions tools such as:
 
 - `xmllint`
 - `xsltproc`
+- `boon` (JSON Schema validator)
 
 Individual skills specify which tools they require.
 

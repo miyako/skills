@@ -21,6 +21,7 @@ Currently the release provides platform-specific builds of:
 
 * `xmllint`
 * `xsltproc`
+* `boon` (JSON Schema validator)
 
 These tools are implementation dependencies of the 4D skills. They are not
 themselves 4D skills.
@@ -41,6 +42,7 @@ After installation, the expected layout is:
 tools/
 	xmllint
 	xsltproc
+	boon
 ```
 
 On Windows, executable files may use the `.exe` extension.
@@ -122,6 +124,12 @@ and/or:
 
 ```
 tools/xsltproc --version
+```
+
+and/or:
+
+```
+tools/boon --help
 ```
 
 The command should successfully execute and print its version information.
