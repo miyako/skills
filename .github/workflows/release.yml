@@ -1061,6 +1061,219 @@ jobs:
           retention-days: 5
 
   # ---------------------------------------------------------------------------
+  # tool4d-lsp-stdio (4D LSP bridge) - macOS
+  # ---------------------------------------------------------------------------
+  tool4d-lsp-stdio-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-apple-darwin
+          - arch: arm64
+            target: aarch64-apple-darwin
+
+    runs-on: macos-14
+
+    env:
+      ARTIFACT: tool4d-lsp-stdio-macos-${{ matrix.arch }}
+      TARGET_DIR: ${{ github.workspace }}/vendor/tool4d-lsp-stdio-target
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build tool4d-lsp-stdio
+        working-directory: vendor/language-4dm-nova/tool4d-lsp-stdio
+        run: |
+          cargo build \
+            --release \
+            --target "${{ matrix.target }}" \
+            --target-dir "${{ env.TARGET_DIR }}"
+
+          strip \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio"
+
+          file \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio"
+
+      - name: Import signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          TMP_DIR=$(mktemp -d)
+          CERT_FILE="$TMP_DIR/cert.p12"
+          KEYCHAIN_FILE="$TMP_DIR/build.keychain-db"
+
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
+
+          security create-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security set-keychain-settings \
+            -lut 21600 \
+            "$KEYCHAIN_FILE"
+
+          security unlock-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security import "$CERT_FILE" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_FILE"
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security list-keychains \
+            -d user \
+            -s "$KEYCHAIN_FILE" login.keychain-db
+
+          echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
+          echo "TMP_DIR=$TMP_DIR" >> "$GITHUB_ENV"
+
+      - name: Sign binary
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" |
+            head -1 |
+            sed 's/.*"\(.*\)".*/\1/')
+
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$IDENTITY" \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio"
+
+      - name: Notarize binary
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE=$(mktemp /tmp/tool4d-lsp-stdio.XXXXXX.zip)
+
+          ditto \
+            -c \
+            -k \
+            --keepParent \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio" \
+            "$ZIP_FILE"
+
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+      - name: Archive
+        run: |
+          mkdir -p staging
+
+          cp \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio" \
+            staging/tool4d-lsp-stdio
+
+          tar \
+            -cJf "${{ env.ARTIFACT }}.tar.xz" \
+            -C staging \
+            tool4d-lsp-stdio
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_FILE:-}" ]; then
+            security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+          fi
+
+          if [ -n "${TMP_DIR:-}" ]; then
+            rm -rf "$TMP_DIR"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # tool4d-lsp-stdio (4D LSP bridge) - Windows
+  # ---------------------------------------------------------------------------
+  tool4d-lsp-stdio-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-pc-windows-msvc
+            runner: windows-2022
+          - arch: arm64
+            target: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      ARTIFACT: tool4d-lsp-stdio-windows-${{ matrix.arch }}
+      TARGET_DIR: ${{ github.workspace }}/vendor/tool4d-lsp-stdio-target
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build tool4d-lsp-stdio
+        working-directory: vendor/language-4dm-nova/tool4d-lsp-stdio
+        run: cargo build --release --target "${{ matrix.target }}" --target-dir "${{ env.TARGET_DIR }}"
+
+      - name: Archive
+        shell: bash
+        run: |
+          mkdir -p staging
+
+          cp \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio.exe" \
+            staging/tool4d-lsp-stdio.exe
+
+          tar \
+            -cJf "${{ env.ARTIFACT }}.tar.xz" \
+            -C staging \
+            tool4d-lsp-stdio.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
   # Create GitHub Release
   # ---------------------------------------------------------------------------
   release:
@@ -1074,6 +1287,8 @@ jobs:
       - boon-linux
       - boon-macos
       - boon-windows
+      - tool4d-lsp-stdio-macos
+      - tool4d-lsp-stdio-windows
 
     runs-on: ubuntu-latest
 

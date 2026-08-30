@@ -10,3 +10,6 @@
 [submodule "vendor/boon"]
 	path = vendor/boon
 	url = https://github.com/santhosh-tekuri/boon.git
+[submodule "vendor/language-4dm-nova"]
+	path = vendor/language-4dm-nova
+	url = https://github.com/miyako/language-4dm-nova.git
