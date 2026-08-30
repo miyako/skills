@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!ENTITY % common_definitions SYSTEM "./common.dtd">
+<!ENTITY % base_definitions SYSTEM "./base_core.dtd">
+%common_definitions;
+%base_definitions;
