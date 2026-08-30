@@ -19,6 +19,17 @@ schema: tables, fields, primary keys, indexes, and relations.
 Do not treat a `.4DCatalog` as generic XML. XML well-formedness is necessary
 but is not sufficient to establish that the artifact is a valid 4D Catalog.
 
+## Creating a new catalog
+
+When instructed to create a new database schema:
+
+- The file name must be `catalog.4DCatalog`.
+- The file path must be `Project/Sources/catalog.4DCatalog`.
+- Create `catalog.4DCatalog` only if it does not already exist.
+- Create `catalog_editor.json` only if it does not already exist.
+- If `Project/Sources/catalog.4DCatalog` already exists, ask the user for
+  confirmation before replacing it.
+
 ## Validation (read this first)
 
 **Always** validate with this exact command:
