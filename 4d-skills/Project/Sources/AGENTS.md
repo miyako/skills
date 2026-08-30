@@ -10,9 +10,9 @@ them before reporting the task as complete.
 2. Validate all modified files in one call:
 
    ```sh
-   tools/tool4d-lsp-stdio validate --workspace . \
-     Project/Sources/Methods/method1.4dm \
-     Project/Sources/Classes/MyClass.4dm
+   tools/tool4d-lsp-stdio validate --workspace Project/ \
+     Sources/Methods/method1.4dm \
+     Sources/Classes/MyClass.4dm
    ```
 
 3. If the exit code is 1, read the error messages, fix the code, and

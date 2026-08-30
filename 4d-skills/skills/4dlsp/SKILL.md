@@ -59,7 +59,7 @@ configuration is needed. Otherwise set `TOOL4D_PATH` explicitly.
 Use the `validate` subcommand to check `.4dm` files in a single call:
 
 ```sh
-tools/tool4d-lsp-stdio validate --workspace . Project/Sources/Methods/myMethod.4dm
+tools/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMethod.4dm
 ```
 
 Or point directly at the `.4DProject` file:
@@ -67,7 +67,7 @@ Or point directly at the `.4DProject` file:
 ```sh
 tools/tool4d-lsp-stdio validate \
   --project Project/MyApp.4DProject \
-  Project/Sources/Methods/myMethod.4dm
+  Sources/Methods/myMethod.4dm
 ```
 
 ### Multiple files
@@ -75,10 +75,10 @@ tools/tool4d-lsp-stdio validate \
 Pass multiple file paths to validate them all in one session:
 
 ```sh
-tools/tool4d-lsp-stdio validate --workspace . \
-  Project/Sources/Methods/method1.4dm \
-  Project/Sources/Methods/method2.4dm \
-  Project/Sources/Classes/MyClass.4dm
+tools/tool4d-lsp-stdio validate --workspace Project/ \
+  Sources/Methods/method1.4dm \
+  Sources/Methods/method2.4dm \
+  Sources/Classes/MyClass.4dm
 ```
 
 This starts tool4d once and validates all files before shutting down.
@@ -88,8 +88,8 @@ This starts tool4d once and validates all files before shutting down.
 Human-readable output (default):
 
 ```
-Project/Sources/Methods/myMethod.4dm:6:1: error: Unknown command: ALRT
-Project/Sources/Methods/myMethod.4dm:10:5: warning: Variable not declared
+Sources/Methods/myMethod.4dm:6:1: error: Unknown command: ALRT
+Sources/Methods/myMethod.4dm:10:5: warning: Variable not declared
 ```
 
 Format: `file:line:col: severity: message`
@@ -97,7 +97,7 @@ Format: `file:line:col: severity: message`
 JSON output with `--json`:
 
 ```sh
-tools/tool4d-lsp-stdio validate --json --workspace . myMethod.4dm
+tools/tool4d-lsp-stdio validate --json --workspace Project/ Sources/Methods/myMethod.4dm
 ```
 
 ### Exit codes
@@ -125,7 +125,7 @@ tools/tool4d-lsp-stdio validate --json --workspace . myMethod.4dm
 On Windows, use `tools\tool4d-lsp-stdio.exe`:
 
 ```powershell
-tools\tool4d-lsp-stdio.exe validate --workspace . Project\Sources\Methods\myMethod.4dm
+tools\tool4d-lsp-stdio.exe validate --workspace Project\ Sources\Methods\myMethod.4dm
 ```
 
 ## Important notes
