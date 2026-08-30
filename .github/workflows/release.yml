@@ -353,10 +353,399 @@ jobs:
           retention-days: 5
 
   # ---------------------------------------------------------------------------
+  # xmllint + xsltproc - Linux
+  # ---------------------------------------------------------------------------
+  xml-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            cmake_system_processor: x86_64
+            cc_prefix: x86_64-linux-gnu
+            runner: ubuntu-24.04
+            cross_package: amd64
+          - arch: arm64
+            cmake_system_processor: aarch64
+            cc_prefix: aarch64-linux-gnu
+            runner: ubuntu-24.04
+            cross_package: arm64
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            crossbuild-essential-${{ matrix.cross_package }}
+
+      - name: Create CMake toolchain file
+        run: |
+          cat > toolchain.cmake <<'EOF'
+          set(CMAKE_SYSTEM_NAME Linux)
+          set(CMAKE_SYSTEM_PROCESSOR ${{ matrix.cmake_system_processor }})
+          set(CMAKE_C_COMPILER ${{ matrix.cc_prefix }}-gcc)
+          set(CMAKE_AR ${{ matrix.cc_prefix }}-ar)
+          set(CMAKE_RANLIB ${{ matrix.cc_prefix }}-ranlib)
+          set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+          set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+          set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+          EOF
+
+      - name: Build libxml2
+        run: |
+          cmake -S vendor/libxml2 -B build/libxml2 -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DLIBXML2_WITH_ICONV=OFF \
+            -DLIBXML2_WITH_LZMA=OFF \
+            -DLIBXML2_WITH_PYTHON=OFF \
+            -DLIBXML2_WITH_ZLIB=OFF \
+            -DLIBXML2_WITH_TESTS=OFF \
+            -DLIBXML2_WITH_PROGRAMS=ON \
+            -DCMAKE_C_FLAGS="-O2 -fstack-protector-all" \
+            -DCMAKE_EXE_LINKER_FLAGS="-static -s"
+          cmake --build build/libxml2 -j"$(nproc)"
+          cmake --install build/libxml2
+          file build/libxml2/xmllint
+
+      - name: Build libxslt
+        run: |
+          cmake -S vendor/libxslt -B build/libxslt -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+            -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DLIBXSLT_WITH_PYTHON=OFF \
+            -DLIBXSLT_WITH_TESTS=OFF \
+            -DLIBXSLT_WITH_PROGRAMS=ON \
+            -DLIBXSLT_WITH_CRYPTO=OFF \
+            -DLIBXSLT_WITH_MODULES=OFF \
+            -DCMAKE_C_FLAGS="-O2 -fstack-protector-all" \
+            -DCMAKE_EXE_LINKER_FLAGS="-static -s"
+          cmake --build build/libxslt -j"$(nproc)"
+          file build/libxslt/xsltproc
+
+      - name: Archive xmllint
+        run: |
+          mkdir -p staging
+          cp build/libxml2/xmllint staging/xmllint
+          tar -cJf "xmllint-linux-${{ matrix.arch }}.tar.xz" -C staging xmllint
+
+      - name: Archive xsltproc
+        run: |
+          rm -rf staging && mkdir -p staging
+          cp build/libxslt/xsltproc staging/xsltproc
+          tar -cJf "xsltproc-linux-${{ matrix.arch }}.tar.xz" -C staging xsltproc
+
+      - name: Upload xmllint
+        uses: actions/upload-artifact@v4
+        with:
+          name: xmllint-linux-${{ matrix.arch }}
+          path: xmllint-linux-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload xsltproc
+        uses: actions/upload-artifact@v4
+        with:
+          name: xsltproc-linux-${{ matrix.arch }}
+          path: xsltproc-linux-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # xmllint + xsltproc - macOS (signed + notarized)
+  # ---------------------------------------------------------------------------
+  xml-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            cmake_osx_arch: x86_64
+          - arch: arm64
+            cmake_osx_arch: arm64
+
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install packages
+        run: |
+          brew update || brew update-reset
+          brew install cmake ninja
+
+      - name: Build libxml2
+        run: |
+          cmake -S vendor/libxml2 -B build/libxml2 -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_osx_arch }} \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DLIBXML2_WITH_ICONV=OFF \
+            -DLIBXML2_WITH_LZMA=OFF \
+            -DLIBXML2_WITH_PYTHON=OFF \
+            -DLIBXML2_WITH_ZLIB=OFF \
+            -DLIBXML2_WITH_TESTS=OFF \
+            -DLIBXML2_WITH_PROGRAMS=ON \
+            -DCMAKE_C_FLAGS="-O2 -fstack-protector-all"
+          cmake --build build/libxml2 -j"$(sysctl -n hw.logicalcpu)"
+          cmake --install build/libxml2
+          file build/libxml2/xmllint
+
+      - name: Build libxslt
+        run: |
+          cmake -S vendor/libxslt -B build/libxslt -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+            -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_osx_arch }} \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DLIBXSLT_WITH_PYTHON=OFF \
+            -DLIBXSLT_WITH_TESTS=OFF \
+            -DLIBXSLT_WITH_PROGRAMS=ON \
+            -DLIBXSLT_WITH_CRYPTO=OFF \
+            -DLIBXSLT_WITH_MODULES=OFF \
+            -DCMAKE_C_FLAGS="-O2 -fstack-protector-all"
+          cmake --build build/libxslt -j"$(sysctl -n hw.logicalcpu)"
+          file build/libxslt/xsltproc
+
+      - name: Strip binaries
+        run: |
+          strip build/libxml2/xmllint
+          strip build/libxslt/xsltproc
+
+      - name: Import signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          TMP_DIR=$(mktemp -d)
+          CERT_FILE="$TMP_DIR/cert.p12"
+          KEYCHAIN_FILE="$TMP_DIR/build.keychain-db"
+
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
+
+          security create-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security set-keychain-settings \
+            -lut 21600 \
+            "$KEYCHAIN_FILE"
+
+          security unlock-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security import "$CERT_FILE" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_FILE"
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security list-keychains \
+            -d user \
+            -s "$KEYCHAIN_FILE" login.keychain-db
+
+          echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
+          echo "TMP_DIR=$TMP_DIR" >> "$GITHUB_ENV"
+
+      - name: Sign binaries
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" |
+            head -1 |
+            sed 's/.*"\(.*\)".*/\1/')
+
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$IDENTITY" \
+            build/libxml2/xmllint
+
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$IDENTITY" \
+            build/libxslt/xsltproc
+
+      - name: Notarize binaries
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE=$(mktemp /tmp/xml-tools.XXXXXX.zip)
+
+          ditto \
+            -c \
+            -k \
+            --keepParent \
+            build/libxml2/xmllint \
+            build/libxslt/xsltproc \
+            "$ZIP_FILE"
+
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+      - name: Archive xmllint
+        run: |
+          mkdir -p staging
+          cp build/libxml2/xmllint staging/xmllint
+          tar -cJf "xmllint-macos-${{ matrix.arch }}.tar.xz" -C staging xmllint
+
+      - name: Archive xsltproc
+        run: |
+          rm -rf staging && mkdir -p staging
+          cp build/libxslt/xsltproc staging/xsltproc
+          tar -cJf "xsltproc-macos-${{ matrix.arch }}.tar.xz" -C staging xsltproc
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_FILE:-}" ]; then
+            security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+          fi
+
+          if [ -n "${TMP_DIR:-}" ]; then
+            rm -rf "$TMP_DIR"
+          fi
+
+      - name: Upload xmllint
+        uses: actions/upload-artifact@v4
+        with:
+          name: xmllint-macos-${{ matrix.arch }}
+          path: xmllint-macos-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload xsltproc
+        uses: actions/upload-artifact@v4
+        with:
+          name: xsltproc-macos-${{ matrix.arch }}
+          path: xsltproc-macos-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # xmllint + xsltproc - Windows
+  # ---------------------------------------------------------------------------
+  xml-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            cmake_arch: x64
+            runner: windows-2022
+          - arch: arm64
+            cmake_arch: ARM64
+            runner: windows-11-arm
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build libxml2
+        run: |
+          cmake -S vendor/libxml2 -B build/libxml2 `
+            -A ${{ matrix.cmake_arch }} `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DLIBXML2_WITH_ICONV=OFF `
+            -DLIBXML2_WITH_LZMA=OFF `
+            -DLIBXML2_WITH_PYTHON=OFF `
+            -DLIBXML2_WITH_ZLIB=OFF `
+            -DLIBXML2_WITH_TESTS=OFF `
+            -DLIBXML2_WITH_PROGRAMS=ON `
+            -DCMAKE_C_FLAGS="/O2 /GS" `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake --build build/libxml2 --config Release -j $env:NUMBER_OF_PROCESSORS
+          cmake --install build/libxml2 --config Release
+
+      - name: Build libxslt
+        run: |
+          cmake -S vendor/libxslt -B build/libxslt `
+            -A ${{ matrix.cmake_arch }} `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install `
+            -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DLIBXSLT_WITH_PYTHON=OFF `
+            -DLIBXSLT_WITH_TESTS=OFF `
+            -DLIBXSLT_WITH_PROGRAMS=ON `
+            -DLIBXSLT_WITH_CRYPTO=OFF `
+            -DLIBXSLT_WITH_MODULES=OFF `
+            -DCMAKE_C_FLAGS="/O2 /GS" `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake --build build/libxslt --config Release -j $env:NUMBER_OF_PROCESSORS
+
+      - name: Archive
+        shell: bash
+        run: |
+          mkdir -p staging-xmllint staging-xsltproc
+          cp build/libxml2/Release/xmllint.exe staging-xmllint/xmllint.exe
+          cp build/libxslt/Release/xsltproc.exe staging-xsltproc/xsltproc.exe
+          tar -cJf "xmllint-windows-${{ matrix.arch }}.tar.xz" -C staging-xmllint xmllint.exe
+          tar -cJf "xsltproc-windows-${{ matrix.arch }}.tar.xz" -C staging-xsltproc xsltproc.exe
+
+      - name: Upload xmllint
+        uses: actions/upload-artifact@v4
+        with:
+          name: xmllint-windows-${{ matrix.arch }}
+          path: xmllint-windows-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload xsltproc
+        uses: actions/upload-artifact@v4
+        with:
+          name: xsltproc-windows-${{ matrix.arch }}
+          path: xsltproc-windows-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
   # Create GitHub Release
   # ---------------------------------------------------------------------------
   release:
-    needs: [jq-linux, jq-macos, jq-windows]
+    needs: [jq-linux, jq-macos, jq-windows, xml-linux, xml-macos, xml-windows]
     runs-on: ubuntu-latest
 
     steps:
