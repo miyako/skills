@@ -97,8 +97,24 @@ Do not "fix" validation failures by weakening or modifying the schema.
 
 ## Tool Dependencies
 
-If a required validation tool is unavailable, use the `4dtools` skill to
-provision the required tool when applicable.
+This skill requires `boon` for JSON Schema validation.
+
+Before validating, check whether `boon` is available:
+
+```sh
+command -v boon >/dev/null 2>&1 || test -x tools/boon
+```
+
+If neither the system `boon` nor `tools/boon` is available, use the
+`4dtools` skill to provision it. The `4dtools` skill provides the complete
+download, extraction, and verification procedure.
+
+Once provisioned, use `tools/boon` (or `tools\boon.exe` on Windows)
+instead of a bare `boon` command:
+
+```
+tools/boon schemas/4dform/formsSchema.json <file>
+```
 
 Do not duplicate tool installation logic in this skill.
 
