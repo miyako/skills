@@ -67,7 +67,7 @@ Do not modify the DTD to make an invalid Catalog pass validation.
 
 The DOCTYPE SYSTEM identifier is a conventional 4D reference. The URL does
 not resolve over HTTP. The actual DTD is the local file
-`schemas/4dcatalog/base_core.dtd`. Always keep the DOCTYPE declaration
+`schemas/4dcatalog/base.dtd`. Always keep the DOCTYPE declaration
 exactly as shown -- do not change the SYSTEM identifier to a local path.
 Validation uses `--dtdvalid` with the local DTD and `--nonet` to suppress
 network access.
@@ -395,7 +395,7 @@ When validating a `.4DCatalog`:
 2. Validate the document against:
 
    ```
-   schemas/4dcatalog/base_core.dtd
+   schemas/4dcatalog/base.dtd
    ```
 
 3. Report validation errors with their location and relevant element or
