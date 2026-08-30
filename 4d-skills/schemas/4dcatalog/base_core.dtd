@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  a DB4D database
+  collation_locale is the RFC3066Bis identifier for locale to be used when comparing text.
+  collator_ignores_middle_wildchar tells if string comparisons should ignore the '@' wild char in the middle of a pattern.
+-->
+<!ELEMENT base ((schema | table | relation | index)*, base_extra?)>
+<!ATTLIST base
+    uuid CDATA #IMPLIED
+    name CDATA #IMPLIED
+    collation_locale CDATA #IMPLIED
+    collator_ignores_middle_wildchar (true | false) "false"
+    consider_only_dead_chars_for_keywords (true | false) "false"
+>
+<!--
+  Some extra information
+  
+  v11_open_v12_data_mode keys exists only on 4D v11.x
+
+  open_data_one_version_more_recent_mode tells the behavior when opening version n+1 data files.
+  It generalizes the now deprecated v11_open_v12_data_mode property.
+  
+-->
+<!ELEMENT base_extra (temp_folder?, journal_file?, editor_base_info?)>
+<!ATTLIST base_extra
+    resman_stamp NMTOKEN #IMPLIED
+    resman_marker NMTOKEN #IMPLIED
+    package_name CDATA #IMPLIED
+    structure_file_name CDATA #IMPLIED
+    cache_folder_name CDATA #IMPLIED
+    data_file_path CDATA #IMPLIED
+    source_code_available (true | false) "true"
+    source_code_stamp NMTOKEN #IMPLIED
+    intel_code_stamp NMTOKEN #IMPLIED
+    ppc_code_stamp NMTOKEN #IMPLIED
+    intel64_code_stamp NMTOKEN #IMPLIED
+    last_opening_mode NMTOKEN #IMPLIED
+    structure_opener (true | false) "false"
+    is_compiled_database (true | false) "false"
+    v11_open_v12_data_mode NMTOKEN #IMPLIED
+    open_data_one_version_more_recent_mode NMTOKEN #IMPLIED
+    __keywordBuildingHash CDATA #IMPLIED
+    __stringCompHash CDATA #IMPLIED
+>
+<!--
+  Journal file information
+  journal_file_enabled is true if a log file should be created for new data files
+-->
+<!ELEMENT journal_file EMPTY>
+<!ATTLIST journal_file
+    journal_file_enabled (true | false) "false"
+    datalink CDATA #IMPLIED
+    filepath CDATA #IMPLIED
+    next_filepath CDATA #IMPLIED
+    sequence_number NMTOKEN #IMPLIED
+>
+<!--
+  Information used by the graphical structure editor
+-->
+<!ELEMENT editor_base_info (color)>
+<!ATTLIST editor_base_info
+    picture_format NMTOKEN #IMPLIED
+    picture_name CDATA #IMPLIED
+    font_name CDATA #IMPLIED
+    font_size NMTOKEN #IMPLIED
+>
+<!--
+  Temporary folder selection
+  folder_selector:
+	data		-> the data file folder (default)
+	structure	-> the structure file folder
+	system		-> the temporary folder provided by the system
+	custom		-> folder specified in file_path attribute
+  file_path is the path of the temporary folder in 'custom' mode. Absolute pathn using ':' on Mac and '/' on windows.
+-->
+<!ELEMENT temp_folder EMPTY>
+<!ATTLIST temp_folder
+  folder_selector (data | structure | system | custom) "data"
+  path CDATA #IMPLIED
+>
+<!--
+
+	Schema definition
+
+	
+-->
+<!ELEMENT schema EMPTY>
+<!ATTLIST schema
+	name CDATA #REQUIRED
+>
+<!--
+
+	Table definition
+
+	id	-> the 4d language table index (for information only, this attribute is not used when creating a table)
+	leave table_extra last element
+
+-->
+<!ELEMENT table (field*,primary_key*,table_extra?)>
+<!ATTLIST table
+    uuid CDATA #IMPLIED
+    name CDATA #REQUIRED
+    id NMTOKEN #IMPLIED
+    leave_tag_on_delete (true | false) "false"
+    sql_schema_id NMTOKEN #IMPLIED
+    sql_schema_name CDATA #IMPLIED
+    keep_record_stamps (true | false) "true"
+    keep_record_sync_info (true | false) "false"
+    hide_in_REST (true | false) "false"
+    prevent_journaling (true | false) "false"
+    encryptable (true | false) "false"
+>
+<!ELEMENT table_extra (comment*, editor_table_info?)>
+<!ATTLIST table_extra
+    visible (true | false) "true"
+    trigger_load (true | false) "false"
+    trigger_insert (true | false) "false"
+    trigger_delete (true | false) "false"
+    trigger_update (true | false) "false"
+    trashed (true | false) "false"
+    input_form CDATA #IMPLIED
+    output_form CDATA #IMPLIED
+	encryptable (true | false) "false"
+>
+<!--
+
+	Field definition
+
+	type is a value from DB4DFieldType enum
+	limiting_length only for alpha kind
+	multi_line is for text and alpha and tells if the field may contain more than one line of text
+	enumeration_id is the enumeration resource id for enumerated field (none or -1 if not enumerated)
+	not_null means an integrity check is performed to ensure no NULL value is entered.
+	never_null means the database engine may never return a NULL value for this field (returns 0.0 or "" instead).
+	id is the 4d language field index (for information only, this attribute is not used when creating a field)
+
+	qt_spatial_settings is for picture fields.
+	
+	index_ref elements are only for easy xsl parsing, they are not used while importing.
+	They list all indexes using the field.
+  
+	leave field_extra last element
+	
+-->
+<!ELEMENT field (index_ref*,field_extra?)>
+<!ATTLIST field
+    name CDATA #REQUIRED
+    uuid CDATA #IMPLIED
+    type NMTOKEN #REQUIRED
+    limiting_length NMTOKEN #IMPLIED
+    unique (true | false) "false"
+    autosequence (true | false) "false"
+    not_null (true | false) "false"
+    never_null (true | false) "false"
+    text_switch_size NMTOKEN #IMPLIED
+    blob_switch_size NMTOKEN #IMPLIED
+    id NMTOKEN #IMPLIED
+    autogenerate (true | false) "false"
+    store_as_utf8 (true | false) "false"
+    store_as_UUID (true | false) "false"
+    styled_text (true | false) "false"
+    outside_blob (true | false) "false"
+    hide_in_REST (true | false) "false"
+>
+<!ELEMENT field_extra (qt_spatial_settings?, tip?, comment*, editor_field_info?)>
+<!ATTLIST field_extra
+    visible (true | false) "true"
+    enterable (true | false) "true"
+    modifiable (true | false) "true"
+    mandatory (true | false) "false"
+    multi_line (true | false | default) "default"
+    compressed (true | false) "false"
+    enumeration_id NMTOKEN "-1"
+    position NMTOKEN #IMPLIED
+    class_id CDATA #IMPLIED
+>
+<!--
+
+	Index definition
+
+	if type is not specified, it is selected accordingly to the kind and the fields.
+
+-->
+<!ELEMENT index (field_ref+)>
+<!ATTLIST index
+    kind (regular | keywords) "regular"
+    unique_keys (true | false) "false"
+    name CDATA #IMPLIED
+    uuid CDATA #IMPLIED
+    type NMTOKEN #IMPLIED
+>
+<!--
+
+	Primary key definition
+
+-->
+<!ELEMENT primary_key EMPTY>
+<!ATTLIST primary_key
+    field_name CDATA #REQUIRED
+    field_uuid CDATA #IMPLIED
+>
+<!--
+
+	Relation definition
+
+	state is a value from DB4D_RelationState enum
+
+	leave relation_extra last element
+	
+	NTo1 relations
+		entry_wildchar
+		entry_create
+		choice_field	field id in the "1" table
+
+	1ToN relations
+		integrity, entry_autofill
+
+-->
+<!ELEMENT relation (related_field+, relation_extra?)>
+<!ATTLIST relation
+    name_Nto1 CDATA #IMPLIED
+    name_1toN CDATA #IMPLIED
+    uuid CDATA #IMPLIED
+    auto_load_Nto1 (true | false) "false"
+    auto_load_1toN (true | false) "false"
+    foreign_key (true | false) "false"
+    integrity (none | reject | delete) "none"
+    state NMTOKEN #REQUIRED
+>
+<!ELEMENT related_field (field_ref)>
+<!ATTLIST related_field
+    kind (source | destination) #REQUIRED
+>
+<!ELEMENT relation_extra (editor_relation_info?)>
+<!ATTLIST relation_extra
+    entry_wildchar (true | false) "false"
+    entry_create (true | false) "false"
+    choice_field NMTOKEN #IMPLIED
+    entry_autofill (true | false) "false"
+>
+<!--
+
+	Structure editor specifics
+
+-->
+<!ELEMENT editor_table_info (color?, coordinates?)>
+<!ATTLIST editor_table_info
+    fields_ordering NMTOKEN #IMPLIED
+    collapsed (true | false) "false"
+    displayable_fields_count NMTOKEN #IMPLIED
+>
+<!ELEMENT editor_field_info (color?)>
+
+<!ELEMENT editor_relation_info (color?)>
+<!ATTLIST editor_relation_info
+    via_point_x NMTOKEN #IMPLIED
+    via_point_y NMTOKEN #IMPLIED
+    prefers_left (true | false) "false"
+    smartlink (true | false) "false"
+>
