@@ -22,6 +22,7 @@ Currently the release provides platform-specific builds of:
 * `xmllint`
 * `xsltproc`
 * `boon` (JSON Schema validator)
+* `tool4d-lsp-stdio` (4D LSP bridge for code validation)
 
 These tools are implementation dependencies of the 4D skills. They are not
 themselves 4D skills.
@@ -38,6 +39,7 @@ not inside the skills repository itself.
     xmllint        (or xmllint.exe on Windows)
     xsltproc       (or xsltproc.exe on Windows)
     boon           (or boon.exe on Windows)
+    tool4d-lsp-stdio (or tool4d-lsp-stdio.exe on Windows)
   Project/
     ...
 ```
@@ -167,6 +169,7 @@ Common sets:
 
 - 4dcatalog needs: `xmllint`
 - 4dform needs: `boon`
+- 4dlsp needs: `tool4d-lsp-stdio` (macOS and Windows only -- no Linux build)
 - XSLT transforms need: `xsltproc`
 
 ## Verification

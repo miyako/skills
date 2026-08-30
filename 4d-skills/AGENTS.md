@@ -50,6 +50,7 @@ The `4dtools` skill currently provisions tools such as:
 - `xmllint`
 - `xsltproc`
 - `boon` (JSON Schema validator)
+- `tool4d-lsp-stdio` (4D LSP bridge for code validation)
 
 Individual skills specify which tools they require.
 
@@ -64,6 +65,7 @@ in the `skills/` directory relative to this file:
 | `.4DForm` (form definition) | 4dform | `skills/4dform/SKILL.md` |
 | `.4DProject` (project definition) | 4dproject | `skills/4dproject/SKILL.md` |
 | `.4DSettings` (settings) | 4dsettings | `skills/4dsettings/SKILL.md` |
+| `.4dm` code validation / LSP | 4dlsp | `skills/4dlsp/SKILL.md` |
 | Tool provisioning | 4dtools | `skills/4dtools/SKILL.md` |
 
 Read the applicable `SKILL.md` before making structural changes to a
