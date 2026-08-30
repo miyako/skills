@@ -28,138 +28,182 @@ themselves 4D skills.
 
 ## Installation Location
 
-Downloaded tools must be placed in the repository-level:
+Downloaded tools must be placed in the `tools/` directory at the root of
+the repository being worked on (the repo that contains the 4D project),
+not inside the skills repository itself.
 
 ```
-tools/
+<working-repo>/
+  tools/
+    xmllint        (or xmllint.exe on Windows)
+    xsltproc       (or xsltproc.exe on Windows)
+    boon           (or boon.exe on Windows)
+  Project/
+    ...
 ```
 
 Do not install them globally and do not modify the user's PATH.
 
-After installation, the expected layout is:
-
-```
-tools/
-	xmllint
-	xsltproc
-	boon
-```
-
-On Windows, executable files may use the `.exe` extension.
-
 ## Platform Detection
 
-Determine the host operating system and CPU architecture before downloading.
+Detect the operating system and CPU architecture before downloading.
 
-Supported targets are the platform/architecture combinations provided by the
-release.
+On macOS and Linux:
 
-At minimum distinguish:
+```sh
+OS=$(uname -s)     # Darwin or Linux
+ARCH=$(uname -m)   # arm64 or x86_64
+```
 
-* macOS arm64
-* macOS x86_64
-* Windows x86_64
-* Linux x86_64
+Map to asset name components:
+
+| `uname -s` | `uname -m` | Asset pattern |
+|-------------|------------|---------------|
+| `Darwin` | `arm64` | `*-macos-arm64.tar.xz` |
+| `Darwin` | `x86_64` | `*-macos-x64.tar.xz` |
+| `Linux` | `aarch64` | `*-linux-arm64.tar.xz` |
+| `Linux` | `x86_64` | `*-linux-x64.tar.xz` |
+
+On Windows (PowerShell):
+
+```powershell
+$arch = if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') { 'arm64' } else { 'x64' }
+```
+
+| Architecture | Asset pattern |
+|-------------|---------------|
+| `x64` | `*-windows-x64.tar.xz` |
+| `arm64` | `*-windows-arm64.tar.xz` |
 
 Do not assume that the operating system alone identifies the correct asset.
 
-On macOS, distinguish Apple Silicon (`arm64`) from Intel (`x86_64`).
+## Download and Install Procedure
 
-On Windows, distinguish the native architecture rather than assuming the
-architecture of the shell.
+### macOS and Linux
 
-## Download Procedure
+Complete recipe to provision a tool (e.g., `xmllint`):
 
-Prefer `curl` for downloading release assets.
+```sh
+TOOL=xmllint
+OS=$(uname -s)
+ARCH=$(uname -m)
 
-Use the latest release.
+# Map to asset naming convention
+case "$OS" in
+  Darwin) PLATFORM=macos ;;
+  Linux)  PLATFORM=linux ;;
+  *)      echo "Unsupported OS: $OS" >&2; exit 1 ;;
+esac
 
-Do not silently substitute an arbitrary file from the repository's `main`
-branch.
+case "$ARCH" in
+  arm64|aarch64) ASSET_ARCH=arm64 ;;
+  x86_64)        ASSET_ARCH=x64 ;;
+  *)             echo "Unsupported arch: $ARCH" >&2; exit 1 ;;
+esac
 
-Use the GitHub Releases API to discover the assets for the latest release
-rather than relying on guessed asset filenames.
+ASSET_PATTERN="${TOOL}-${PLATFORM}-${ASSET_ARCH}"
 
-The GitHub release API endpoint is:
+# Query the GitHub Releases API for the latest release
+DOWNLOAD_URL=$(curl -sL \
+  "https://api.github.com/repos/miyako/skills/releases/latest" |
+  grep -o "\"browser_download_url\": *\"[^\"]*${ASSET_PATTERN}[^\"]*\"" |
+  head -1 |
+  sed 's/.*": *"\(.*\)"/\1/')
 
+if [ -z "$DOWNLOAD_URL" ]; then
+  echo "No asset matching ${ASSET_PATTERN} found" >&2
+  exit 1
+fi
+
+# Download and extract
+mkdir -p tools
+TMP_FILE=$(mktemp)
+curl -sL "$DOWNLOAD_URL" -o "$TMP_FILE"
+tar -xJf "$TMP_FILE" -C tools/
+rm -f "$TMP_FILE"
+
+# tar.xz preserves Unix permissions including the execute bit,
+# so chmod is not needed.
+
+# On macOS, do NOT modify the binary after extraction --
+# it is code-signed and notarized; any modification invalidates
+# the signature.
+
+# Verify
+tools/${TOOL} --version
 ```
-https://api.github.com/repos/miyako/skills/releases/latest
+
+### Windows (PowerShell)
+
+```powershell
+$tool = "xmllint"
+$arch = if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') { 'arm64' } else { 'x64' }
+$pattern = "${tool}-windows-${arch}"
+
+$release = Invoke-RestMethod "https://api.github.com/repos/miyako/skills/releases/latest"
+$asset = $release.assets | Where-Object { $_.name -like "*$pattern*" } | Select-Object -First 1
+
+if (-not $asset) {
+    Write-Error "No asset matching $pattern found"
+    exit 1
+}
+
+New-Item -ItemType Directory -Force -Path tools | Out-Null
+$tmp = [System.IO.Path]::GetTempFileName()
+Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $tmp
+tar -xJf $tmp -C tools/
+Remove-Item $tmp
+
+# Verify
+& "tools/${tool}.exe" --version
 ```
 
-Select the asset whose name matches:
+## Provisioning Multiple Tools
 
-1. the required tool;
-2. the current operating system;
-3. the current CPU architecture.
+Repeat the download recipe for each required tool. Do not batch-download
+tools that are not needed by the current operation.
 
-Do not download an asset intended for another platform or architecture.
+Common sets:
 
-## Installation
-
-Create the repository `tools/` directory if necessary.
-
-Download to a temporary file first.
-
-Do not overwrite an existing working executable until the download has
-completed successfully.
-
-After a successful download:
-
-1. Move the executable into `tools/`.
-2. On Unix-like systems, ensure it has executable permissions.
-3. On macOS, preserve the downloaded executable's code-signing/notarization
-   state. Do not modify the executable after download.
-4. On Windows, retain the `.exe` extension.
-5. Invoke the installed executable once to verify that it can run.
+- 4dcatalog needs: `xmllint`
+- 4dform needs: `boon`
+- XSLT transforms need: `xsltproc`
 
 ## Verification
 
-After installation, run:
+After installation, verify each tool can run:
 
-```
+```sh
 tools/xmllint --version
-```
-
-and/or:
-
-```
 tools/xsltproc --version
-```
-
-and/or:
-
-```
 tools/boon --help
 ```
 
-The command should successfully execute and print its version information.
+On Windows, append `.exe`:
+
+```powershell
+& tools\xmllint.exe --version
+& tools\xsltproc.exe --version
+& tools\boon.exe --help
+```
 
 A successful download is not sufficient. Treat installation as successful
 only after the executable can be launched.
 
-Log the following information:
-
-* tool name
-* detected operating system
-* detected architecture
-* release tag
-* selected asset name
-* download URL
-* destination
-* reported tool version
-
-Do not log secrets or environment variables.
-
 ## Existing Tools
 
-Before downloading, check whether the required tool is already available on
-the host.
+Before downloading, check whether the required tool is already available
+on the host:
+
+```sh
+command -v xmllint >/dev/null 2>&1 && xmllint --version
+```
 
 If the system tool is acceptable for the current operation, it may be used
 instead of downloading another copy.
 
-If the 4D skill requires the known bundled version, use the copy in `tools/`
-after provisioning it.
+If the 4D skill requires the known bundled version, use the copy in
+`tools/` after provisioning it.
 
 Do not overwrite a working bundled executable unnecessarily.
 
@@ -176,8 +220,8 @@ If no release asset matches the current platform and architecture:
 If `curl` is unavailable, report the problem rather than silently switching
 to an unrelated package manager.
 
-If the download succeeds but the executable cannot be launched, do not report
-the tool as installed.
+If the download succeeds but the executable cannot be launched, do not
+report the tool as installed.
 
 ## Security
 
@@ -192,31 +236,15 @@ Use a temporary file for downloads and install only after verification.
 
 ## Use by Other Skills
 
-Other 4D skills should not contain their own download logic.
+Other 4D skills should not contain their own download logic. They reference
+this skill when a tool is unavailable.
 
-For example, the `4d-form` skill may require `xmllint` and should instruct
-the agent to use this skill when `xmllint` is unavailable.
-
-The dependency relationship is:
+The dependency relationships are:
 
 ```
-4d-form
-	|
-	+-- requires xmllint
-			|
-			+-- 4d-tools provisions xmllint
-```
-
-Likewise:
-
-```
-4d-catalog
-	|
-	+-- requires xmllint
-
-4d-form
-	|
-	+-- may require xsltproc
+4dcatalog       --> xmllint      --> 4dtools provisions xmllint
+4dform          --> boon         --> 4dtools provisions boon
+XSLT transforms --> xsltproc    --> 4dtools provisions xsltproc
 ```
 
 The individual 4D skills should concentrate on 4D-specific behavior,

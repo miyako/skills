@@ -414,8 +414,20 @@ Do not "fix" validation failures by weakening or modifying the DTD.
 
 ## Tool Dependencies
 
-If `xmllint` or another required validation tool is unavailable, use the
-`4dtools` skill to provision the required tool when applicable.
+This skill requires `xmllint` for DTD validation.
+
+Before validating, check whether `xmllint` is available:
+
+```sh
+command -v xmllint >/dev/null 2>&1 || test -x tools/xmllint
+```
+
+If neither the system `xmllint` nor `tools/xmllint` is available, follow
+the download procedure in `4d-skills/skills/4dtools/SKILL.md` to provision
+it.
+
+Once provisioned, use `tools/xmllint` (or `tools\xmllint.exe` on Windows)
+instead of a bare `xmllint` command.
 
 Do not duplicate tool installation logic in this skill.
 
