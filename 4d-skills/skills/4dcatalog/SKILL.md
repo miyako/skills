@@ -422,9 +422,9 @@ Before validating, check whether `xmllint` is available:
 command -v xmllint >/dev/null 2>&1 || test -x tools/xmllint
 ```
 
-If neither the system `xmllint` nor `tools/xmllint` is available, use the
-`4dtools` skill to provision it. The `4dtools` skill provides the complete
-download, extraction, and verification procedure.
+If neither the system `xmllint` nor `tools/xmllint` is available, follow
+the download procedure in `4d-skills/skills/4dtools/SKILL.md` to provision
+it.
 
 Once provisioned, use `tools/xmllint` (or `tools\xmllint.exe` on Windows)
 instead of a bare `xmllint` command.

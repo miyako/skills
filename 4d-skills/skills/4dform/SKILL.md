@@ -105,9 +105,8 @@ Before validating, check whether `boon` is available:
 command -v boon >/dev/null 2>&1 || test -x tools/boon
 ```
 
-If neither the system `boon` nor `tools/boon` is available, use the
-`4dtools` skill to provision it. The `4dtools` skill provides the complete
-download, extraction, and verification procedure.
+If neither the system `boon` nor `tools/boon` is available, follow the
+download procedure in `4d-skills/skills/4dtools/SKILL.md` to provision it.
 
 Once provisioned, use `tools/boon` (or `tools\boon.exe` on Windows)
 instead of a bare `boon` command:
