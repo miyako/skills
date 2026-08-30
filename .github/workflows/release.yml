@@ -785,7 +785,7 @@ jobs:
             runner: ubuntu-24.04
           - arch: arm64
             target: aarch64-unknown-linux-musl
-            runner: ubuntu-24.04
+            runner: ubuntu-24.04-arm
 
     runs-on: ${{ matrix.runner }}
 
@@ -803,22 +803,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
-
-      - name: Install cross-compilation tools
-        if: matrix.arch == 'arm64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-
-      - name: Configure linker for cross-compilation
-        if: matrix.arch == 'arm64'
-        run: |
-          mkdir -p .cargo
-
-          cat > .cargo/config.toml <<'EOF'
-          [target.aarch64-unknown-linux-musl]
-          linker = "aarch64-linux-gnu-gcc"
-          EOF
 
       - name: Install musl tools
         run: |
@@ -1049,11 +1033,7 @@ jobs:
 
       - name: Build boon
         working-directory: vendor/boon/cli
-        run: |
-          cargo build \
-            --release \
-            --target "${{ matrix.target }}" \
-            --target-dir "${{ env.TARGET_DIR }}"
+        run: cargo build --release --target "${{ matrix.target }}" --target-dir "${{ env.TARGET_DIR }}"
 
       - name: Archive
         shell: bash
