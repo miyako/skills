@@ -36,6 +36,16 @@ Do not modify the DTD to make an invalid Catalog pass validation.
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE base SYSTEM "http://www.4d.com/dtd/2007/base.dtd" >
+```
+
+The DOCTYPE SYSTEM identifier is a conventional 4D reference. The URL does
+not resolve over HTTP. The actual DTD is the local file
+`schemas/4dcatalog/base_core.dtd`. Always keep the DOCTYPE declaration
+exactly as shown -- do not change the SYSTEM identifier to a local path.
+Validation uses `--dtdvalid` with the local DTD and `--nonet` to suppress
+network access.
+
+```xml
 <base name="{ProjectName}" uuid="{BASE_UUID}" collation_locale="en-gb">
   <schema name="DEFAULT_SCHEMA"/>
 
@@ -372,8 +382,13 @@ Use an XML validator capable of DTD validation.
 For example, where `xmllint` is available:
 
 ```
-xmllint --noout --dtdvalid schemas/4dcatalog/base_core.dtd <file>
+xmllint --noout --nonet --dtdvalid schemas/4dcatalog/base_core.dtd <file>
 ```
+
+The `--nonet` flag is required because `.4DCatalog` files declare a remote
+DOCTYPE (`http://www.4d.com/dtd/2007/base.dtd`) that does not resolve. The
+`--dtdvalid` flag overrides the declared DTD with the local copy. Without
+`--nonet`, xmllint will attempt to fetch the remote URL and fail or loop.
 
 If the Catalog's DTD declaration or validation mechanism requires a
 different invocation, follow the structure of the actual artifact rather
