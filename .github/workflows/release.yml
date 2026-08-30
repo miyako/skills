@@ -24,22 +24,37 @@ jobs:
           - arch: x64
             cc_prefix: x86_64-linux-gnu
             runner: ubuntu-24.04
+            cross_package: amd64
           - arch: arm64
             cc_prefix: aarch64-linux-gnu
             runner: ubuntu-24.04
+            cross_package: arm64
+
     runs-on: ${{ matrix.runner }}
+
     env:
       ARTIFACT: jq-linux-${{ matrix.arch }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: true
+          # jq has a nested vendor/oniguruma submodule.
+          submodules: recursive
 
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y automake autoconf libtool crossbuild-essential-${{ matrix.arch == 'x64' && 'amd64' || 'arm64' }}
+          sudo apt-get install -y \
+            automake \
+            autoconf \
+            libtool \
+            crossbuild-essential-${{ matrix.cross_package }}
+
+      - name: Verify submodules
+        run: |
+          git submodule status --recursive
+          test -f vendor/jq/vendor/oniguruma/configure.ac
 
       - name: Build jq
         working-directory: vendor/jq
@@ -50,15 +65,23 @@ jobs:
           CHOST: ${{ matrix.cc_prefix }}
           LDFLAGS: -s
         run: |
-          autoreconf -i
+          # Oniguruma is a nested jq submodule and needs its own
+          # Autotools files generated before jq is configured.
+          autoreconf -fi vendor/oniguruma
+
+          autoreconf -fi
+
           ./configure \
             --host=${{ matrix.cc_prefix }} \
             --disable-docs \
             --with-oniguruma=builtin \
+            --disable-shared \
             --enable-static \
             --enable-all-static \
             CFLAGS="-O2 -pthread -fstack-protector-all"
+
           make -j"$(nproc)"
+
           file ./jq
 
       - name: Archive
@@ -88,19 +111,28 @@ jobs:
             target: x86_64-apple-darwin
           - arch: arm64
             target: arm64-apple-darwin
+
     runs-on: macos-14
+
     env:
       ARTIFACT: jq-macos-${{ matrix.arch }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: true
+          # jq has a nested vendor/oniguruma submodule.
+          submodules: recursive
 
       - name: Install packages
         run: |
           brew update || brew update-reset
           brew install autoconf automake libtool
+
+      - name: Verify submodules
+        run: |
+          git submodule status --recursive
+          test -f vendor/jq/vendor/oniguruma/configure.ac
 
       - name: Build jq
         working-directory: vendor/jq
@@ -108,7 +140,11 @@ jobs:
           CC: clang -target ${{ matrix.target }}
           LDFLAGS: -dead_strip
         run: |
-          autoreconf -i
+          # Oniguruma has its own configure.ac and must be bootstrapped.
+          autoreconf -fi vendor/oniguruma
+
+          autoreconf -fi
+
           ./configure \
             --host="${{ matrix.target }}" \
             --disable-docs \
@@ -117,7 +153,9 @@ jobs:
             --enable-static \
             --enable-all-static \
             CFLAGS="-O2 -pthread -fstack-protector-all"
+
           make -j"$(sysctl -n hw.logicalcpu)"
+
           strip ./jq
           file ./jq
 
@@ -129,21 +167,43 @@ jobs:
         run: |
           CERT_FILE=$(mktemp /tmp/cert.XXXXXX.p12)
           KEYCHAIN_FILE=$(mktemp /tmp/keychain.XXXXXX.keychain-db)
+
           echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_FILE"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_FILE"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_FILE"
-          security import "$CERT_FILE" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_FILE"
-          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_FILE"
-          security list-keychains -d user -s "$KEYCHAIN_FILE" login.keychain-db
+
+          security import "$CERT_FILE" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_FILE"
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security list-keychains \
+            -d user \
+            -s "$KEYCHAIN_FILE" login.keychain-db
 
           echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
 
       - name: Sign binary
         run: |
-          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          codesign --force --options runtime --timestamp --sign "$IDENTITY" vendor/jq/jq
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" |
+            head -1 |
+            sed 's/.*"\(.*\)".*/\1/')
+
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$IDENTITY" \
+            vendor/jq/jq
 
       - name: Notarize binary
         env:
@@ -152,7 +212,14 @@ jobs:
           TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
         run: |
           ZIP_FILE=$(mktemp /tmp/jq.XXXXXX.zip)
-          ditto -c -k --keepParent vendor/jq/jq "$ZIP_FILE"
+
+          ditto \
+            -c \
+            -k \
+            --keepParent \
+            vendor/jq/jq \
+            "$ZIP_FILE"
+
           xcrun notarytool submit "$ZIP_FILE" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_PASSWORD" \
@@ -167,7 +234,10 @@ jobs:
 
       - name: Cleanup keychain
         if: always()
-        run: security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+        run: |
+          if [ -n "${KEYCHAIN_FILE:-}" ]; then
+            security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -192,21 +262,27 @@ jobs:
           - arch: arm64
             msystem: CLANGARM64
             runner: windows-11-arm
+
     runs-on: ${{ matrix.runner }}
+
     env:
       ARTIFACT: jq-windows-${{ matrix.arch }}
+
     defaults:
       run:
         shell: msys2 {0}
+
     steps:
       - name: Prepare git config
-        run: git config --system core.autocrlf false
         shell: bash
+        run: |
+          git config --system core.autocrlf false
 
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: true
+          # jq has a nested vendor/oniguruma submodule.
+          submodules: recursive
 
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
@@ -222,10 +298,19 @@ jobs:
           pacboy: >-
             toolchain:p
 
+      - name: Verify submodules
+        run: |
+          git submodule status --recursive
+          test -f vendor/jq/vendor/oniguruma/configure.ac
+
       - name: Build jq
         working-directory: vendor/jq
         run: |
-          autoreconf -i
+          # Oniguruma has its own configure.ac and must be bootstrapped.
+          autoreconf -fi vendor/oniguruma
+
+          autoreconf -fi
+
           ./configure \
             --disable-docs \
             --with-oniguruma=builtin \
@@ -234,7 +319,9 @@ jobs:
             --enable-all-static \
             CFLAGS="-O2 -pthread -fstack-protector-all -Wl,--stack,8388608" \
             LDFLAGS="-s"
-          make -j$(nproc)
+
+          make -j"$(nproc)"
+
           file ./jq.exe
 
       - name: Archive
@@ -257,6 +344,7 @@ jobs:
   release:
     needs: [jq-linux, jq-macos, jq-windows]
     runs-on: ubuntu-latest
+
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -265,7 +353,8 @@ jobs:
           merge-multiple: true
 
       - name: List assets
-        run: ls -lh artifacts/
+        run: |
+          ls -lh artifacts/
 
       - name: Create release
         uses: softprops/action-gh-release@v2
