@@ -24,8 +24,12 @@ but is not sufficient to establish that the artifact is a valid 4D Catalog.
 **Always** validate with this exact command:
 
 ```sh
-xmllint --noout --nonet --dtdvalid schemas/4dcatalog/base_core.dtd <file>
+tools/xmllint --noout --nonet --dtdvalid schemas/4dcatalog/base_core.dtd <file>
 ```
+
+Prefer `tools/xmllint` (or `tools\xmllint.exe` on Windows) over any
+system-installed xmllint. If `tools/xmllint` does not exist, provision it
+first by reading `skills/4dtools/SKILL.md`.
 
 - `--nonet` is **required**. Without it xmllint tries to fetch the remote
   DOCTYPE URL (`http://www.4d.com/dtd/2007/base.dtd`) which does not resolve
@@ -440,18 +444,18 @@ Do not "fix" validation failures by weakening or modifying the DTD.
 
 This skill requires `xmllint` for DTD validation.
 
-Before validating, check whether `xmllint` is available:
+Prefer `tools/xmllint` over the system `xmllint`. Before validating,
+check whether it has been provisioned:
 
 ```sh
-command -v xmllint >/dev/null 2>&1 || test -x tools/xmllint
+test -x tools/xmllint
 ```
 
-If neither the system `xmllint` nor `tools/xmllint` is available, follow
-the download procedure in `4d-skills/skills/4dtools/SKILL.md` to provision
-it.
+If `tools/xmllint` does not exist, follow the download procedure in
+`skills/4dtools/SKILL.md` to provision it.
 
-Once provisioned, use `tools/xmllint` (or `tools\xmllint.exe` on Windows)
-instead of a bare `xmllint` command.
+Use `tools/xmllint` (or `tools\xmllint.exe` on Windows) in all
+validation commands -- do not use a bare `xmllint`.
 
 Do not duplicate tool installation logic in this skill.
 
