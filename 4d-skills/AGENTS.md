@@ -55,20 +55,28 @@ Individual skills specify which tools they require.
 
 ## Skill Selection
 
-Use the most specific applicable skill.
+Use the most specific applicable skill. Each skill is a `SKILL.md` file
+in the `skills/` directory relative to this file:
 
-For example:
+| Artifact | Skill | File path |
+|----------|-------|-----------|
+| `.4DCatalog` (database schema) | 4dcatalog | `skills/4dcatalog/SKILL.md` |
+| `.4DForm` (form definition) | 4dform | `skills/4dform/SKILL.md` |
+| `.4DProject` (project definition) | 4dproject | `skills/4dproject/SKILL.md` |
+| `.4DSettings` (settings) | 4dsettings | `skills/4dsettings/SKILL.md` |
+| Tool provisioning | 4dtools | `skills/4dtools/SKILL.md` |
 
-* `.4DForm` → `4dform`
-* `.4DProject` → `4dproject`
-* `.4DCatalog` → `4dcatalog`
-* `.4DSettings` → `4dsettings`
-
-Consult the applicable skill before making structural changes to a
+Read the applicable `SKILL.md` before making structural changes to a
 proprietary 4D artifact.
 
+Schemas referenced by skills are in the `schemas/` directory relative to
+this file:
+
+- `schemas/4dcatalog/base_core.dtd` -- 4D Catalog DTD
+- `schemas/4dform/formsSchema.json` -- 4D Form JSON Schema
+
 Do not duplicate detailed artifact-specific instructions here. Those belong
-in the corresponding `SKILL.md` and its referenced documentation.
+in the corresponding `SKILL.md`.
 
 ## Validation
 
