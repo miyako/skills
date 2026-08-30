@@ -7,21 +7,19 @@ them before reporting the task as complete.
 
 1. Provision `tool4d-lsp-stdio` if not already available (see
    `skills/4dtools/SKILL.md`).
-2. Start one LSP session for the project:
+2. Validate all modified files in one call:
 
    ```sh
-   tools/tool4d-lsp-stdio start --project Project/*.4DProject &
-   LSP_PID=$!
+   tools/tool4d-lsp-stdio validate --workspace . \
+     Project/Sources/Methods/method1.4dm \
+     Project/Sources/Classes/MyClass.4dm
    ```
 
-3. For each `.4dm` file you created or modified, send `textDocument/didOpen`
-   (or `textDocument/didChange` for updates) and read the
-   `publishDiagnostics` response.
-4. If diagnostics contain errors (severity 1), fix the code and re-check.
-5. After all files validate cleanly, shut down the LSP session.
+3. If the exit code is 1, read the error messages, fix the code, and
+   re-validate until exit code 0.
 
-See `skills/4dlsp/SKILL.md` for the full LSP protocol reference
-(initialize, didOpen, diagnostics format, shutdown sequence).
+See `skills/4dlsp/SKILL.md` for the full reference (output formats,
+flags, prerequisites).
 
 ## When to skip validation
 
