@@ -101,6 +101,14 @@ Validation should normally include:
 After modifying a 4D artifact, validate it before considering the change
 complete.
 
+### .4dm source code validation
+
+If the workspace contains a `.4DProject` file and you create or modify
+`.4dm` files under `Project/Sources/`, use the `4dlsp` skill to validate
+them via the 4D LSP server. Directory-scoped instructions in
+`Project/Sources/AGENTS.md` describe the workflow. Read
+`skills/4dlsp/SKILL.md` for the full LSP protocol reference.
+
 ## Tool Usage
 
 Prefer mature, established command-line tools for generic processing.
