@@ -1,27 +1,43 @@
 ---
 name: 4dproject
 description: >
-  Work with 4D project definition files (.4DProject). This skill is currently
-  a placeholder; project-specific schema and validation rules have not yet
-  been added.
+  Work with 4D project definition files (.4DProject), including their JSON
+  structure, compatibility version, and tokenization settings.
 ---
 
-# 4D Project
+# 4D Project Definition
 
 ## Scope
 
-This skill covers 4D project definition files:
+This skill covers the `.4DProject` file itself -- the JSON anchor file
+that identifies a 4D project and its settings.
 
-* `*.4DProject`
+For project directory layout, boilerplate files, and methods, see the
+project layout section in `AGENTS.md`.
 
-## Status
+## File Format
 
-**Stub — validation support not yet implemented.**
+A `.4DProject` file is a JSON document:
 
-No 4DProject schema or project-specific validator is currently available
-in this skillset.
+```json
+{
+  "$comment": "The project file serves as an anchor to locate other project files",
+  "compatibilityVersion": 2130,
+  "tokenizedText": false
+}
+```
 
-## Current Guidance
+### Properties
+
+- `compatibilityVersion`: 4D version code. `2130` = 4D 21 R3. Encoding:
+  LTS = `major*100+minor` (e.g., 21.3 = 2103), Feature release =
+  `major*100+R_number*10` (e.g., 21 R3 = 2130).
+- `tokenizedText`: Set to `false` when the project is created/maintained
+  by an agent (not the IDE). Tokens like `:C10` or `:5` are only useful
+  in IDE workflows. When `false`, write **plain 4D code without token
+  suffixes** in all `.4dm` files.
+
+## Modification
 
 When working with a `.4DProject` file:
 
@@ -31,12 +47,3 @@ When working with a `.4DProject` file:
 * Do not remove unknown properties or fields.
 * Do not assume that valid JSON implies a valid 4DProject.
 * Do not invent schema rules or project-specific properties.
-* Do not modify the schema collection to make a file pass validation.
-
-Generic JSON syntax can be checked with an appropriate JSON tool when useful,
-but this does **not** constitute 4DProject validation.
-
-## Future
-
-This skill will be expanded when a 4DProject schema and/or
-4DProject-specific validation rules become available.
