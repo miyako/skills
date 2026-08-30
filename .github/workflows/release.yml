@@ -1033,6 +1033,9 @@ jobs:
 
       - name: Build boon
         working-directory: vendor/boon/cli
+        env:
+          CMAKE_ARGS: -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
         run: cargo build --release --target "${{ matrix.target }}" --target-dir "${{ env.TARGET_DIR }}"
 
       - name: Archive
