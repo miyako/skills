@@ -1,0 +1,276 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # jq - Linux
+  # ---------------------------------------------------------------------------
+  jq-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            cc_prefix: x86_64-linux-gnu
+            runner: ubuntu-24.04
+          - arch: arm64
+            cc_prefix: aarch64-linux-gnu
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    env:
+      ARTIFACT: jq-linux-${{ matrix.arch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y automake autoconf libtool crossbuild-essential-${{ matrix.arch == 'x64' && 'amd64' || 'arm64' }}
+
+      - name: Build jq
+        working-directory: vendor/jq
+        env:
+          AR: ${{ matrix.cc_prefix }}-ar
+          CC: ${{ matrix.cc_prefix }}-gcc
+          CPP: ${{ matrix.cc_prefix }}-cpp
+          CHOST: ${{ matrix.cc_prefix }}
+          LDFLAGS: -s
+        run: |
+          autoreconf -i
+          ./configure \
+            --host=${{ matrix.cc_prefix }} \
+            --disable-docs \
+            --with-oniguruma=builtin \
+            --enable-static \
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all"
+          make -j"$(nproc)"
+          file ./jq
+
+      - name: Archive
+        run: |
+          mkdir -p staging
+          cp vendor/jq/jq staging/jq
+          tar -cJf "${{ env.ARTIFACT }}.tar.xz" -C staging jq
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # jq - macOS (signed + notarized)
+  # ---------------------------------------------------------------------------
+  jq-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-apple-darwin
+          - arch: arm64
+            target: arm64-apple-darwin
+    runs-on: macos-14
+    env:
+      ARTIFACT: jq-macos-${{ matrix.arch }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install packages
+        run: |
+          brew update || brew update-reset
+          brew install autoconf automake libtool
+
+      - name: Build jq
+        working-directory: vendor/jq
+        env:
+          CC: clang -target ${{ matrix.target }}
+          LDFLAGS: -dead_strip
+        run: |
+          autoreconf -i
+          ./configure \
+            --host="${{ matrix.target }}" \
+            --disable-docs \
+            --with-oniguruma=builtin \
+            --disable-shared \
+            --enable-static \
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all"
+          make -j"$(sysctl -n hw.logicalcpu)"
+          strip ./jq
+          file ./jq
+
+      - name: Import signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERT_FILE=$(mktemp /tmp/cert.XXXXXX.p12)
+          KEYCHAIN_FILE=$(mktemp /tmp/keychain.XXXXXX.keychain-db)
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_FILE"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_FILE"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_FILE"
+          security import "$CERT_FILE" -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_FILE"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_FILE"
+          security list-keychains -d user -s "$KEYCHAIN_FILE" login.keychain-db
+
+          echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
+
+      - name: Sign binary
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          codesign --force --options runtime --timestamp --sign "$IDENTITY" vendor/jq/jq
+
+      - name: Notarize binary
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE=$(mktemp /tmp/jq.XXXXXX.zip)
+          ditto -c -k --keepParent vendor/jq/jq "$ZIP_FILE"
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+      - name: Archive
+        run: |
+          mkdir -p staging
+          cp vendor/jq/jq staging/jq
+          tar -cJf "${{ env.ARTIFACT }}.tar.xz" -C staging jq
+
+      - name: Cleanup keychain
+        if: always()
+        run: security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # jq - Windows
+  # ---------------------------------------------------------------------------
+  jq-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            msystem: UCRT64
+            runner: windows-2022
+          - arch: arm64
+            msystem: CLANGARM64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      ARTIFACT: jq-windows-${{ matrix.arch }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Prepare git config
+        run: git config --system core.autocrlf false
+        shell: bash
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: ${{ matrix.msystem }}
+          install: >-
+            base-devel
+            git
+            autoconf
+            automake
+            libtool
+          pacboy: >-
+            toolchain:p
+
+      - name: Build jq
+        working-directory: vendor/jq
+        run: |
+          autoreconf -i
+          ./configure \
+            --disable-docs \
+            --with-oniguruma=builtin \
+            --disable-shared \
+            --enable-static \
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all -Wl,--stack,8388608" \
+            LDFLAGS="-s"
+          make -j$(nproc)
+          file ./jq.exe
+
+      - name: Archive
+        run: |
+          mkdir -p staging
+          cp vendor/jq/jq.exe staging/jq.exe
+          tar -cJf "${{ env.ARTIFACT }}.tar.xz" -C staging jq.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # Create GitHub Release
+  # ---------------------------------------------------------------------------
+  release:
+    needs: [jq-linux, jq-macos, jq-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List assets
+        run: ls -lh artifacts/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
+          generate_release_notes: true
+          files: artifacts/*.tar.xz
