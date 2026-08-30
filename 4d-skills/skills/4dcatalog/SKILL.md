@@ -19,6 +19,29 @@ schema: tables, fields, primary keys, indexes, and relations.
 Do not treat a `.4DCatalog` as generic XML. XML well-formedness is necessary
 but is not sufficient to establish that the artifact is a valid 4D Catalog.
 
+## Validation (read this first)
+
+**Always** validate with this exact command:
+
+```sh
+xmllint --noout --nonet --dtdvalid schemas/4dcatalog/base_core.dtd <file>
+```
+
+- `--nonet` is **required**. Without it xmllint tries to fetch the remote
+  DOCTYPE URL (`http://www.4d.com/dtd/2007/base.dtd`) which does not resolve
+  and causes xmllint to hang or fail.
+- `--dtdvalid` overrides the declared DOCTYPE with the local DTD copy.
+- Do NOT use `--valid` or `--postvalid` -- they will attempt remote fetch.
+- Do NOT try Python lxml, catalog files, or other workarounds. The command
+  above is the correct and complete validation method.
+- **Expected warning you can ignore:** xmllint will print
+  `I/O warning : failed to load "http://www.4d.com/dtd/2007/base.dtd"`.
+  This is normal and harmless. The `--dtdvalid` flag provides the real DTD.
+  Check the exit code: 0 means validation passed.
+
+If `xmllint` is not available, provision it first by reading
+`skills/4dtools/SKILL.md`.
+
 ## Schema
 
 The 4D Catalog DTD is:
@@ -377,22 +400,8 @@ When validating a `.4DCatalog`:
 A successful XML parse alone must not be reported as successful 4D Catalog
 validation.
 
-Use an XML validator capable of DTD validation.
-
-For example, where `xmllint` is available:
-
-```
-xmllint --noout --nonet --dtdvalid schemas/4dcatalog/base_core.dtd <file>
-```
-
-The `--nonet` flag is required because `.4DCatalog` files declare a remote
-DOCTYPE (`http://www.4d.com/dtd/2007/base.dtd`) that does not resolve. The
-`--dtdvalid` flag overrides the declared DTD with the local copy. Without
-`--nonet`, xmllint will attempt to fetch the remote URL and fail or loop.
-
-If the Catalog's DTD declaration or validation mechanism requires a
-different invocation, follow the structure of the actual artifact rather
-than modifying the document merely to accommodate the command.
+Use the validation command from the "Validation (read this first)" section
+at the top of this file.
 
 ## Modification
 
