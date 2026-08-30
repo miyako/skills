@@ -1,306 +1,1095 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.1.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
   # ---------------------------------------------------------------------------
-# boon (JSON Schema validator) - Linux
-# ---------------------------------------------------------------------------
-boon-linux:
-  strategy:
-    fail-fast: false
-    matrix:
-      arch: [x64, arm64]
-      include:
-        - arch: x64
-          target: x86_64-unknown-linux-musl
-          runner: ubuntu-24.04
-        - arch: arm64
-          target: aarch64-unknown-linux-musl
-          runner: ubuntu-24.04
+  # jq - Linux
+  # ---------------------------------------------------------------------------
+  jq-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            cc_prefix: x86_64-linux-gnu
+            runner: ubuntu-24.04
+            cross_package: amd64
+          - arch: arm64
+            cc_prefix: aarch64-linux-gnu
+            runner: ubuntu-24.04
+            cross_package: arm64
 
-  runs-on: ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
 
-  env:
-    ARTIFACT: boon-linux-${{ matrix.arch }}
-    TARGET_DIR: ${{ github.workspace }}/vendor/boon-target
+    env:
+      ARTIFACT: jq-linux-${{ matrix.arch }}
 
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # jq has a nested vendor/oniguruma submodule.
+          submodules: recursive
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: ${{ matrix.target }}
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            automake \
+            autoconf \
+            libtool \
+            crossbuild-essential-${{ matrix.cross_package }}
 
-    - name: Install cross-compilation tools
-      if: matrix.arch == 'arm64'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-aarch64-linux-gnu
+      - name: Verify submodules
+        run: |
+          git submodule status --recursive
+          test -f vendor/jq/vendor/oniguruma/configure.ac
 
-    - name: Configure linker for cross-compilation
-      if: matrix.arch == 'arm64'
-      run: |
-        mkdir -p .cargo
-        cat > .cargo/config.toml <<'EOF'
-        [target.aarch64-unknown-linux-musl]
-        linker = "aarch64-linux-gnu-gcc"
-        EOF
+      - name: Build jq
+        working-directory: vendor/jq
+        env:
+          AR: ${{ matrix.cc_prefix }}-ar
+          CC: ${{ matrix.cc_prefix }}-gcc
+          CPP: ${{ matrix.cc_prefix }}-cpp
+          CHOST: ${{ matrix.cc_prefix }}
+          LDFLAGS: -s
+        run: |
+          # Oniguruma is a nested jq submodule and needs its own
+          # Autotools files generated before jq is configured.
+          autoreconf -fi vendor/oniguruma
 
-    - name: Install musl tools
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y musl-tools
+          autoreconf -fi
 
-    - name: Build boon
-      working-directory: vendor/boon/cli
-      run: |
-        cargo build \
-          --release \
-          --target "${{ matrix.target }}" \
-          --target-dir "${{ env.TARGET_DIR }}"
+          ./configure \
+            --host=${{ matrix.cc_prefix }} \
+            --disable-docs \
+            --with-oniguruma=builtin \
+            --disable-shared \
+            --enable-static \
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all"
 
-        strip \
-          "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon" || true
+          make -j"$(nproc)"
 
-        file \
-          "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon"
+          file ./jq
 
-    - name: Archive
-      run: |
-        mkdir -p staging
+      - name: Archive
+        run: |
+          mkdir -p staging
+          cp vendor/jq/jq staging/jq
+          tar -cJf "${{ env.ARTIFACT }}.tar.xz" -C staging jq
 
-        cp \
-          "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon" \
-          staging/boon
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
 
-        tar \
-          -cJf "${{ env.ARTIFACT }}.tar.xz" \
-          -C staging \
-          boon
+  # ---------------------------------------------------------------------------
+  # jq - macOS (signed + notarized)
+  # ---------------------------------------------------------------------------
+  jq-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-apple-darwin
+          - arch: arm64
+            target: arm64-apple-darwin
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.ARTIFACT }}
-        path: ${{ env.ARTIFACT }}.tar.xz
-        if-no-files-found: error
-        retention-days: 5
+    runs-on: macos-14
 
+    env:
+      ARTIFACT: jq-macos-${{ matrix.arch }}
 
-# ---------------------------------------------------------------------------
-# boon (JSON Schema validator) - macOS (signed + notarized)
-# ---------------------------------------------------------------------------
-boon-macos:
-  strategy:
-    fail-fast: false
-    matrix:
-      arch: [x64, arm64]
-      include:
-        - arch: x64
-          target: x86_64-apple-darwin
-        - arch: arm64
-          target: aarch64-apple-darwin
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # jq has a nested vendor/oniguruma submodule.
+          submodules: recursive
 
-  runs-on: macos-14
+      - name: Install packages
+        run: |
+          brew update || brew update-reset
+          brew install autoconf automake libtool
 
-  env:
-    ARTIFACT: boon-macos-${{ matrix.arch }}
-    TARGET_DIR: ${{ github.workspace }}/vendor/boon-target
+      - name: Verify submodules
+        run: |
+          git submodule status --recursive
+          test -f vendor/jq/vendor/oniguruma/configure.ac
 
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      - name: Build jq
+        working-directory: vendor/jq
+        env:
+          CC: clang -target ${{ matrix.target }}
+          LDFLAGS: -dead_strip
+        run: |
+          # Oniguruma has its own configure.ac and must be bootstrapped.
+          autoreconf -fi vendor/oniguruma
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: ${{ matrix.target }}
+          autoreconf -fi
 
-    - name: Build boon
-      working-directory: vendor/boon/cli
-      run: |
-        cargo build \
-          --release \
-          --target "${{ matrix.target }}" \
-          --target-dir "${{ env.TARGET_DIR }}"
+          ./configure \
+            --host="${{ matrix.target }}" \
+            --disable-docs \
+            --with-oniguruma=builtin \
+            --disable-shared \
+            --enable-static \
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all"
 
-        strip \
-          "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon"
+          make -j"$(sysctl -n hw.logicalcpu)"
 
-        file \
-          "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon"
+          strip ./jq
+          file ./jq
 
-    - name: Import signing certificate
-      env:
-        CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE }}
-        CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
-        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      run: |
-        TMP_DIR=$(mktemp -d)
-        CERT_FILE="$TMP_DIR/cert.p12"
-        KEYCHAIN_FILE="$TMP_DIR/build.keychain-db"
+      - name: Import signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          TMP_DIR=$(mktemp -d)
+          CERT_FILE="$TMP_DIR/cert.p12"
+          KEYCHAIN_FILE="$TMP_DIR/build.keychain-db"
+          
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
+          
+          security create-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+          
+          security set-keychain-settings \
+            -lut 21600 \
+            "$KEYCHAIN_FILE"
+          
+          security unlock-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+          
+          security import "$CERT_FILE" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_FILE"
+          
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+          
+          security list-keychains \
+            -d user \
+            -s "$KEYCHAIN_FILE" login.keychain-db
+          
+          echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
+          echo "TMP_DIR=$TMP_DIR" >> "$GITHUB_ENV"
 
-        echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
+      - name: Sign binary
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" |
+            head -1 |
+            sed 's/.*"\(.*\)".*/\1/')
 
-        security create-keychain \
-          -p "$KEYCHAIN_PASSWORD" \
-          "$KEYCHAIN_FILE"
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$IDENTITY" \
+            vendor/jq/jq
 
-        security set-keychain-settings \
-          -lut 21600 \
-          "$KEYCHAIN_FILE"
+      - name: Notarize binary
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE=$(mktemp /tmp/jq.XXXXXX.zip)
 
-        security unlock-keychain \
-          -p "$KEYCHAIN_PASSWORD" \
-          "$KEYCHAIN_FILE"
+          ditto \
+            -c \
+            -k \
+            --keepParent \
+            vendor/jq/jq \
+            "$ZIP_FILE"
 
-        security import "$CERT_FILE" \
-          -P "$CERTIFICATE_PASSWORD" \
-          -A \
-          -t cert \
-          -f pkcs12 \
-          -k "$KEYCHAIN_FILE"
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
 
-        security set-key-partition-list \
-          -S apple-tool:,apple: \
-          -k "$KEYCHAIN_PASSWORD" \
-          "$KEYCHAIN_FILE"
+      - name: Archive
+        run: |
+          mkdir -p staging
+          cp vendor/jq/jq staging/jq
+          tar -cJf "${{ env.ARTIFACT }}.tar.xz" -C staging jq
 
-        security list-keychains \
-          -d user \
-          -s "$KEYCHAIN_FILE" login.keychain-db
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_FILE:-}" ]; then
+            security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+          fi
+          
+          if [ -n "${TMP_DIR:-}" ]; then
+            rm -rf "$TMP_DIR"
+          fi
 
-        echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
-        echo "TMP_DIR=$TMP_DIR" >> "$GITHUB_ENV"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
 
-    - name: Sign binary
-      run: |
-        IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" |
-          head -1 |
-          sed 's/.*"\(.*\)".*/\1/')
+  # ---------------------------------------------------------------------------
+  # jq - Windows
+  # ---------------------------------------------------------------------------
+  jq-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            msystem: UCRT64
+            runner: windows-2022
+          - arch: arm64
+            msystem: CLANGARM64
+            runner: windows-11-arm
 
-        codesign \
-          --force \
-          --options runtime \
-          --timestamp \
-          --sign "$IDENTITY" \
-          "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon"
+    runs-on: ${{ matrix.runner }}
 
-    - name: Notarize binary
-      env:
-        APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
-        APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
-        TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
-      run: |
-        ZIP_FILE=$(mktemp /tmp/boon.XXXXXX.zip)
+    env:
+      ARTIFACT: jq-windows-${{ matrix.arch }}
 
-        ditto \
-          -c \
-          -k \
-          --keepParent \
-          "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon" \
-          "$ZIP_FILE"
+    defaults:
+      run:
+        shell: msys2 {0}
 
-        xcrun notarytool submit "$ZIP_FILE" \
-          --apple-id "$APPLE_ID" \
-          --password "$APPLE_PASSWORD" \
-          --team-id "$TEAM_ID" \
-          --wait
+    steps:
+      - name: Prepare git config
+        shell: bash
+        run: |
+          git config --system core.autocrlf false
 
-    - name: Archive
-      run: |
-        mkdir -p staging
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # jq has a nested vendor/oniguruma submodule.
+          submodules: recursive
 
-        cp \
-          "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon" \
-          staging/boon
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: ${{ matrix.msystem }}
+          install: >-
+            base-devel
+            git
+            autoconf
+            automake
+            libtool
+          pacboy: >-
+            toolchain:p
 
-        tar \
-          -cJf "${{ env.ARTIFACT }}.tar.xz" \
-          -C staging \
-          boon
+      - name: Verify submodules
+        run: |
+          git submodule status --recursive
+          test -f vendor/jq/vendor/oniguruma/configure.ac
 
-    - name: Cleanup keychain
-      if: always()
-      run: |
-        if [ -n "${KEYCHAIN_FILE:-}" ]; then
-          security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
-        fi
+      - name: Build jq
+        working-directory: vendor/jq
+        run: |
+          # Oniguruma has its own configure.ac and must be bootstrapped.
+          autoreconf -fi vendor/oniguruma
 
-        if [ -n "${TMP_DIR:-}" ]; then
-          rm -rf "$TMP_DIR"
-        fi
+          autoreconf -fi
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.ARTIFACT }}
-        path: ${{ env.ARTIFACT }}.tar.xz
-        if-no-files-found: error
-        retention-days: 5
+          ./configure \
+            --disable-docs \
+            --with-oniguruma=builtin \
+            --disable-shared \
+            --enable-static \
+            --enable-all-static \
+            CFLAGS="-O2 -pthread -fstack-protector-all -Wl,--stack,8388608" \
+            LDFLAGS="-s"
 
+          make -j"$(nproc)"
 
-# ---------------------------------------------------------------------------
-# boon (JSON Schema validator) - Windows
-# ---------------------------------------------------------------------------
-boon-windows:
-  strategy:
-    fail-fast: false
-    matrix:
-      arch: [x64, arm64]
-      include:
-        - arch: x64
-          target: x86_64-pc-windows-msvc
-          runner: windows-2022
-        - arch: arm64
-          target: aarch64-pc-windows-msvc
-          runner: windows-11-arm
+          file ./jq.exe
 
-  runs-on: ${{ matrix.runner }}
+      - name: Archive
+        run: |
+          mkdir -p staging
+          cp vendor/jq/jq.exe staging/jq.exe
+          tar -cJf "${{ env.ARTIFACT }}.tar.xz" -C staging jq.exe
 
-  env:
-    ARTIFACT: boon-windows-${{ matrix.arch }}
-    TARGET_DIR: ${{ github.workspace }}/vendor/boon-target
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
 
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
+  # ---------------------------------------------------------------------------
+  # xmllint + xsltproc - Linux
+  # ---------------------------------------------------------------------------
+  xml-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            cmake_system_processor: x86_64
+            cc_prefix: x86_64-linux-gnu
+            runner: ubuntu-24.04
+            cross_package: amd64
+          - arch: arm64
+            cmake_system_processor: aarch64
+            cc_prefix: aarch64-linux-gnu
+            runner: ubuntu-24.04
+            cross_package: arm64
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
 
-    - name: Build boon
-      working-directory: vendor/boon/cli
-      run: |
-        cargo build \
-          --release \
-          --target "${{ matrix.target }}" \
-          --target-dir "${{ env.TARGET_DIR }}"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Archive
-      shell: bash
-      run: |
-        mkdir -p staging
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            crossbuild-essential-${{ matrix.cross_package }}
 
-        cp \
-          "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon.exe" \
-          staging/boon.exe
+      - name: Create CMake toolchain file
+        run: |
+          cat > toolchain.cmake <<'EOF'
+          set(CMAKE_SYSTEM_NAME Linux)
+          set(CMAKE_SYSTEM_PROCESSOR ${{ matrix.cmake_system_processor }})
+          set(CMAKE_C_COMPILER ${{ matrix.cc_prefix }}-gcc)
+          set(CMAKE_AR ${{ matrix.cc_prefix }}-ar)
+          set(CMAKE_RANLIB ${{ matrix.cc_prefix }}-ranlib)
+          set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+          set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+          set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+          EOF
 
-        tar \
-          -cJf "${{ env.ARTIFACT }}.tar.xz" \
-          -C staging \
-          boon.exe
+      - name: Build libxml2
+        run: |
+          cmake -S vendor/libxml2 -B build/libxml2 -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DLIBXML2_WITH_ICONV=OFF \
+            -DLIBXML2_WITH_LZMA=OFF \
+            -DLIBXML2_WITH_PYTHON=OFF \
+            -DLIBXML2_WITH_ZLIB=OFF \
+            -DLIBXML2_WITH_TESTS=OFF \
+            -DLIBXML2_WITH_PROGRAMS=ON \
+            -DCMAKE_C_FLAGS="-O2 -fstack-protector-all" \
+            -DCMAKE_EXE_LINKER_FLAGS="-static -s"
+          cmake --build build/libxml2 -j"$(nproc)"
+          cmake --install build/libxml2
+          file build/libxml2/xmllint
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: ${{ env.ARTIFACT }}
-        path: ${{ env.ARTIFACT }}.tar.xz
-        if-no-files-found: error
-        retention-days: 5
+      - name: Build libxslt
+        run: |
+          cmake -S vendor/libxslt -B build/libxslt -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+            -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DLIBXSLT_WITH_PYTHON=OFF \
+            -DLIBXSLT_WITH_TESTS=OFF \
+            -DLIBXSLT_WITH_PROGRAMS=ON \
+            -DLIBXSLT_WITH_CRYPTO=OFF \
+            -DLIBXSLT_WITH_MODULES=OFF \
+            -DCMAKE_C_FLAGS="-O2 -fstack-protector-all" \
+            -DCMAKE_EXE_LINKER_FLAGS="-static -s"
+          cmake --build build/libxslt -j"$(nproc)"
+          file build/libxslt/xsltproc
+
+      - name: Archive xmllint
+        run: |
+          mkdir -p staging
+          cp build/libxml2/xmllint staging/xmllint
+          tar -cJf "xmllint-linux-${{ matrix.arch }}.tar.xz" -C staging xmllint
+
+      - name: Archive xsltproc
+        run: |
+          rm -rf staging && mkdir -p staging
+          cp build/libxslt/xsltproc staging/xsltproc
+          tar -cJf "xsltproc-linux-${{ matrix.arch }}.tar.xz" -C staging xsltproc
+
+      - name: Upload xmllint
+        uses: actions/upload-artifact@v4
+        with:
+          name: xmllint-linux-${{ matrix.arch }}
+          path: xmllint-linux-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload xsltproc
+        uses: actions/upload-artifact@v4
+        with:
+          name: xsltproc-linux-${{ matrix.arch }}
+          path: xsltproc-linux-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # xmllint + xsltproc - macOS (signed + notarized)
+  # ---------------------------------------------------------------------------
+  xml-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            cmake_osx_arch: x86_64
+          - arch: arm64
+            cmake_osx_arch: arm64
+
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install packages
+        run: |
+          brew update || brew update-reset
+          brew install cmake ninja
+
+      - name: Build libxml2
+        run: |
+          cmake -S vendor/libxml2 -B build/libxml2 -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_osx_arch }} \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DLIBXML2_WITH_ICONV=OFF \
+            -DLIBXML2_WITH_LZMA=OFF \
+            -DLIBXML2_WITH_PYTHON=OFF \
+            -DLIBXML2_WITH_ZLIB=OFF \
+            -DLIBXML2_WITH_TESTS=OFF \
+            -DLIBXML2_WITH_PROGRAMS=ON \
+            -DCMAKE_C_FLAGS="-O2 -fstack-protector-all"
+          cmake --build build/libxml2 -j"$(sysctl -n hw.logicalcpu)"
+          cmake --install build/libxml2
+          file build/libxml2/xmllint
+
+      - name: Build libxslt
+        run: |
+          cmake -S vendor/libxslt -B build/libxslt -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install \
+            -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.cmake_osx_arch }} \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DLIBXSLT_WITH_PYTHON=OFF \
+            -DLIBXSLT_WITH_TESTS=OFF \
+            -DLIBXSLT_WITH_PROGRAMS=ON \
+            -DLIBXSLT_WITH_CRYPTO=OFF \
+            -DLIBXSLT_WITH_MODULES=OFF \
+            -DCMAKE_C_FLAGS="-O2 -fstack-protector-all"
+          cmake --build build/libxslt -j"$(sysctl -n hw.logicalcpu)"
+          file build/libxslt/xsltproc
+
+      - name: Strip binaries
+        run: |
+          strip build/libxml2/xmllint
+          strip build/libxslt/xsltproc
+
+      - name: Import signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          TMP_DIR=$(mktemp -d)
+          CERT_FILE="$TMP_DIR/cert.p12"
+          KEYCHAIN_FILE="$TMP_DIR/build.keychain-db"
+
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
+
+          security create-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security set-keychain-settings \
+            -lut 21600 \
+            "$KEYCHAIN_FILE"
+
+          security unlock-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security import "$CERT_FILE" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_FILE"
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security list-keychains \
+            -d user \
+            -s "$KEYCHAIN_FILE" login.keychain-db
+
+          echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
+          echo "TMP_DIR=$TMP_DIR" >> "$GITHUB_ENV"
+
+      - name: Sign binaries
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" |
+            head -1 |
+            sed 's/.*"\(.*\)".*/\1/')
+
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$IDENTITY" \
+            build/libxml2/xmllint
+
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$IDENTITY" \
+            build/libxslt/xsltproc
+
+      - name: Notarize xmllint
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE=$(mktemp /tmp/xmllint.XXXXXX.zip)
+
+          ditto \
+            -c \
+            -k \
+            --keepParent \
+            build/libxml2/xmllint \
+            "$ZIP_FILE"
+
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+      - name: Notarize xsltproc
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE=$(mktemp /tmp/xsltproc.XXXXXX.zip)
+
+          ditto \
+            -c \
+            -k \
+            --keepParent \
+            build/libxslt/xsltproc \
+            "$ZIP_FILE"
+
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+      - name: Archive xmllint
+        run: |
+          mkdir -p staging
+          cp build/libxml2/xmllint staging/xmllint
+          tar -cJf "xmllint-macos-${{ matrix.arch }}.tar.xz" -C staging xmllint
+
+      - name: Archive xsltproc
+        run: |
+          rm -rf staging && mkdir -p staging
+          cp build/libxslt/xsltproc staging/xsltproc
+          tar -cJf "xsltproc-macos-${{ matrix.arch }}.tar.xz" -C staging xsltproc
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_FILE:-}" ]; then
+            security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+          fi
+
+          if [ -n "${TMP_DIR:-}" ]; then
+            rm -rf "$TMP_DIR"
+          fi
+
+      - name: Upload xmllint
+        uses: actions/upload-artifact@v4
+        with:
+          name: xmllint-macos-${{ matrix.arch }}
+          path: xmllint-macos-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload xsltproc
+        uses: actions/upload-artifact@v4
+        with:
+          name: xsltproc-macos-${{ matrix.arch }}
+          path: xsltproc-macos-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # xmllint + xsltproc - Windows
+  # ---------------------------------------------------------------------------
+  xml-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            cmake_arch: x64
+            runner: windows-2022
+          - arch: arm64
+            cmake_arch: ARM64
+            runner: windows-11-arm
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build libxml2
+        run: |
+          cmake -S vendor/libxml2 -B build/libxml2 `
+            -A ${{ matrix.cmake_arch }} `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DLIBXML2_WITH_ICONV=OFF `
+            -DLIBXML2_WITH_LZMA=OFF `
+            -DLIBXML2_WITH_PYTHON=OFF `
+            -DLIBXML2_WITH_ZLIB=OFF `
+            -DLIBXML2_WITH_TESTS=OFF `
+            -DLIBXML2_WITH_PROGRAMS=ON `
+            -DCMAKE_C_FLAGS="/O2 /GS" `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake --build build/libxml2 --config Release -j $env:NUMBER_OF_PROCESSORS
+          cmake --install build/libxml2 --config Release
+
+      - name: Build libxslt
+        run: |
+          cmake -S vendor/libxslt -B build/libxslt `
+            -A ${{ matrix.cmake_arch }} `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install `
+            -DCMAKE_PREFIX_PATH=${{ github.workspace }}/install `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DLIBXSLT_WITH_PYTHON=OFF `
+            -DLIBXSLT_WITH_TESTS=OFF `
+            -DLIBXSLT_WITH_PROGRAMS=ON `
+            -DLIBXSLT_WITH_CRYPTO=OFF `
+            -DLIBXSLT_WITH_MODULES=OFF `
+            -DCMAKE_C_FLAGS="/O2 /GS" `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+          cmake --build build/libxslt --config Release -j $env:NUMBER_OF_PROCESSORS
+
+      - name: Archive
+        shell: bash
+        run: |
+          mkdir -p staging-xmllint staging-xsltproc
+          cp build/libxml2/Release/xmllint.exe staging-xmllint/xmllint.exe
+          cp build/libxslt/Release/xsltproc.exe staging-xsltproc/xsltproc.exe
+          tar -cJf "xmllint-windows-${{ matrix.arch }}.tar.xz" -C staging-xmllint xmllint.exe
+          tar -cJf "xsltproc-windows-${{ matrix.arch }}.tar.xz" -C staging-xsltproc xsltproc.exe
+
+      - name: Upload xmllint
+        uses: actions/upload-artifact@v4
+        with:
+          name: xmllint-windows-${{ matrix.arch }}
+          path: xmllint-windows-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+      - name: Upload xsltproc
+        uses: actions/upload-artifact@v4
+        with:
+          name: xsltproc-windows-${{ matrix.arch }}
+          path: xsltproc-windows-${{ matrix.arch }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # boon (JSON Schema validator) - Linux
+  # ---------------------------------------------------------------------------
+  boon-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-unknown-linux-musl
+            runner: ubuntu-24.04
+          - arch: arm64
+            target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04
+  
+    runs-on: ${{ matrix.runner }}
+  
+    env:
+      ARTIFACT: boon-linux-${{ matrix.arch }}
+      TARGET_DIR: ${{ github.workspace }}/vendor/boon-target
+  
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+  
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+  
+      - name: Install cross-compilation tools
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+  
+      - name: Configure linker for cross-compilation
+        if: matrix.arch == 'arm64'
+        run: |
+          mkdir -p .cargo
+          cat > .cargo/config.toml <<'EOF'
+          [target.aarch64-unknown-linux-musl]
+          linker = "aarch64-linux-gnu-gcc"
+          EOF
+  
+      - name: Install musl tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+  
+      - name: Build boon
+        working-directory: vendor/boon/cli
+        run: |
+          cargo build \
+            --release \
+            --target "${{ matrix.target }}" \
+            --target-dir "${{ env.TARGET_DIR }}"
+  
+          strip \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon" || true
+  
+          file \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon"
+  
+      - name: Archive
+        run: |
+          mkdir -p staging
+  
+          cp \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon" \
+            staging/boon
+  
+          tar \
+            -cJf "${{ env.ARTIFACT }}.tar.xz" \
+            -C staging \
+            boon
+  
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+  
+  
+  # ---------------------------------------------------------------------------
+  # boon (JSON Schema validator) - macOS (signed + notarized)
+  # ---------------------------------------------------------------------------
+  boon-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-apple-darwin
+          - arch: arm64
+            target: aarch64-apple-darwin
+  
+    runs-on: macos-14
+  
+    env:
+      ARTIFACT: boon-macos-${{ matrix.arch }}
+      TARGET_DIR: ${{ github.workspace }}/vendor/boon-target
+  
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+  
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+  
+      - name: Build boon
+        working-directory: vendor/boon/cli
+        run: |
+          cargo build \
+            --release \
+            --target "${{ matrix.target }}" \
+            --target-dir "${{ env.TARGET_DIR }}"
+  
+          strip \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon"
+  
+          file \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon"
+  
+      - name: Import signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          TMP_DIR=$(mktemp -d)
+          CERT_FILE="$TMP_DIR/cert.p12"
+          KEYCHAIN_FILE="$TMP_DIR/build.keychain-db"
+  
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
+  
+          security create-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+  
+          security set-keychain-settings \
+            -lut 21600 \
+            "$KEYCHAIN_FILE"
+  
+          security unlock-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+  
+          security import "$CERT_FILE" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_FILE"
+  
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+  
+          security list-keychains \
+            -d user \
+            -s "$KEYCHAIN_FILE" login.keychain-db
+  
+          echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
+          echo "TMP_DIR=$TMP_DIR" >> "$GITHUB_ENV"
+  
+      - name: Sign binary
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" |
+            head -1 |
+            sed 's/.*"\(.*\)".*/\1/')
+  
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$IDENTITY" \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon"
+  
+      - name: Notarize binary
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE=$(mktemp /tmp/boon.XXXXXX.zip)
+  
+          ditto \
+            -c \
+            -k \
+            --keepParent \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon" \
+            "$ZIP_FILE"
+  
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+  
+      - name: Archive
+        run: |
+          mkdir -p staging
+  
+          cp \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon" \
+            staging/boon
+  
+          tar \
+            -cJf "${{ env.ARTIFACT }}.tar.xz" \
+            -C staging \
+            boon
+  
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_FILE:-}" ]; then
+            security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+          fi
+  
+          if [ -n "${TMP_DIR:-}" ]; then
+            rm -rf "$TMP_DIR"
+          fi
+  
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+  
+  
+  # ---------------------------------------------------------------------------
+  # boon (JSON Schema validator) - Windows
+  # ---------------------------------------------------------------------------
+  boon-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-pc-windows-msvc
+            runner: windows-2022
+          - arch: arm64
+            target: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+  
+    runs-on: ${{ matrix.runner }}
+  
+    env:
+      ARTIFACT: boon-windows-${{ matrix.arch }}
+      TARGET_DIR: ${{ github.workspace }}/vendor/boon-target
+  
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+  
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+  
+      - name: Build boon
+        working-directory: vendor/boon/cli
+        run: |
+          cargo build \
+            --release \
+            --target "${{ matrix.target }}" \
+            --target-dir "${{ env.TARGET_DIR }}"
+  
+      - name: Archive
+        shell: bash
+        run: |
+          mkdir -p staging
+  
+          cp \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon.exe" \
+            staging/boon.exe
+  
+          tar \
+            -cJf "${{ env.ARTIFACT }}.tar.xz" \
+            -C staging \
+            boon.exe
+  
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+                  
+  # ---------------------------------------------------------------------------
+  # Create GitHub Release
+  # ---------------------------------------------------------------------------
+  release:
+    needs: [jq-linux, jq-macos, jq-windows, xml-linux, xml-macos, xml-windows, boon-linux, boon-macos, boon-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List assets
+        run: |
+          ls -lh artifacts/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          name: ${{ inputs.tag }}
+          generate_release_notes: true
+          files: artifacts/*.tar.xz
