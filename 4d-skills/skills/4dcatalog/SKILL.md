@@ -113,37 +113,23 @@ The catalog XML must follow this order within `<base>`:
 
 ## UUIDs
 
-All structural elements (tables, fields, indexes, relations) require a
-`uuid` attribute -- a 32-character hex string (only digits 0-9 and letters
-A-F; case-insensitive; stored as 128-bit integer).
+32-character hex string (0-9, A-F), unique within the catalog.
 
-**Rules:**
-- UUIDs must be **unique within the catalog** and **referentially
-  consistent** (e.g., `<primary_key field_uuid="X">` must match the
-  field's `uuid="X"`)
-- UUIDs can be **deterministic** -- no need for true random UUIDs
-- Recommended scheme for agents -- encode resource type and IDs (use only
-  hex digits 0-9, A-F):
-  - Base: `B000...`
-  - Tables: `A{table_id padded}...` (32 chars total, zero-padded)
-  - Fields: `F{table_id}{field_id}...`
-  - Indexes: `C{table_id}{field_id}...`
-  - Relations: `D{relation_number}...`
+UUIDs must be **referentially consistent**: when a field has `uuid="X"`,
+every `field_uuid="X"` and `<field_ref uuid="X">` in primary keys,
+indexes, and relations must use the same value. Never change an existing
+UUID.
 
-Example scheme (zero-padded to 32 hex chars, using only hex digits 0-9 A-F):
+**Deterministic scheme** (recommended -- avoids tracking state):
+
 ```
-Base:       B0000000000000000000000000000000
-Table 1:    A0010000000000000000000000000000
-Table 2:    A0020000000000000000000000000000
-Field 1.1:  F0010001000000000000000000000000
-Field 1.2:  F0010002000000000000000000000000
-Field 2.1:  F0020001000000000000000000000000
-Index 1.1:  C0010001000000000000000000000000
-Relation 1: D0010000000000000000000000000000
+{prefix}{table_id 3 digits}{field_id 4 digits}{zero-padded to 32 chars}
 ```
 
-Prefix legend (all valid hex): `A` = table, `B` = base, `C` = index,
-`D` = relation, `E` = reserved, `F` = field.
+Prefixes: `A` table, `B` base, `C` index, `D` relation, `F` field.
+
+Example: table 1 field 2 = `F0010002000000000000000000000000`,
+its index = `C0010002000000000000000000000000`.
 
 ## Naming Rules for Tables and Fields
 
