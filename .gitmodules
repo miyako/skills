@@ -13,3 +13,4 @@
 [submodule "vendor/language-4dm-nova"]
 	path = vendor/language-4dm-nova
 	url = https://github.com/miyako/language-4dm-nova.git
+	ignore = dirty
