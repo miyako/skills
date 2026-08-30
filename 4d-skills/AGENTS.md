@@ -1,0 +1,193 @@
+# 4D Development Agent Instructions
+
+## Purpose
+
+This repository provides a collection of Agent Skills for 4D development.
+
+The skills provide 4D-specific knowledge, validation rules, schemas, and
+workflows for working with 4D source projects and their associated files.
+
+When working on a 4D project, prefer the most specific 4D skill available
+rather than treating a 4D artifact as a generic JSON or XML document.
+
+## 4D Source Artifacts
+
+Recognize the following 4D-specific artifacts:
+
+* `.4DProject` — 4D project definition
+* `.4DForm` — 4D form definition
+* `.4DCatalog` — 4D catalog
+* `.4DSettings` — 4D settings
+
+Other `.json` and `.xml` files may also occur in a 4D project.
+
+Do not assume that a JSON or XML file is a generic document merely because
+of its file extension. Determine whether it is a known 4D artifact before
+applying generic processing.
+
+## 4D Tooling
+
+This skillset provides the `4dtools` skill for provisioning platform-specific
+command-line tools used by the other 4D skills.
+
+Use `4dtools` when a required tool is not available on the host.
+
+Tools provisioned by `4dtools` are installed under:
+
+	tools/
+
+Do not install these tools globally or modify the user's PATH.
+
+Prefer an existing compatible system installation of a tool when the
+applicable skill permits it. Otherwise use `4dtools` to provision the
+required tool.
+
+Do not duplicate tool-download or installation logic in individual 4D
+skills.
+
+The `4dtools` skill currently provisions tools such as:
+
+- `xmllint`
+- `xsltproc`
+
+Individual skills specify which tools they require.
+
+## Skill Selection
+
+Use the most specific applicable skill.
+
+For example:
+
+* `.4DForm` → `4dform`
+* `.4DProject` → `4dproject`
+* `.4DCatalog` → `4dcatalog`
+* `.4DSettings` → `4dsettings`
+
+Consult the applicable skill before making structural changes to a
+proprietary 4D artifact.
+
+Do not duplicate detailed artifact-specific instructions here. Those belong
+in the corresponding `SKILL.md` and its referenced documentation.
+
+## Validation
+
+4D-specific validation takes precedence over generic file-format validation.
+
+For example:
+
+* Valid JSON does not necessarily mean a `.4DProject` or `.4DForm` is valid.
+* Well-formed XML does not necessarily mean a `.4DCatalog` or `.4DSettings`
+  file is valid.
+
+When a 4D schema or validator is available, use it.
+
+Validation should normally include:
+
+1. File-format syntax validation
+2. Applicable 4D schema validation
+3. Additional 4D-specific validation where available
+
+After modifying a 4D artifact, validate it before considering the change
+complete.
+
+## Tool Usage
+
+Prefer mature, established command-line tools for generic processing.
+
+Examples include:
+
+* `jq` for JSON processing
+* `xmllint` for XML validation and XPath
+* `xsltproc` for XSLT processing
+* other established tools where appropriate
+
+Do not create a new abstraction over an existing mature CLI unless there is
+a concrete requirement for one.
+
+Use small shell scripts when they provide useful routing, portability,
+environment detection, or consistent invocation.
+
+Do not compile or install third-party tools automatically unless the
+applicable skill explicitly requires it.
+
+When a tool may not be available on the host, follow the fallback mechanism
+defined by the applicable skill.
+
+## Schemas
+
+Schemas in this repository are used to validate 4D-specific file formats.
+
+Do not modify a schema merely to make an invalid source file pass validation.
+
+If a file fails validation, first determine whether:
+
+* the source file is invalid;
+* the wrong schema or 4D version is being used;
+* the schema does not cover the artifact correctly; or
+* the validator invocation is incorrect.
+
+Where 4D versions have different schemas or rules, use the schema applicable
+to the artifact's version.
+
+## Modification Discipline
+
+When modifying 4D source files:
+
+* Make the smallest necessary change.
+* Preserve existing structure and conventions.
+* Preserve unknown properties or elements unless there is a clear reason
+  to remove them.
+* Avoid unrelated formatting or normalization.
+* Do not rewrite generated metadata without understanding its purpose.
+* Review the resulting diff.
+* Validate the modified artifact.
+
+Do not rely solely on a generic JSON/XML parser to determine whether a
+modified 4D artifact is safe.
+
+## Error Reporting
+
+When reporting validation failures, provide:
+
+* the artifact type;
+* the file;
+* the validation stage;
+* the location of the problem when available;
+* the relevant error;
+* a concise explanation of the likely cause.
+
+Do not conceal a 4D validation failure behind a generic parser error.
+
+## Repository Organization
+
+Keep artifact-specific knowledge in the corresponding skill.
+
+Keep machine-readable schemas in `schemas/`.
+
+Keep reusable tooling or environment-specific wrappers in `tools/`.
+
+Avoid duplicating the same 4D rules across multiple skills.
+
+## General Principle
+
+Treat this repository as a 4D development knowledge and tooling layer.
+
+Prefer:
+
+```
+4D artifact
+	↓
+specific 4D skill
+	↓
+established validator/tool
+	↓
+4D-specific validation
+```
+
+over:
+
+```
+4D artifact
+	↓
+generic JSON/XML processing
+```
