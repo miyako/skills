@@ -165,32 +165,42 @@ jobs:
           CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          CERT_FILE=$(mktemp /tmp/cert.XXXXXX.p12)
-          KEYCHAIN_FILE=$(mktemp /tmp/keychain.XXXXXX.keychain-db)
-
+          TMP_DIR=$(mktemp -d)
+          CERT_FILE="$TMP_DIR/cert.p12"
+          KEYCHAIN_FILE="$TMP_DIR/build.keychain-db"
+          
           echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_FILE"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_FILE"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_FILE"
-
+          
+          security create-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+          
+          security set-keychain-settings \
+            -lut 21600 \
+            "$KEYCHAIN_FILE"
+          
+          security unlock-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+          
           security import "$CERT_FILE" \
             -P "$CERTIFICATE_PASSWORD" \
             -A \
             -t cert \
             -f pkcs12 \
             -k "$KEYCHAIN_FILE"
-
+          
           security set-key-partition-list \
             -S apple-tool:,apple: \
             -k "$KEYCHAIN_PASSWORD" \
             "$KEYCHAIN_FILE"
-
+          
           security list-keychains \
             -d user \
             -s "$KEYCHAIN_FILE" login.keychain-db
-
+          
           echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
+          echo "TMP_DIR=$TMP_DIR" >> "$GITHUB_ENV"
 
       - name: Sign binary
         run: |
@@ -237,6 +247,10 @@ jobs:
         run: |
           if [ -n "${KEYCHAIN_FILE:-}" ]; then
             security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+          fi
+          
+          if [ -n "${TMP_DIR:-}" ]; then
+            rm -rf "$TMP_DIR"
           fi
 
       - name: Upload artifact
