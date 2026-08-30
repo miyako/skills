@@ -19,6 +19,17 @@ schema: tables, fields, primary keys, indexes, and relations.
 Do not treat a `.4DCatalog` as generic XML. XML well-formedness is necessary
 but is not sufficient to establish that the artifact is a valid 4D Catalog.
 
+## Creating a new catalog
+
+When instructed to create a new database schema:
+
+- The file name must be `catalog.4DCatalog`.
+- The file path must be `Project/Sources/catalog.4DCatalog`.
+- Create `catalog.4DCatalog` only if it does not already exist.
+- Create `catalog_editor.json` only if it does not already exist.
+- If `Project/Sources/catalog.4DCatalog` already exists, ask the user for
+  confirmation before replacing it.
+
 ## Validation (read this first)
 
 **Always** validate with this exact command:
@@ -67,7 +78,7 @@ Do not modify the DTD to make an invalid Catalog pass validation.
 
 The DOCTYPE SYSTEM identifier is a conventional 4D reference. The URL does
 not resolve over HTTP. The actual DTD is the local file
-`schemas/4dcatalog/base_core.dtd`. Always keep the DOCTYPE declaration
+`schemas/4dcatalog/base.dtd`. Always keep the DOCTYPE declaration
 exactly as shown -- do not change the SYSTEM identifier to a local path.
 Validation uses `--dtdvalid` with the local DTD and `--nonet` to suppress
 network access.
@@ -102,37 +113,23 @@ The catalog XML must follow this order within `<base>`:
 
 ## UUIDs
 
-All structural elements (tables, fields, indexes, relations) require a
-`uuid` attribute -- a 32-character hex string (only digits 0-9 and letters
-A-F; case-insensitive; stored as 128-bit integer).
+32-character hex string (0-9, A-F), unique within the catalog.
 
-**Rules:**
-- UUIDs must be **unique within the catalog** and **referentially
-  consistent** (e.g., `<primary_key field_uuid="X">` must match the
-  field's `uuid="X"`)
-- UUIDs can be **deterministic** -- no need for true random UUIDs
-- Recommended scheme for agents -- encode resource type and IDs (use only
-  hex digits 0-9, A-F):
-  - Base: `B000...`
-  - Tables: `A{table_id padded}...` (32 chars total, zero-padded)
-  - Fields: `F{table_id}{field_id}...`
-  - Indexes: `C{table_id}{field_id}...`
-  - Relations: `D{relation_number}...`
+UUIDs must be **referentially consistent**: when a field has `uuid="X"`,
+every `field_uuid="X"` and `<field_ref uuid="X">` in primary keys,
+indexes, and relations must use the same value. Never change an existing
+UUID.
 
-Example scheme (zero-padded to 32 hex chars, using only hex digits 0-9 A-F):
+**Deterministic scheme** (recommended -- avoids tracking state):
+
 ```
-Base:       B0000000000000000000000000000000
-Table 1:    A0010000000000000000000000000000
-Table 2:    A0020000000000000000000000000000
-Field 1.1:  F0010001000000000000000000000000
-Field 1.2:  F0010002000000000000000000000000
-Field 2.1:  F0020001000000000000000000000000
-Index 1.1:  C0010001000000000000000000000000
-Relation 1: D0010000000000000000000000000000
+{prefix}{table_id 3 digits}{field_id 4 digits}{zero-padded to 32 chars}
 ```
 
-Prefix legend (all valid hex): `A` = table, `B` = base, `C` = index,
-`D` = relation, `E` = reserved, `F` = field.
+Prefixes: `A` table, `B` base, `C` index, `D` relation, `F` field.
+
+Example: table 1 field 2 = `F0010002000000000000000000000000`,
+its index = `C0010002000000000000000000000000`.
 
 ## Naming Rules for Tables and Fields
 
@@ -386,46 +383,71 @@ Reference: https://developer.4d.com/docs/ORDA/dsmapping
 
 For agent-generated projects, use only `format="text"` (skip RTF).
 
-## Validation
-
-When validating a `.4DCatalog`:
-
-1. Confirm that the file is well-formed XML.
-
-2. Validate the document against:
-
-   ```
-   schemas/4dcatalog/base_core.dtd
-   ```
-
-3. Report validation errors with their location and relevant element or
-   attribute information when available.
-
-A successful XML parse alone must not be reported as successful 4D Catalog
-validation.
-
-Use the validation command from the "Validation (read this first)" section
-at the top of this file.
-
-## Modification
+## Modifying an existing catalog
 
 When modifying a `.4DCatalog`:
 
-* Preserve the existing XML structure.
-* Make the smallest necessary change.
-* Preserve elements and attributes that are not directly involved in the
-  requested change.
-* Do not remove unknown elements or attributes merely because they are not
+- Preserve the existing XML structure and element ordering.
+- Make the smallest necessary change.
+- Preserve elements and attributes not directly involved in the change.
+- Do not remove unknown elements or attributes merely because they are not
   understood.
-* Preserve the existing document encoding and XML declaration where
-  practical.
-* Avoid unrelated formatting or whitespace changes.
-* Do not introduce elements or attributes based solely on assumptions about
-  4D.
+- Preserve the existing document encoding and XML declaration.
+- Avoid unrelated formatting or whitespace changes.
 
-After modification, validate the resulting file against the 4D Catalog DTD.
+### UUIDs are immutable
 
-Review the resulting diff for unintended changes.
+Never change an existing UUID. UUIDs are stable identifiers referenced by
+the 4D runtime, data files, and other artifacts. Changing a UUID breaks
+those references silently.
+
+### Deleting a table
+
+When removing a table, also remove:
+- All `<relation>` elements where the table appears as source or
+  destination (check both `<related_field kind="source">` and
+  `<related_field kind="destination">`)
+- All `<index>` elements that reference fields in the deleted table
+- Any foreign key fields in other tables that pointed to this table
+  (or ask the user what to do with them)
+
+### Deleting a field
+
+When removing a field, also remove:
+- Any `<index>` elements that reference the field (check `<field_ref uuid>`)
+- Any `<relation>` elements where the field is the source or destination
+- The `<primary_key>` element if the field was the primary key
+- If the field was a foreign key, remove the corresponding relation
+
+### Renaming a table or field
+
+Update the `name` attribute everywhere it appears:
+- The element's own `name` attribute
+- All `<field_ref name="...">` references in indexes and relations
+- All `<table_ref name="...">` references in indexes and relations
+- The `<primary_key field_name="...">` if renaming a PK field
+
+Do NOT change the `uuid` when renaming.
+
+### Changing a field type
+
+- Fields at both ends of a relation must be the same type. If the field
+  is used in a relation, remove the relation first, change the field type,
+  then recreate the relation if both fields are now the same type.
+- Check whether the field has an index. Some index types are not compatible
+  with all field types (e.g., keyword indexes only work with Alpha, Text,
+  Picture).
+- If changing to Alpha (type 10), add `limiting_length`.
+- If changing from Alpha (type 10), remove `limiting_length`.
+
+### Adding a field to an existing table
+
+- Assign the next sequential `id` value (one higher than the current max
+  field id in that table).
+- Generate a new UUID following the scheme in the UUIDs section.
+- Do not reuse the id or UUID of a previously deleted field.
+
+After any modification, validate the resulting file against the DTD.
 
 ## DTD Errors
 
@@ -439,25 +461,6 @@ If a Catalog fails DTD validation, determine whether:
 * the supplied DTD does not completely describe the artifact.
 
 Do not "fix" validation failures by weakening or modifying the DTD.
-
-## Tool Dependencies
-
-This skill requires `xmllint` for DTD validation.
-
-Prefer `tools/xmllint` over the system `xmllint`. Before validating,
-check whether it has been provisioned:
-
-```sh
-test -x tools/xmllint
-```
-
-If `tools/xmllint` does not exist, follow the download procedure in
-`skills/4dtools/SKILL.md` to provision it.
-
-Use `tools/xmllint` (or `tools\xmllint.exe` on Windows) in all
-validation commands -- do not use a bare `xmllint`.
-
-Do not duplicate tool installation logic in this skill.
 
 ## Complete Example
 

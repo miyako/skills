@@ -74,7 +74,7 @@ proprietary 4D artifact.
 Schemas referenced by skills are in the `schemas/` directory relative to
 this file:
 
-- `schemas/4dcatalog/base_core.dtd` -- 4D Catalog DTD
+- `schemas/4dcatalog/base.dtd` -- 4D Catalog DTD
 - `schemas/4dform/formsSchema.json` -- 4D Form JSON Schema
 
 Do not duplicate detailed artifact-specific instructions here. Those belong
