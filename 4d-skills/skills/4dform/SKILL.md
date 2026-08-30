@@ -48,8 +48,13 @@ When validating a `.4DForm`:
 A successful JSON parse alone must not be reported as successful 4D Form
 validation.
 
-Use an appropriate JSON Schema validator. Do not assume that `jq` alone
-performs JSON Schema validation.
+Use `boon` for JSON Schema validation. For example:
+
+```
+boon schemas/4dform/formsSchema.json <file>
+```
+
+Do not assume that `jq` alone performs JSON Schema validation.
 
 ## Modification
 

@@ -7,3 +7,6 @@
 [submodule "vendor/jq"]
 	path = vendor/jq
 	url = https://github.com/jqlang/jq.git
+[submodule "vendor/boon"]
+	path = vendor/boon
+	url = https://github.com/santhosh-tekuri/boon.git
