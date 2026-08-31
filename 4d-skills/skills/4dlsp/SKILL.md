@@ -199,6 +199,30 @@ below. Add `--json` for structured output. These accept the same
 `hover` on any command you're not fully certain is current -- `validate`
 alone can miss obsolete/renamed commands (see Important notes above).
 
+#### Locating a character position
+
+`--line`/`--character` must point at the exact token you want to check.
+**Do not find this by trial and error** (e.g. calling `hover` repeatedly
+across a range of `--character` values until one returns real info) --
+each call is a full request and, in standalone mode, an ~8-second tool4d
+startup; scanning a dozen columns one call at a time multiplies both the
+call count and the wall-clock time for no reason. Compute the offset
+once from the file text instead, then call `hover` exactly once:
+
+```sh
+# 0-based line number of the line containing the token (grep -n is 1-based, subtract 1):
+grep -n "Count tables" Sources/Methods/myMethod.4dm
+# 0-based character offset of the token's first character on that line:
+python3 -c "print(open('Sources/Methods/myMethod.4dm').readlines()[LINE].index('Count tables'))"
+```
+
+Then call `hover`/`completion`/`goto-definition` once with the resulting
+`--line`/`--character`. If you're unsure of the exact spelling of a
+command (e.g. it might be a substring of a longer identifier), narrow
+with `grep -bo` on that one line, or use `document-symbols` first to see
+what tokens 4D itself recognizes on the line, rather than sweeping
+character positions with `hover`.
+
 ### Reusing a running server (faster repeated calls)
 
 Omit **both** `--project` and `--workspace` on any one-shot subcommand
@@ -248,6 +272,17 @@ tools/tool4d-lsp-stdio mcp --stop --project Project/MyApp.4DProject
 
 A daemonized server also self-terminates after an idle timeout as a
 safety net if you forget to stop it.
+
+**Start it once per task, and pick one flag consistently.** Use either
+`--project` or `--workspace` to start it (whichever you prefer), but do
+not call `mcp` again mid-task to "restart" or switch flags -- if a
+server is already running for this project, starting another is
+redundant (and any in-flight attached calls may momentarily target the
+wrong instance). If you're unsure whether one is already running,
+either just try an attached one-shot call first (it fails clearly if
+none exists, see above) or call `mcp --stop` before starting a fresh
+one -- don't leave multiple starts/stops interleaved with your actual
+work.
 
 **For hosts with a native MCP client** that want to attach to this
 server's stdio directly (JSON-RPC over stdin/stdout) instead of a
