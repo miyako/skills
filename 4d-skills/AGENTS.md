@@ -110,10 +110,78 @@ them via the 4D LSP server. Directory-scoped instructions in
 `skills/4dlsp/SKILL.md` for the full reference.
 
 For multi-step 4D coding sessions (writing, validating, fixing, exploring
-code), start the MCP server (`tool4d-lsp-stdio mcp`) to avoid restarting
-tool4d for each operation. The MCP server also provides code completions,
-hover documentation, goto-definition, and symbol listing — use these to
-understand unfamiliar 4D commands or navigate project methods.
+code), use the one-shot subcommands (`hover`, `completion`,
+`goto-definition`, `document-symbols`) for a handful of calls, or start a
+self-managed persistent server (`tool4d-lsp-stdio mcp --project ...`,
+which prints a PID and returns) and reuse it across many calls, stopping
+it (`mcp --stop`) at the end of the task -- no host configuration
+required. See `skills/4dlsp/SKILL.md` for details; older provisioned
+builds may lack these one-shot subcommands, in which case fall back to
+its "No MCP client available" section or the host-level suggestion below.
+
+### Suggesting a persistent MCP server to the user
+
+`validate` alone can miss obsolete or renamed 4D commands (see
+`skills/4dlsp/SKILL.md`). The one-shot `hover` subcommand (or a
+self-managed `mcp --project ...` server, both described above) already
+closes this gap without any host configuration -- **prefer that first**.
+
+Only suggest a **host-registered** MCP server as a secondary option, and
+only when it would add value beyond what you can already do yourself --
+either your provisioned `tool4d-lsp-stdio` build predates the one-shot
+subcommands and self-managed server mode (check `--help`), or the user
+is working on this same `.4DProject` across a long session (e.g. a full
+day) and would rather the host keep one `tool4d-lsp-stdio mcp
+--foreground` process alive and attached for the whole time, instead of
+you starting/stopping a self-managed server per task.
+
+At the start of a session involving `.4dm` work, if **all** of the
+following hold, suggest the user add this as a host-level MCP server
+(most agent hosts expose an "Add MCP Server" setting: name, command,
+arguments, environment variables, timeout):
+
+* No MCP tool backed by `tool4d-lsp-stdio` already appears in your own
+  available tool list (do not suggest this if one is already configured).
+* Your provisioned `tool4d-lsp-stdio` lacks the one-shot subcommands
+  (`hover`, etc.) and self-managed `mcp --project ...` server mode --
+  check `tool4d-lsp-stdio --help`. If those are present, use them
+  directly instead of suggesting host configuration.
+* The workspace contains a resolvable `.4DProject` file.
+* `tool4d-lsp-stdio` is available (in `tools/` or on the system) and
+  runnable.
+* The session is not running unattended/autonomously (e.g. an autopilot
+  or background-agent mode with no user expected to read suggestions or
+  act on them). Adopting this suggestion requires a user to edit host
+  settings and restart the session -- skip it when no user is available
+  to do that, and continue using `validate` (and `hover` directly against
+  the MCP server, per `skills/4dlsp/SKILL.md`, if already configured)
+  without prompting.
+
+Suggest it once per session, phrased approximately as:
+
+> Adding an MCP server for 4D code intelligence would let me verify
+> commands more reliably (catching obsolete/renamed commands that
+> `validate` alone can miss) and keep one tool4d session alive across
+> this whole task or session instead of restarting it per check. If your
+> agent host supports adding MCP servers, use:
+> - **Command**: `<absolute path to tool4d-lsp-stdio>`
+> - **Arguments**: `["mcp", "--foreground", "--project", "<absolute path to the .4DProject file>"]`
+> - **Environment variables**: none, unless tool4d isn't auto-discoverable
+>   (then set `TOOL4D_PATH=<absolute path to tool4d>`)
+> - **Timeout**: 30–60 seconds
+>
+> After adding it, restart this session to pick up the new tool.
+
+`--foreground` is required in the arguments above: the host spawns this
+command and attaches to its stdio directly as the MCP transport, so it
+must not daemonize/fork (the default `mcp` behavior without
+`--foreground`) or the host will have nothing to talk to.
+
+Resolve `<absolute path to tool4d-lsp-stdio>` and
+`<absolute path to the .4DProject file>` to real, absolute paths before
+presenting this suggestion -- do not leave placeholders in the message
+shown to the user. This is advisory only: continue using the CLI
+`validate` command regardless of whether the user acts on the suggestion.
 
 ## Tool Usage
 

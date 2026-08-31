@@ -148,29 +148,140 @@ tools/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMethod.4d
 - tool4d may take a few seconds to start (it loads the project). The default
   startup timeout is 30 seconds.
 - Validate only the files you created or modified, not the entire project.
+- **`validate` reporting 0 errors does not guarantee every command is
+  current.** Some obsolete/renamed commands (e.g. old commands replaced by
+  a newer equivalent) may not surface as a compile error. If you are
+  unsure whether a specific command is real or current -- especially one
+  from training data, an older 4D version, or unfamiliar code -- confirm
+  it with the MCP `hover` tool (see below) rather than relying on
+  `validate` alone. `hover` returning "No hover information available"
+  for a command-shaped token is a strong signal it is not recognized.
 
 ## MCP server
 
-The `mcp` subcommand starts a persistent MCP server on stdio. It keeps a
-tool4d LSP session alive so agents can make repeated calls without the
-~8-second startup cost each time.
+The `mcp` subcommand starts a persistent server that keeps a tool4d LSP
+session alive so agents can make repeated calls without the ~8-second
+startup cost each time. It also exposes the LSP capabilities directly as
+one-shot CLI subcommands (see "One-shot commands" below) -- most agent
+tasks should prefer those over talking MCP/JSON-RPC directly.
 
-### When to use MCP vs validate
+> **Note:** this section describes the design agreed in
+> https://github.com/miyako/skills/issues/27 -- check
+> `tools/tool4d-lsp-stdio --version` and `--help` to confirm which of
+> these subcommands/flags are present in your provisioned build before
+> relying on them. Older builds only have `mcp` (stdio, foreground) and
+> `validate`; fall back to "No MCP client available" below if `hover`
+> etc. are not recognized subcommands.
 
-- **`validate`** — one-shot CLI. Best for CI, quick checks after editing
-  a few files, or when you don't need completions/hover.
-- **`mcp`** — persistent server. Best when you need multiple interactions:
-  validate, then fix, then re-validate, or when you need completions,
-  hover info, or goto-definition.
+### One-shot commands
 
-### Starting the MCP server
+`hover`, `completion`, `goto-definition`, and `document-symbols` work
+exactly like `validate` -- no persistent process, no MCP/JSON-RPC
+knowledge required:
 
 ```sh
-tools/tool4d-lsp-stdio mcp --workspace Project/
+tools/tool4d-lsp-stdio hover --project Project/MyApp.4DProject \
+  Sources/Methods/myMethod.4dm --line 6 --character 21
+tools/tool4d-lsp-stdio completion --workspace Project/ \
+  Sources/Methods/myMethod.4dm --line 5 --character 10
+tools/tool4d-lsp-stdio goto-definition --workspace Project/ \
+  Sources/Methods/myMethod.4dm --line 5 --character 10
+tools/tool4d-lsp-stdio document-symbols --workspace Project/ \
+  Sources/Methods/myMethod.4dm
 ```
 
-The server runs on stdio using the MCP protocol (JSON-RPC 2.0). It
-exposes these tools:
+`--line`/`--character` are zero-based, same as the MCP tool parameters
+below. Add `--json` for structured output. These accept the same
+`--tool`/`--project`/`--workspace`/`--startup-timeout`/etc. flags as
+`validate`.
+
+**Prefer these one-shot commands over hand-rolling MCP/JSON-RPC.** Use
+`hover` on any command you're not fully certain is current -- `validate`
+alone can miss obsolete/renamed commands (see Important notes above).
+
+### Reusing a running server (faster repeated calls)
+
+Omit **both** `--project` and `--workspace` on any one-shot subcommand
+(including `validate`) to attach to an already-running persistent server
+for the current project instead of starting a new tool4d process:
+
+```sh
+tools/tool4d-lsp-stdio hover Sources/Methods/myMethod.4dm --line 6 --character 21
+```
+
+If no server is running, this fails with a clear error telling you to
+start one with `mcp` or pass `--project`/`--workspace` to run standalone.
+Use this pattern in a multi-step task (many hover/completion calls across
+one session) to pay the tool4d startup cost once instead of per call.
+
+### Starting a persistent server for a task
+
+Running `mcp --project ...` (or `--workspace ...`) directly daemonizes:
+it forks into the background, binds the discoverable socket used by (2),
+and prints the PID (and socket path) to stdout, then returns control.
+
+```sh
+tools/tool4d-lsp-stdio mcp --project Project/MyApp.4DProject
+# -> pid=12345 socket=/tmp/tool4d-lsp-<hash>.sock
+```
+
+> **Note on `tool4d-lsp-stdio` 0.3.0:** the originally-shipped 0.3.0
+> build of this daemonize/attach workflow was broken (tracked in
+> https://github.com/miyako/language-4dm-nova/issues/42 -- daemonize
+> always failed to start, and attached one-shot calls returned no
+> hover/completion/etc info even for valid commands). A fix has been
+> merged upstream (PR #43) and `tools/tool4d-lsp-stdio` in this
+> workspace has been rebuilt from that fix, so the daemonize/attach
+> pattern below now works reliably here. If you're working from a
+> `tool4d-lsp-stdio` build that predates that fix, fall back to running
+> one-shot subcommands directly with `--project`/`--workspace` on every
+> call, or `mcp --foreground`.
+
+Use this at the start of a multi-step `.4dm` task, then call one-shot
+subcommands without `--project`/`--workspace` for the rest of the task.
+Stop it when done:
+
+```sh
+tools/tool4d-lsp-stdio mcp --stop --project Project/MyApp.4DProject
+# or: kill <pid>
+```
+
+A daemonized server also self-terminates after an idle timeout as a
+safety net if you forget to stop it.
+
+**For hosts with a native MCP client** that want to attach to this
+server's stdio directly (JSON-RPC over stdin/stdout) instead of a
+detached background process, pass `--foreground` to keep the original
+(pre-daemonizing) behavior:
+
+```sh
+tools/tool4d-lsp-stdio mcp --foreground --workspace Project/
+```
+
+### When to use one-shot vs a persistent server vs validate
+
+- **No `.4dm` command verification needed** -- use `validate` alone.
+- **A few `hover`/`completion`/`goto-definition` checks in one task** --
+  use the one-shot subcommands directly with `--project`/`--workspace`;
+  the per-call startup cost is fine for a handful of calls.
+- **Many LSP checks across one task** (e.g. reviewing every command in a
+  file) -- use the one-shot subcommands directly with
+  `--project`/`--workspace` for now (see known issue above); once fixed,
+  start a persistent server once (`mcp --project ...`), then call
+  one-shot subcommands without `--project`/`--workspace` for the rest of
+  the task, and stop the server (`mcp --stop`) when done.
+- **Host has a native MCP client already configured** for this server --
+  use its MCP tools directly instead of shelling out to any of the
+  above; do not spawn a duplicate `tools/tool4d-lsp-stdio mcp` process
+  yourself in that case.
+
+### MCP protocol details (for `--foreground` / native MCP clients only)
+
+The server runs on stdio using the MCP protocol (JSON-RPC 2.0), framed as
+**newline-delimited JSON** (one JSON object per line) -- not the
+`Content-Length:` header framing used by the LSP protocol itself.
+
+It exposes these tools:
 
 | Tool | Description |
 |------|-------------|
@@ -200,17 +311,32 @@ Line and character are zero-based.
 { "file": "Sources/Methods/myMethod.4dm" }
 ```
 
-### MCP workflow
+### No MCP client available (older builds only)
 
-1. Start the MCP server (agent configures it as an MCP tool provider)
-2. Call `validate` with modified files
-3. If errors, fix code, call `validate` again
-4. Use `open_file` → `completion` / `hover` / `goto_definition` as needed
-5. Call `close_file` when done with a file
+If your provisioned build doesn't have the one-shot subcommands above
+(`hover`, `completion`, etc. as top-level subcommands) and your host has
+no native MCP client either, drive the newline-delimited JSON-RPC
+protocol directly over the `mcp --foreground` subprocess's stdin/stdout
+(write one JSON object per line, read one JSON object per line back).
+Any language works; example in Python:
+
+```python
+proc.stdin.write(json.dumps(request) + "\n"); proc.stdin.flush()
+response = json.loads(proc.stdout.readline())
+```
+
+Handshake before any tool call: send `initialize` (id +
+`protocolVersion`, `capabilities`, `clientInfo`) → read the response →
+send `notifications/initialized` (no id) → send `tools/call` requests
+(e.g. `{"name":"hover","arguments":{...}}`).
+
+Prefer provisioning a newer `tool4d-lsp-stdio` build with the one-shot
+subcommands over this fallback -- see `skills/4dtools/SKILL.md`.
 
 ### Notes
 
 - Files must be opened (`open_file` or `validate`) before `completion`,
-  `hover`, or `goto_definition` will return results.
-- `validate` automatically opens and closes files.
-- All file paths are relative to the workspace (the `Project/` directory).
+  `hover`, or `goto_definition` will return results, when using the MCP
+  tools directly. The one-shot CLI subcommands handle this automatically.
+- All file paths are relative to the workspace (the `Project/` directory)
+  unless an absolute path is given.
