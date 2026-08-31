@@ -48,8 +48,11 @@ searches for tool4d automatically in this order:
 3. VS Code 4D Analyzer extension storage
    - macOS: `~/Library/Application Support/Code/User/globalStorage/4d.4d-analyzer/tool4d/`
    - Windows: `%APPDATA%/Code/User/globalStorage/4d.4d-analyzer/tool4d/`
+   - Linux: `~/.config/Code/User/globalStorage/4d.4d-analyzer/tool4d/`
 4. Conventional application locations
    - macOS: `/Applications/4D*.app` and `~/Applications/4D*.app`
+   - Windows: `%ProgramFiles%\4D\<version>\tool4d\`
+   - Linux: `/opt/4d/`, `/opt/4D*/`, `/usr/local/bin/`
 
 If tool4d is installed via the 4D Analyzer VS Code extension, no
 configuration is needed. Otherwise set `TOOL4D_PATH` explicitly.
@@ -126,6 +129,15 @@ On Windows, use `tools\tool4d-lsp-stdio.exe`:
 
 ```powershell
 tools\tool4d-lsp-stdio.exe validate --workspace Project\ Sources\Methods\myMethod.4dm
+```
+
+## Linux
+
+On Linux, tool4d is available for CI and GitHub Codespaces. Use the same
+syntax as macOS:
+
+```sh
+tools/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMethod.4dm
 ```
 
 ## Important notes
