@@ -195,6 +195,18 @@ below. Add `--json` for structured output. These accept the same
 `--tool`/`--project`/`--workspace`/`--startup-timeout`/etc. flags as
 `validate`.
 
+**File path resolution differs by mode.** With `--project`/`--workspace`
+given explicitly (standalone mode), the file argument resolves the same
+way as `validate`'s file list -- relative to the workspace/repo root.
+Once you attach to a running server by omitting both flags (see below),
+the file argument instead resolves relative to **your current working
+directory**, since there is no workspace context on that call. A
+relative path that doesn't match your cwd fails fast (in well under a
+second) with a generic read/parse error that looks like "file not
+found" rather than "wrong path base" -- if an attached call fails
+quickly and confusingly, pass an **absolute** file path instead of
+debugging the relative one.
+
 **Prefer these one-shot commands over hand-rolling MCP/JSON-RPC.** Use
 `hover` on any command you're not fully certain is current -- `validate`
 alone can miss obsolete/renamed commands (see Important notes above).
@@ -272,6 +284,14 @@ tools/tool4d-lsp-stdio mcp --stop --project Project/MyApp.4DProject
 
 A daemonized server also self-terminates after an idle timeout as a
 safety net if you forget to stop it.
+
+**`mcp --stop` returns before shutdown is guaranteed complete.** The
+worker and its tool4d child process may still be alive for a few
+seconds after `--stop` prints its confirmation -- shutdown happens
+asynchronously. If you need to verify no leftover process remains
+(e.g. before starting a fresh server, or at the end of a task), poll
+`ps` a couple of times with a short delay rather than checking
+immediately once and concluding cleanup failed.
 
 **Start it once per task, and pick one flag consistently.** Use either
 `--project` or `--workspace` to start it (whichever you prefer), but do
