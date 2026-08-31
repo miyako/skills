@@ -1,8 +1,9 @@
 ---
 name: 4dlsp
 description: >
-  Validate 4D source code (.4dm files) using tool4d-lsp-stdio. Run a single
-  command to get compiler-grade diagnostics from the real 4D engine.
+  Validate and explore 4D source code (.4dm files) using tool4d-lsp-stdio.
+  One-shot validation via CLI, or persistent MCP server for completions,
+  hover, goto-definition, and more.
 ---
 
 # 4D LSP
@@ -147,4 +148,69 @@ tools/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMethod.4d
 - tool4d may take a few seconds to start (it loads the project). The default
   startup timeout is 30 seconds.
 - Validate only the files you created or modified, not the entire project.
-- `tool4d-lsp-stdio` is available on macOS and Windows only (no Linux).
+
+## MCP server
+
+The `mcp` subcommand starts a persistent MCP server on stdio. It keeps a
+tool4d LSP session alive so agents can make repeated calls without the
+~8-second startup cost each time.
+
+### When to use MCP vs validate
+
+- **`validate`** — one-shot CLI. Best for CI, quick checks after editing
+  a few files, or when you don't need completions/hover.
+- **`mcp`** — persistent server. Best when you need multiple interactions:
+  validate, then fix, then re-validate, or when you need completions,
+  hover info, or goto-definition.
+
+### Starting the MCP server
+
+```sh
+tools/tool4d-lsp-stdio mcp --workspace Project/
+```
+
+The server runs on stdio using the MCP protocol (JSON-RPC 2.0). It
+exposes these tools:
+
+| Tool | Description |
+|------|-------------|
+| `validate` | Check `.4dm` files for syntax errors |
+| `completion` | Code completion at a position |
+| `hover` | Documentation / type signature at a position |
+| `goto_definition` | Find where a symbol is defined |
+| `document_symbols` | List all symbols in a file |
+| `open_file` | Open a file in the LSP session |
+| `close_file` | Close a file from the LSP session |
+
+### Tool parameters
+
+**validate**
+```json
+{ "files": ["Sources/Methods/myMethod.4dm"] }
+```
+
+**completion / hover / goto_definition**
+```json
+{ "file": "Sources/Methods/myMethod.4dm", "line": 5, "character": 10 }
+```
+Line and character are zero-based.
+
+**document_symbols / open_file / close_file**
+```json
+{ "file": "Sources/Methods/myMethod.4dm" }
+```
+
+### MCP workflow
+
+1. Start the MCP server (agent configures it as an MCP tool provider)
+2. Call `validate` with modified files
+3. If errors, fix code, call `validate` again
+4. Use `open_file` → `completion` / `hover` / `goto_definition` as needed
+5. Call `close_file` when done with a file
+
+### Notes
+
+- Files must be opened (`open_file` or `validate`) before `completion`,
+  `hover`, or `goto_definition` will return results.
+- `validate` automatically opens and closes files.
+- All file paths are relative to the workspace (the `Project/` directory).
