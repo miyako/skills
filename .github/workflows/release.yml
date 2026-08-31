@@ -1274,6 +1274,85 @@ jobs:
           retention-days: 5
 
   # ---------------------------------------------------------------------------
+  # tool4d-lsp-stdio (4D LSP bridge) - Linux
+  # ---------------------------------------------------------------------------
+  tool4d-lsp-stdio-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-unknown-linux-gnu
+            runner: ubuntu-22.04
+          - arch: arm64
+            target: aarch64-unknown-linux-gnu
+            runner: ubuntu-22.04
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      ARTIFACT: tool4d-lsp-stdio-linux-${{ matrix.arch }}
+      TARGET_DIR: ${{ github.workspace }}/vendor/tool4d-lsp-stdio-target
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install cross-compilation tools
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build tool4d-lsp-stdio
+        working-directory: vendor/language-4dm-nova/tool4d-lsp-stdio
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: ${{ matrix.arch == 'arm64' && 'aarch64-linux-gnu-gcc' || '' }}
+        run: |
+          cargo build \
+            --release \
+            --target "${{ matrix.target }}" \
+            --target-dir "${{ env.TARGET_DIR }}"
+
+          strip \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio" \
+            || aarch64-linux-gnu-strip \
+              "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio" \
+            || true
+
+          file \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio"
+
+      - name: Archive
+        run: |
+          mkdir -p staging
+
+          cp \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio" \
+            staging/tool4d-lsp-stdio
+
+          tar \
+            -cJf "${{ env.ARTIFACT }}.tar.xz" \
+            -C staging \
+            tool4d-lsp-stdio
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
   # Create GitHub Release
   # ---------------------------------------------------------------------------
   release:
@@ -1289,6 +1368,7 @@ jobs:
       - boon-windows
       - tool4d-lsp-stdio-macos
       - tool4d-lsp-stdio-windows
+      - tool4d-lsp-stdio-linux
 
     runs-on: ubuntu-latest
 
