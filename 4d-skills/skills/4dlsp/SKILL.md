@@ -3,7 +3,8 @@ name: 4dlsp
 description: >
   Validate and explore 4D source code (.4dm files) using tool4d-lsp-stdio.
   One-shot validation via CLI, or persistent MCP server for completions,
-  hover, goto-definition, and more.
+  hover, goto-definition, and more. Also look up correct 4D command
+  syntax and examples via 4d-language-classic before writing code.
 ---
 
 # 4D LSP
@@ -19,6 +20,8 @@ pattern matching or guesswork to verify 4D code.
 
 ## When to use
 
+- Before writing an unfamiliar 4D command, to look up its correct syntax
+  and a compiler-verified example (see "Command lookup" below)
 - After generating a new `.4dm` method or class
 - After modifying existing `.4dm` code
 
@@ -57,6 +60,36 @@ searches for tool4d automatically in this order:
 
 If tool4d is installed via the 4D Analyzer VS Code extension, no
 configuration is needed. Otherwise set `TOOL4D_PATH` explicitly.
+
+## Command lookup (before writing code)
+
+Before writing or fixing a call to an unfamiliar 4D command, look it up
+with `tools/4d-language-classic` instead of guessing at its syntax from
+training data. It is a deterministic, offline reference over a
+compiler-verified 4D command IR: given a natural-language query (e.g.
+*"how do I read a json file"* or *"open a file dialog"*), it returns the
+matched command(s)' real overload signatures (param names/types/
+optionality/discriminator rules) and a real, `tool4d`-verified example
+call. If `tools/4d-language-classic` does not exist, provision it first by
+reading `skills/4dtools/SKILL.md`.
+
+```sh
+tools/4d-language-classic query "how do I parse json" --limit 3 --json
+```
+
+- Default output is human-readable; pass `--json` for machine-readable
+  results (ranked matches with their full overload objects and a raw,
+  compiler-verified example).
+- `--limit N` controls how many ranked matches come back (default 5).
+- A long-running task that will look up many commands can instead start
+  `tools/4d-language-classic serve --port <port>` once and query
+  `GET /lookup?q=<query>&limit=<n>` over HTTP, avoiding repeated process
+  startup.
+
+This is a **lookup aid for getting syntax right the first time** -- it is
+not a substitute for `validate`/`check-syntax`. Always still validate the
+code you write; do not treat a `4d-language-classic` result alone as
+proof the code compiles.
 
 ## Validate command
 
@@ -303,12 +336,14 @@ confirms the install completed or fails outright.
 
 ## Workflow
 
-1. Write or modify `.4dm` files
-2. Run `validate` on all modified files (or `check-syntax` for a
+1. Before writing unfamiliar 4D code, look up correct command syntax with
+   `4d-language-classic` (see above)
+2. Write or modify `.4dm` files
+3. Run `validate` on all modified files (or `check-syntax` for a
    project-wide pass -- see above)
-3. If errors: fix the code based on error messages, re-validate
-4. Repeat until exit code 0
-5. Report success to user
+4. If errors: fix the code based on error messages, re-validate
+5. Repeat until exit code 0
+6. Report success to user
 
 ## Windows
 
@@ -342,6 +377,11 @@ tools/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMethod.4d
   it with the MCP `hover` tool (see below) rather than relying on
   `validate` alone. `hover` returning "No hover information available"
   for a command-shaped token is a strong signal it is not recognized.
+- For unfamiliar commands, prefer looking them up with
+  `4d-language-classic` (see "Command lookup" above) before writing code
+  at all -- it returns the authoritative overload signature and a
+  compiler-verified example, which is more useful upfront than
+  discovering a syntax mistake after the fact via `validate`/`hover`.
 
 ## MCP server
 
