@@ -18,6 +18,20 @@ When you work with `.4dm` files under `Project/Sources/`, use
 3. If the exit code is 1, read the error messages, fix the code, and
    re-validate until exit code 0.
 
+`validate` requires an explicit file list. When you want a project-wide
+compile-check pass instead -- without listing every file -- use
+`check-syntax`, which is otherwise optional-files and covers the whole
+project in one call:
+
+```sh
+tools/tool4d-lsp-stdio check-syntax --workspace Project/
+```
+
+It has not yet been empirically confirmed whether this reliably reports
+diagnostics for files it did not explicitly open, so don't rely on it as
+a replacement for validating specific files you just modified. See
+`skills/4dlsp/SKILL.md` for the full reference.
+
 ## Code intelligence (hover, completion, goto-definition)
 
 When you need more than validation — completions, documentation lookups,

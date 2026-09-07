@@ -109,6 +109,10 @@ them via the 4D LSP server. Directory-scoped instructions in
 `Project/Sources/AGENTS.md` describe the workflow. Read
 `skills/4dlsp/SKILL.md` for the full reference.
 
+For a project-wide compile-check pass without listing every file, use
+`check-syntax` instead of `validate` -- see `skills/4dlsp/SKILL.md` for
+its optional-files behavior and current limitations.
+
 For multi-step 4D coding sessions (writing, validating, fixing, exploring
 code), use the one-shot subcommands (`hover`, `completion`,
 `goto-definition`, `document-symbols`) for a handful of calls, or start a
