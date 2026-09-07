@@ -116,10 +116,89 @@ tools/tool4d-lsp-stdio validate --json --workspace Project/ Sources/Methods/myMe
   do not block on warnings.
 - **info** / **hint** -- informational. Ignore unless relevant to the task.
 
+## Check-syntax command (project-wide)
+
+`validate` requires a specific list of files. Use the `check-syntax`
+subcommand instead when you want a project-wide compile-check pass
+without knowing or listing every `.4dm` file yourself -- e.g. after a
+refactor that may have touched files you didn't explicitly edit, or when
+asked "does the whole project still compile?".
+
+`check-syntax` wraps the LSP's `experimental/checkSyntax` request (a
+project-wide check), as opposed to `validate`, which pulls diagnostics
+per file via `textDocument/diagnostic`. It accepts the same
+`--tool`/`--project`/`--workspace`/`--port`/`--startup-timeout`/
+`--shutdown-timeout`/`--skip-onstartup`/`--dataless`/`--log-level`/
+`--json` flags as `validate`.
+
+`[FILES]...` is **optional** for `check-syntax` (unlike `validate`,
+where it's required):
+
+```sh
+# Project-wide check, no files needed:
+tools/tool4d-lsp-stdio check-syntax --workspace Project/
+
+# Anchor on specific file(s) you just edited:
+tools/tool4d-lsp-stdio check-syntax --workspace Project/ \
+  Sources/Methods/myMethod.4dm
+```
+
+- If files are given, each is opened via `didOpen` first (so the server
+  has at least one known/open document as a valid anchor URI).
+- If omitted, the tool automatically picks the first `.4dm` file found
+  under `Sources/` (falling back to the project root if no `Sources/`
+  directory exists) and opens that as the anchor document.
+- Exactly **one** `experimental/checkSyntax` request is sent (not one
+  per file), anchored at the first opened document. Per the 4D Analyzer
+  VS Code extension's own usage of this request, the anchor document is
+  arbitrary -- the response is project-wide regardless of which
+  document was passed.
+
+### Output format
+
+Non-JSON output mirrors `validate`'s per-file `got N diagnostic(s) for
+<path>` logging style, plus a `previously opened: true/false` note per
+file in the report -- useful because the response may include
+diagnostics for files that were never explicitly `didOpen`'d by this
+process.
+
+`--json` output normalizes the upstream `WorkspaceDiagnosticReport`
+shape to match `validate --json`'s contract exactly:
+
+```json
+[{"uri": "...", "diagnostics": [...]}]
+```
+
+(Upstream nests entries as `{ items: [{ uri, version, kind: "full",
+items: Diagnostic[] }, ...] }` -- note the inner per-file diagnostics
+field is itself named `items` upstream; this CLI renames it to
+`diagnostics` in its own JSON output, matching `validate`.)
+
+Exit codes follow the same convention as `validate`: `0` whether or not
+diagnostics were found (as long as the session ran cleanly), nonzero
+only for real transport/protocol failures.
+
+> **Not yet empirically verified against a live tool4d binary:** it is
+> not yet confirmed whether the response reliably includes diagnostics
+> for files that were never opened by this process. `check-syntax`
+> *should* report project-wide diagnostics regardless of the anchor
+> file, but treat that as unconfirmed until tested in practice. Do not
+> drop `validate`'s per-file chunking in favor of `check-syntax` based
+> on this alone.
+
+### `validate` vs `check-syntax`
+
+- **`validate`** -- check specific files you just wrote or modified;
+  files are required.
+- **`check-syntax`** -- check the whole project's syntax in one pass
+  without listing every file; files are optional and only serve as an
+  anchor document.
+
 ## Workflow
 
 1. Write or modify `.4dm` files
-2. Run `validate` on all modified files
+2. Run `validate` on all modified files (or `check-syntax` for a
+   project-wide pass -- see above)
 3. If errors: fix the code based on error messages, re-validate
 4. Repeat until exit code 0
 5. Report success to user
@@ -341,6 +420,7 @@ It exposes these tools:
 | Tool | Description |
 |------|-------------|
 | `validate` | Check `.4dm` files for syntax errors |
+| `check-syntax` | Project-wide compile-check (see "Check-syntax command" above) |
 | `completion` | Code completion at a position |
 | `hover` | Documentation / type signature at a position |
 | `goto_definition` | Find where a symbol is defined |
