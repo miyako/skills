@@ -20,6 +20,8 @@ pattern matching or guesswork to verify 4D code.
 
 ## When to use
 
+- Before writing an unfamiliar 4D command, to look up its correct syntax
+  and a compiler-verified example (see "Command lookup" below)
 - After generating a new `.4dm` method or class
 - After modifying existing `.4dm` code
 
