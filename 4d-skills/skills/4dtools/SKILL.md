@@ -23,6 +23,7 @@ Currently the release provides platform-specific builds of:
 * `xsltproc`
 * `boon` (JSON Schema validator)
 * `tool4d-lsp-stdio` (4D LSP bridge for code validation)
+* `4d-language-classic` (natural-language lookup service for 4D classic-language commands)
 
 These tools are implementation dependencies of the 4D skills. They are not
 themselves 4D skills.
@@ -40,6 +41,7 @@ not inside the skills repository itself.
     xsltproc       (or xsltproc.exe on Windows)
     boon           (or boon.exe on Windows)
     tool4d-lsp-stdio (or tool4d-lsp-stdio.exe on Windows)
+    4d-language-classic (or 4d-language-classic.exe on Windows)
   Project/
     ...
 ```
