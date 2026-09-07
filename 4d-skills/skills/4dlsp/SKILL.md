@@ -194,6 +194,37 @@ only for real transport/protocol failures.
   without listing every file; files are optional and only serve as an
   anchor document.
 
+## Diagnostics scope
+
+`--diagnostics-scope <document|workspace>` controls how much of the
+project the LSP `initialize` request asks tool4d to diagnose. It
+defaults to `workspace` (the prior, unconditional behavior), so existing
+commands and examples above are unaffected unless you pass it
+explicitly.
+
+- `workspace` (default) -- diagnostics/checks apply project-wide.
+- `document` -- diagnostics/checks are scoped to documents this session
+  explicitly opens (via `didOpen`), narrower than workspace scope.
+
+```sh
+tools/tool4d-lsp-stdio check-syntax --workspace Project/ --diagnostics-scope document
+```
+
+This flag is available on `validate`, `check-syntax`, `mcp`, `hover`,
+`completion`, `goto-definition`, and `document-symbols` -- i.e. every
+subcommand that builds its own `initialize` request. It mirrors the
+non-standard `initializationOptions.diagnostics.scope` option the 4D
+Analyzer VS Code extension sends to the LSP server.
+
+> **Runtime effect not independently verified:** it is confirmed that
+> this flag correctly threads the option through to the LSP
+> `initialize` request, matching what the real VS Code extension sends.
+> Whether `document` scope actually narrows diagnostics further (or
+> affects performance) against a live tool4d server has not been
+> empirically verified in this environment -- treat the behavioral
+> description above as the LSP option's intent, not a confirmed
+> guarantee.
+
 ## Workflow
 
 1. Write or modify `.4dm` files
