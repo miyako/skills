@@ -47,7 +47,7 @@ On Windows, check for `tools\4dlsp\tool4d-lsp-stdio.exe`.
 `tool4d-lsp-stdio` requires **tool4d** (the headless 4D runtime). It
 searches for tool4d automatically in this order:
 
-1. `--tool4d-path` argument or `TOOL4D_PATH` environment variable
+1. `--tool` argument or `TOOL4D_PATH` environment variable
 2. System PATH
 3. VS Code 4D Analyzer extension storage
    - macOS: `~/Library/Application Support/Code/User/globalStorage/4d.4d-analyzer/tool4d/`
@@ -59,7 +59,10 @@ searches for tool4d automatically in this order:
    - Linux: `/opt/4d/`, `/opt/4D*/`, `/usr/local/bin/`
 
 If tool4d is installed via the 4D Analyzer VS Code extension, no
-configuration is needed. Otherwise set `TOOL4D_PATH` explicitly.
+configuration is needed. Otherwise pass `--tool <path-to-tool4d>` (or set
+`TOOL4D_PATH`) explicitly -- e.g. on macOS a manually-installed 4D.app is
+common and won't be found without this, since it isn't on PATH and isn't
+in the VS Code extension storage or conventional locations list above.
 
 ## Command lookup (before writing code)
 
@@ -432,6 +435,12 @@ second) with a generic read/parse error that looks like "file not
 found" rather than "wrong path base" -- if an attached call fails
 quickly and confusingly, pass an **absolute** file path instead of
 debugging the relative one.
+
+A relative **`--workspace`** (or `--project`) value can hit the same
+kind of confusing failure in standalone mode too, not just the
+attached-mode case above -- if a one-shot command fails to locate a file
+that demonstrably exists, retry with an absolute `--workspace`/`--project`
+path before assuming the command itself is broken.
 
 **Prefer these one-shot commands over hand-rolling MCP/JSON-RPC.** Use
 `hover` on any command you're not fully certain is current -- `validate`
