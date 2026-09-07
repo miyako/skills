@@ -36,10 +36,11 @@ Tools provisioned by `4dtools` are installed under:
 
 	tools/
 
-Tools used exclusively by one skill are installed into a subdirectory
-named after that skill (e.g. `tools/4dlsp/`, `tools/4dform/`), keeping
-each skill's tooling isolated. Tools shared by more than one consumer
-(e.g. `xmllint`, `xsltproc`) stay directly under `tools/`. See
+Every tool currently provisioned is used by exactly one 4D skill, so
+each is installed into a subdirectory named after that skill (e.g.
+`tools/4dcatalog/`, `tools/4dform/`, `tools/4dlsp/`), keeping each
+skill's tooling isolated. A future tool genuinely needed by more than
+one skill would instead stay directly under `tools/`. See
 `skills/4dtools/SKILL.md` for the exact destination of each tool.
 
 Do not install these tools globally or modify the user's PATH.
@@ -54,7 +55,6 @@ skills.
 The `4dtools` skill currently provisions tools such as:
 
 - `xmllint`
-- `xsltproc`
 - `boon` (JSON Schema validator)
 - `tool4d-lsp-stdio` (4D LSP bridge for validation and code intelligence)
 - `4d-language-classic` (natural-language lookup service for 4D
