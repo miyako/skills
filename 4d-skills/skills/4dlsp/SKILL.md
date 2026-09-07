@@ -32,15 +32,15 @@ pattern matching or guesswork to verify 4D code.
 
 ## Tool location
 
-Prefer `tools/tool4d-lsp-stdio` over any system-installed copy. If
-`tools/tool4d-lsp-stdio` does not exist, provision it first by reading
+Prefer `tools/4dlsp/tool4d-lsp-stdio` over any system-installed copy. If
+`tools/4dlsp/tool4d-lsp-stdio` does not exist, provision it first by reading
 `skills/4dtools/SKILL.md`.
 
 ```sh
-test -x tools/tool4d-lsp-stdio
+test -x tools/4dlsp/tool4d-lsp-stdio
 ```
 
-On Windows, check for `tools\tool4d-lsp-stdio.exe`.
+On Windows, check for `tools\4dlsp\tool4d-lsp-stdio.exe`.
 
 ## Prerequisites
 
@@ -64,17 +64,17 @@ configuration is needed. Otherwise set `TOOL4D_PATH` explicitly.
 ## Command lookup (before writing code)
 
 Before writing or fixing a call to an unfamiliar 4D command, look it up
-with `tools/4d-language-classic` instead of guessing at its syntax from
+with `tools/4dlsp/4d-language-classic` instead of guessing at its syntax from
 training data. It is a deterministic, offline reference over a
 compiler-verified 4D command IR: given a natural-language query (e.g.
 *"how do I read a json file"* or *"open a file dialog"*), it returns the
 matched command(s)' real overload signatures (param names/types/
 optionality/discriminator rules) and a real, `tool4d`-verified example
-call. If `tools/4d-language-classic` does not exist, provision it first by
+call. If `tools/4dlsp/4d-language-classic` does not exist, provision it first by
 reading `skills/4dtools/SKILL.md`.
 
 ```sh
-tools/4d-language-classic query "how do I parse json" --limit 3 --json
+tools/4dlsp/4d-language-classic query "how do I parse json" --limit 3 --json
 ```
 
 - Default output is human-readable; pass `--json` for machine-readable
@@ -82,7 +82,7 @@ tools/4d-language-classic query "how do I parse json" --limit 3 --json
   compiler-verified example).
 - `--limit N` controls how many ranked matches come back (default 5).
 - A long-running task that will look up many commands can instead start
-  `tools/4d-language-classic serve --port <port>` once and query
+  `tools/4dlsp/4d-language-classic serve --port <port>` once and query
   `GET /lookup?q=<query>&limit=<n>` over HTTP, avoiding repeated process
   startup.
 
@@ -96,13 +96,13 @@ proof the code compiles.
 Use the `validate` subcommand to check `.4dm` files in a single call:
 
 ```sh
-tools/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMethod.4dm
+tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMethod.4dm
 ```
 
 Or point directly at the `.4DProject` file:
 
 ```sh
-tools/tool4d-lsp-stdio validate \
+tools/4dlsp/tool4d-lsp-stdio validate \
   --project Project/MyApp.4DProject \
   Sources/Methods/myMethod.4dm
 ```
@@ -112,7 +112,7 @@ tools/tool4d-lsp-stdio validate \
 Pass multiple file paths to validate them all in one session:
 
 ```sh
-tools/tool4d-lsp-stdio validate --workspace Project/ \
+tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ \
   Sources/Methods/method1.4dm \
   Sources/Methods/method2.4dm \
   Sources/Classes/MyClass.4dm
@@ -134,7 +134,7 @@ Format: `file:line:col: severity: message`
 JSON output with `--json`:
 
 ```sh
-tools/tool4d-lsp-stdio validate --json --workspace Project/ Sources/Methods/myMethod.4dm
+tools/4dlsp/tool4d-lsp-stdio validate --json --workspace Project/ Sources/Methods/myMethod.4dm
 ```
 
 ### Exit codes
@@ -169,10 +169,10 @@ where it's required):
 
 ```sh
 # Project-wide check, no files needed:
-tools/tool4d-lsp-stdio check-syntax --workspace Project/
+tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project/
 
 # Anchor on specific file(s) you just edited:
-tools/tool4d-lsp-stdio check-syntax --workspace Project/ \
+tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project/ \
   Sources/Methods/myMethod.4dm
 ```
 
@@ -240,7 +240,7 @@ explicitly.
   explicitly opens (via `didOpen`), narrower than workspace scope.
 
 ```sh
-tools/tool4d-lsp-stdio check-syntax --workspace Project/ --diagnostics-scope document
+tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project/ --diagnostics-scope document
 ```
 
 This flag is available on `validate`, `check-syntax`, `mcp`, `hover`,
@@ -275,7 +275,7 @@ via `dependencies.json`.
 > change.
 
 ```sh
-tools/tool4d-lsp-stdio install-components --workspace Project/
+tools/4dlsp/tool4d-lsp-stdio install-components --workspace Project/
 ```
 
 Unlike `validate`/`check-syntax`, `install-components` takes **no
@@ -347,10 +347,10 @@ confirms the install completed or fails outright.
 
 ## Windows
 
-On Windows, use `tools\tool4d-lsp-stdio.exe`:
+On Windows, use `tools\4dlsp\tool4d-lsp-stdio.exe`:
 
 ```powershell
-tools\tool4d-lsp-stdio.exe validate --workspace Project\ Sources\Methods\myMethod.4dm
+tools\4dlsp\tool4d-lsp-stdio.exe validate --workspace Project\ Sources\Methods\myMethod.4dm
 ```
 
 ## Linux
@@ -359,7 +359,7 @@ On Linux, tool4d is available for CI and GitHub Codespaces. Use the same
 syntax as macOS:
 
 ```sh
-tools/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMethod.4dm
+tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMethod.4dm
 ```
 
 ## Important notes
@@ -393,7 +393,7 @@ tasks should prefer those over talking MCP/JSON-RPC directly.
 
 > **Note:** this section describes the design agreed in
 > https://github.com/miyako/skills/issues/27 -- check
-> `tools/tool4d-lsp-stdio --version` and `--help` to confirm which of
+> `tools/4dlsp/tool4d-lsp-stdio --version` and `--help` to confirm which of
 > these subcommands/flags are present in your provisioned build before
 > relying on them. Older builds only have `mcp` (stdio, foreground) and
 > `validate`; fall back to "No MCP client available" below if `hover`
@@ -406,13 +406,13 @@ exactly like `validate` -- no persistent process, no MCP/JSON-RPC
 knowledge required:
 
 ```sh
-tools/tool4d-lsp-stdio hover --project Project/MyApp.4DProject \
+tools/4dlsp/tool4d-lsp-stdio hover --project Project/MyApp.4DProject \
   Sources/Methods/myMethod.4dm --line 6 --character 21
-tools/tool4d-lsp-stdio completion --workspace Project/ \
+tools/4dlsp/tool4d-lsp-stdio completion --workspace Project/ \
   Sources/Methods/myMethod.4dm --line 5 --character 10
-tools/tool4d-lsp-stdio goto-definition --workspace Project/ \
+tools/4dlsp/tool4d-lsp-stdio goto-definition --workspace Project/ \
   Sources/Methods/myMethod.4dm --line 5 --character 10
-tools/tool4d-lsp-stdio document-symbols --workspace Project/ \
+tools/4dlsp/tool4d-lsp-stdio document-symbols --workspace Project/ \
   Sources/Methods/myMethod.4dm
 ```
 
@@ -468,7 +468,7 @@ Omit **both** `--project` and `--workspace` on any one-shot subcommand
 for the current project instead of starting a new tool4d process:
 
 ```sh
-tools/tool4d-lsp-stdio hover Sources/Methods/myMethod.4dm --line 6 --character 21
+tools/4dlsp/tool4d-lsp-stdio hover Sources/Methods/myMethod.4dm --line 6 --character 21
 ```
 
 If no server is running, this fails with a clear error telling you to
@@ -483,7 +483,7 @@ it forks into the background, binds the discoverable socket used by (2),
 and prints the PID (and socket path) to stdout, then returns control.
 
 ```sh
-tools/tool4d-lsp-stdio mcp --project Project/MyApp.4DProject
+tools/4dlsp/tool4d-lsp-stdio mcp --project Project/MyApp.4DProject
 # -> pid=12345 socket=/tmp/tool4d-lsp-<hash>.sock
 ```
 
@@ -492,7 +492,7 @@ tools/tool4d-lsp-stdio mcp --project Project/MyApp.4DProject
 > https://github.com/miyako/language-4dm-nova/issues/42 -- daemonize
 > always failed to start, and attached one-shot calls returned no
 > hover/completion/etc info even for valid commands). A fix has been
-> merged upstream (PR #43) and `tools/tool4d-lsp-stdio` in this
+> merged upstream (PR #43) and `tools/4dlsp/tool4d-lsp-stdio` in this
 > workspace has been rebuilt from that fix, so the daemonize/attach
 > pattern below now works reliably here. If you're working from a
 > `tool4d-lsp-stdio` build that predates that fix, fall back to running
@@ -504,7 +504,7 @@ subcommands without `--project`/`--workspace` for the rest of the task.
 Stop it when done:
 
 ```sh
-tools/tool4d-lsp-stdio mcp --stop --project Project/MyApp.4DProject
+tools/4dlsp/tool4d-lsp-stdio mcp --stop --project Project/MyApp.4DProject
 # or: kill <pid>
 ```
 
@@ -536,7 +536,7 @@ detached background process, pass `--foreground` to keep the original
 (pre-daemonizing) behavior:
 
 ```sh
-tools/tool4d-lsp-stdio mcp --foreground --workspace Project/
+tools/4dlsp/tool4d-lsp-stdio mcp --foreground --workspace Project/
 ```
 
 ### When to use one-shot vs a persistent server vs validate
@@ -553,7 +553,7 @@ tools/tool4d-lsp-stdio mcp --foreground --workspace Project/
   the task, and stop the server (`mcp --stop`) when done.
 - **Host has a native MCP client already configured** for this server --
   use its MCP tools directly instead of shelling out to any of the
-  above; do not spawn a duplicate `tools/tool4d-lsp-stdio mcp` process
+  above; do not spawn a duplicate `tools/4dlsp/tool4d-lsp-stdio mcp` process
   yourself in that case.
 
 ### MCP protocol details (for `--foreground` / native MCP clients only)
