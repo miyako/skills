@@ -20,7 +20,6 @@ The tools are distributed as GitHub Release assets from:
 Currently the release provides platform-specific builds of:
 
 * `xmllint`
-* `xsltproc`
 * `boon` (JSON Schema validator)
 * `tool4d-lsp-stdio` (4D LSP bridge for code validation)
 * `4d-language-classic` (natural-language lookup service for 4D classic-language commands)
@@ -28,22 +27,27 @@ Currently the release provides platform-specific builds of:
 These tools are implementation dependencies of the 4D skills. They are not
 themselves 4D skills.
 
+`xsltproc` is also built and published as a release asset (a byproduct of
+the same `libxml2`/`libxslt` build that produces `xmllint`), but no
+current skill consumes it, so it is intentionally not provisioned or
+referenced below. Add it here once a skill actually needs it.
+
 ## Installation Location
 
 Downloaded tools must be placed under the `tools/` directory at the root
 of the repository being worked on (the repo that contains the 4D
 project), not inside the skills repository itself.
 
-Tools that are only ever used by a single 4D skill are installed into a
-subdirectory named after that skill, so each skill's exclusive tooling
-stays isolated and can be added, removed, or reprovisioned without
-touching what other skills use. Tools shared by more than one consumer
-stay directly under `tools/` rather than being duplicated per consumer.
+Every tool currently provisioned here is used by exactly one 4D skill,
+so each is installed into a subdirectory named after that skill, keeping
+each skill's tooling isolated -- it can be added, removed, or
+reprovisioned without touching what other skills use. If a future tool
+is genuinely needed by more than one skill, install it directly under
+`tools/` instead of duplicating it per consumer.
 
 | Tool | Destination | Used by |
 |------|-------------|---------|
-| `xmllint` | `tools/` | `4dcatalog`, generic XSLT transforms |
-| `xsltproc` | `tools/` | generic XSLT transforms |
+| `xmllint` | `tools/4dcatalog/` | `4dcatalog` only |
 | `boon` | `tools/4dform/` | `4dform` only |
 | `tool4d-lsp-stdio` | `tools/4dlsp/` | `4dlsp` only |
 | `4d-language-classic` | `tools/4dlsp/` | `4dlsp` only |
@@ -51,8 +55,8 @@ stay directly under `tools/` rather than being duplicated per consumer.
 ```
 <working-repo>/
   tools/
-    xmllint                   (or xmllint.exe on Windows)
-    xsltproc                  (or xsltproc.exe on Windows)
+    4dcatalog/
+      xmllint                  (or xmllint.exe on Windows)
     4dform/
       boon                     (or boon.exe on Windows)
     4dlsp/
@@ -106,13 +110,13 @@ Do not assume that the operating system alone identifies the correct asset.
 
 ### macOS and Linux
 
-Complete recipe to provision a tool (e.g., `xmllint`, destination `tools/`;
-for a skill-exclusive tool like `boon` or `tool4d-lsp-stdio`, set
-`DEST_DIR` to `tools/<skill>` instead -- see the destination table above):
+Complete recipe to provision a tool (e.g., `xmllint` for the `4dcatalog`
+skill; every other tool follows the same pattern with its own
+`DEST_DIR=tools/<skill>` -- see the destination table above):
 
 ```sh
 TOOL=xmllint
-DEST_DIR=tools
+DEST_DIR=tools/4dcatalog
 OS=$(uname -s)
 ARCH=$(uname -m)
 
@@ -170,7 +174,7 @@ For example, to provision `boon` for the `4dform` skill, set
 
 ```powershell
 $tool = "xmllint"
-$destDir = "tools"
+$destDir = "tools/4dcatalog"
 $arch = if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -eq 'Arm64') { 'arm64' } else { 'x64' }
 $pattern = "${tool}-windows-${arch}"
 
@@ -202,20 +206,18 @@ tools that are not needed by the current operation.
 
 Common sets:
 
-- 4dcatalog needs: `xmllint` (`tools/xmllint`)
+- 4dcatalog needs: `xmllint` (`tools/4dcatalog/xmllint`)
 - 4dform needs: `boon` (`tools/4dform/boon`)
 - 4dlsp needs: `tool4d-lsp-stdio` (`tools/4dlsp/tool4d-lsp-stdio`,
   macOS and Windows only -- no Linux build) and `4d-language-classic`
   (`tools/4dlsp/4d-language-classic`, all platforms)
-- XSLT transforms need: `xsltproc` (`tools/xsltproc`)
 
 ## Verification
 
 After installation, verify each tool can run:
 
 ```sh
-tools/xmllint --version
-tools/xsltproc --version
+tools/4dcatalog/xmllint --version
 tools/4dform/boon --help
 tools/4dlsp/tool4d-lsp-stdio --version
 tools/4dlsp/4d-language-classic --help
@@ -224,8 +226,7 @@ tools/4dlsp/4d-language-classic --help
 On Windows, append `.exe`:
 
 ```powershell
-& tools\xmllint.exe --version
-& tools\xsltproc.exe --version
+& tools\4dcatalog\xmllint.exe --version
 & tools\4dform\boon.exe --help
 & tools\4dlsp\tool4d-lsp-stdio.exe --version
 & tools\4dlsp\4d-language-classic.exe --help
@@ -287,11 +288,10 @@ this skill when a tool is unavailable.
 The dependency relationships are:
 
 ```
-4dcatalog       --> xmllint             --> 4dtools provisions tools/xmllint
-4dform          --> boon                --> 4dtools provisions tools/4dform/boon
-4dlsp           --> tool4d-lsp-stdio    --> 4dtools provisions tools/4dlsp/tool4d-lsp-stdio
-4dlsp           --> 4d-language-classic --> 4dtools provisions tools/4dlsp/4d-language-classic
-XSLT transforms --> xsltproc            --> 4dtools provisions tools/xsltproc
+4dcatalog --> xmllint             --> 4dtools provisions tools/4dcatalog/xmllint
+4dform    --> boon                --> 4dtools provisions tools/4dform/boon
+4dlsp     --> tool4d-lsp-stdio    --> 4dtools provisions tools/4dlsp/tool4d-lsp-stdio
+4dlsp     --> 4d-language-classic --> 4dtools provisions tools/4dlsp/4d-language-classic
 ```
 
 The individual 4D skills should concentrate on 4D-specific behavior,

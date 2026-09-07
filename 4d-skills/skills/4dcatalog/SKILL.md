@@ -35,11 +35,11 @@ When instructed to create a new database schema:
 **Always** validate with this exact command:
 
 ```sh
-tools/xmllint --noout --nonet --dtdvalid schemas/4dcatalog/base.dtd <file>
+tools/4dcatalog/xmllint --noout --nonet --dtdvalid schemas/4dcatalog/base.dtd <file>
 ```
 
-Prefer `tools/xmllint` (or `tools\xmllint.exe` on Windows) over any
-system-installed xmllint. If `tools/xmllint` does not exist, provision it
+Prefer `tools/4dcatalog/xmllint` (or `tools\4dcatalog\xmllint.exe` on Windows) over any
+system-installed xmllint. If `tools/4dcatalog/xmllint` does not exist, provision it
 first by reading `skills/4dtools/SKILL.md`.
 
 - `--nonet` is **required**. Without it xmllint tries to fetch the remote
