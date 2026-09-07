@@ -10,7 +10,7 @@ When you work with `.4dm` files under `Project/Sources/`, use
 2. Validate all modified files in one call:
 
    ```sh
-   tools/tool4d-lsp-stdio validate --workspace Project/ \
+   tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ \
      Sources/Methods/method1.4dm \
      Sources/Classes/MyClass.4dm
    ```
@@ -24,7 +24,7 @@ compile-check pass instead -- without listing every file -- use
 project in one call:
 
 ```sh
-tools/tool4d-lsp-stdio check-syntax --workspace Project/
+tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project/
 ```
 
 It has not yet been empirically confirmed whether this reliably reports
@@ -39,7 +39,7 @@ or navigating to definitions — prefer the one-shot subcommands (no
 persistent process needed for a handful of calls):
 
 ```sh
-tools/tool4d-lsp-stdio hover --workspace Project/ \
+tools/4dlsp/tool4d-lsp-stdio hover --workspace Project/ \
   Sources/Methods/myMethod.4dm --line 5 --character 10
 ```
 
@@ -48,16 +48,16 @@ For many such calls in one task, start a persistent server once and omit
 the tool4d startup cost per call):
 
 ```sh
-tools/tool4d-lsp-stdio mcp --project Project/MyApp.4DProject   # prints pid + socket, returns
-tools/tool4d-lsp-stdio hover Sources/Methods/myMethod.4dm --line 5 --character 10
+tools/4dlsp/tool4d-lsp-stdio mcp --project Project/MyApp.4DProject   # prints pid + socket, returns
+tools/4dlsp/tool4d-lsp-stdio hover Sources/Methods/myMethod.4dm --line 5 --character 10
 # ... more one-shot calls without --project/--workspace ...
-tools/tool4d-lsp-stdio mcp --stop --project Project/MyApp.4DProject   # clean up when the task ends
+tools/4dlsp/tool4d-lsp-stdio mcp --stop --project Project/MyApp.4DProject   # clean up when the task ends
 ```
 
 **Note:** the originally-shipped `tool4d-lsp-stdio` 0.3.0 build had this
 daemonize/reuse pattern broken (see
 https://github.com/miyako/language-4dm-nova/issues/42). That fix has
-been merged upstream and `tools/tool4d-lsp-stdio` in this workspace has
+been merged upstream and `tools/4dlsp/tool4d-lsp-stdio` in this workspace has
 been rebuilt from it, so the pattern above works reliably here. If your
 provisioned build predates the fix, fall back to calling one-shot
 subcommands directly with `--project`/`--workspace` on every call, or

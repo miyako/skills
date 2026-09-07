@@ -99,21 +99,21 @@ Do not "fix" validation failures by weakening or modifying the schema.
 
 This skill requires `boon` for JSON Schema validation.
 
-Prefer `tools/boon` over any system-installed boon. Before validating,
+Prefer `tools/4dform/boon` over any system-installed boon. Before validating,
 check whether it has been provisioned:
 
 ```sh
-test -x tools/boon
+test -x tools/4dform/boon
 ```
 
-If `tools/boon` does not exist, follow the download procedure in
+If `tools/4dform/boon` does not exist, follow the download procedure in
 `skills/4dtools/SKILL.md` to provision it.
 
-Use `tools/boon` (or `tools\boon.exe` on Windows) in all validation
+Use `tools/4dform/boon` (or `tools\4dform\boon.exe` on Windows) in all validation
 commands -- do not use a bare `boon`:
 
 ```
-tools/boon schemas/4dform/formsSchema.json <file>
+tools/4dform/boon schemas/4dform/formsSchema.json <file>
 ```
 
 Do not duplicate tool installation logic in this skill.

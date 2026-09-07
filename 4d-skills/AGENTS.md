@@ -36,6 +36,12 @@ Tools provisioned by `4dtools` are installed under:
 
 	tools/
 
+Tools used exclusively by one skill are installed into a subdirectory
+named after that skill (e.g. `tools/4dlsp/`, `tools/4dform/`), keeping
+each skill's tooling isolated. Tools shared by more than one consumer
+(e.g. `xmllint`, `xsltproc`) stay directly under `tools/`. See
+`skills/4dtools/SKILL.md` for the exact destination of each tool.
+
 Do not install these tools globally or modify the user's PATH.
 
 Prefer an existing compatible system installation of a tool when the
@@ -51,6 +57,8 @@ The `4dtools` skill currently provisions tools such as:
 - `xsltproc`
 - `boon` (JSON Schema validator)
 - `tool4d-lsp-stdio` (4D LSP bridge for validation and code intelligence)
+- `4d-language-classic` (natural-language lookup service for 4D
+  classic-language commands)
 
 Individual skills specify which tools they require.
 
@@ -151,7 +159,7 @@ arguments, environment variables, timeout):
   check `tool4d-lsp-stdio --help`. If those are present, use them
   directly instead of suggesting host configuration.
 * The workspace contains a resolvable `.4DProject` file.
-* `tool4d-lsp-stdio` is available (in `tools/` or on the system) and
+* `tool4d-lsp-stdio` is available (in `tools/4dlsp/` or on the system) and
   runnable.
 * The session is not running unattended/autonomously (e.g. an autopilot
   or background-agent mode with no user expected to read suggestions or
