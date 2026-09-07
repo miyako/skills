@@ -211,10 +211,11 @@ tools/tool4d-lsp-stdio check-syntax --workspace Project/ --diagnostics-scope doc
 ```
 
 This flag is available on `validate`, `check-syntax`, `mcp`, `hover`,
-`completion`, `goto-definition`, and `document-symbols` -- i.e. every
-subcommand that builds its own `initialize` request. It mirrors the
-non-standard `initializationOptions.diagnostics.scope` option the 4D
-Analyzer VS Code extension sends to the LSP server.
+`completion`, `goto-definition`, `document-symbols`, and
+`install-components` -- i.e. every subcommand that builds its own
+`initialize` request. It mirrors the non-standard
+`initializationOptions.diagnostics.scope` option the 4D Analyzer VS Code
+extension sends to the LSP server.
 
 > **Runtime effect not independently verified:** it is confirmed that
 > this flag correctly threads the option through to the LSP
@@ -224,6 +225,81 @@ Analyzer VS Code extension sends to the LSP server.
 > empirically verified in this environment -- treat the behavioral
 > description above as the LSP option's intent, not a confirmed
 > guarantee.
+
+## Install-components command
+
+`install-components` wraps the custom `dependency/installComponents`
+LSP notification -- the same one the 4D Analyzer VS Code extension's
+`DependencyManager` sends after downloading a project's dependencies
+via `dependencies.json`.
+
+> **This is not a full dependency manager.** `install-components` does
+> **not** fetch or download anything itself. It assumes the project's
+> components are already present on disk -- fetched out-of-band, or by
+> a prior IDE/VS Code session -- and just tells tool4d to (re)load them.
+> Parsing `dependencies.json`, GitHub/GitLab auth, and actually
+> downloading components are out of scope here and deferred to a future
+> change.
+
+```sh
+tools/tool4d-lsp-stdio install-components --workspace Project/
+```
+
+Unlike `validate`/`check-syntax`, `install-components` takes **no
+`[FILES]...` argument** -- it always targets the resolved project
+(`.4DProject` file) as a whole, not individual source files.
+
+### Behavior
+
+- Sends `dependency/installComponents` with `{"uri": <project's
+  .4DProject file URI>}` -- the project file itself, not a source file,
+  matching what the VS Code extension's `commands.ts`
+  (`fetchProjectForCommand`) sends.
+- Waits for the matching `dependency/installComponents/done`
+  notification before exiting successfully.
+- If tool4d asks the client to re-send via
+  `dependency/installComponents/before` (a real protocol behavior
+  confirmed in `DependencyManager.ts`'s own notification handler), the
+  subcommand automatically re-sends `installComponents` and keeps
+  waiting -- no action needed on your part.
+
+### Flags
+
+Accepts the same `--tool`/`--project`/`--workspace`/`--port`/
+`--startup-timeout`/`--shutdown-timeout`/`--skip-onstartup`/
+`--dataless`/`--log-level`/`--diagnostics-scope`/`--json` flags as
+`check-syntax`/`validate`, plus one flag specific to this command:
+
+- `--install-timeout <seconds>` (default `300`) -- how long to wait for
+  `installComponents/done`. Installs can take much longer than a
+  compile check, hence the separate, longer default from
+  `--startup-timeout`/`--shutdown-timeout`.
+
+### Output format
+
+Non-JSON output prints a single line on success:
+
+```
+Project/MyApp.4DProject: components installed
+```
+
+`--json` output is a single JSON **object**, not an array like
+`validate --json`/`check-syntax --json` -- there's only one project per
+invocation, no per-file breakdown:
+
+```json
+{"uri": "file:///.../MyApp.4DProject", "installed": true}
+```
+
+### Exit codes
+
+- `0` -- `installComponents/done` received within `--install-timeout`.
+- nonzero -- any transport/protocol failure, or a timeout waiting for
+  `done`.
+
+Unlike `validate`/`check-syntax`, there is no diagnostics-found/
+diagnostics-not-found duality here -- `install-components` either
+confirms the install completed or fails outright.
 
 ## Workflow
 
