@@ -172,6 +172,7 @@ Common sets:
 - 4dcatalog needs: `xmllint`
 - 4dform needs: `boon`
 - 4dlsp needs: `tool4d-lsp-stdio` (macOS and Windows only -- no Linux build)
+  and `4d-language-classic` (all platforms)
 - XSLT transforms need: `xsltproc`
 
 ## Verification
@@ -247,9 +248,11 @@ this skill when a tool is unavailable.
 The dependency relationships are:
 
 ```
-4dcatalog       --> xmllint      --> 4dtools provisions xmllint
-4dform          --> boon         --> 4dtools provisions boon
-XSLT transforms --> xsltproc    --> 4dtools provisions xsltproc
+4dcatalog       --> xmllint             --> 4dtools provisions xmllint
+4dform          --> boon                --> 4dtools provisions boon
+4dlsp           --> tool4d-lsp-stdio    --> 4dtools provisions tool4d-lsp-stdio
+4dlsp           --> 4d-language-classic --> 4dtools provisions 4d-language-classic
+XSLT transforms --> xsltproc            --> 4dtools provisions xsltproc
 ```
 
 The individual 4D skills should concentrate on 4D-specific behavior,
