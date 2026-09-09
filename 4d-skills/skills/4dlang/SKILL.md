@@ -171,9 +171,31 @@ A **class** result (`resultType: "class"`), e.g. from
   "howToObtain": [ "$c:=[1; 2; 3]   [literal] -- Collection literal — the most idiomatic form.", "/* + 2 more */" ],
   "constructibleByUserCode": true,
   "memberCounts": { "total": 47, "declared": 47, "inherited": 0, "oop_function": 46, "oop_property": 1, "oop_constructor": 0 },
-  "members": [ { "id": "Collection.orderBy", "memberName": ".orderBy", "kind": "oop_function", "summary": "Returns a new collection containing all elements of the collection in the specified order" } /* + up to 2 more (class-flooding cap) */ ]
+  "members": [ { "id": "Collection.at", "memberName": ".at", "kind": "oop_function", "summary": "Returns the element at the specified position in the collection" } /* + 46 more: the COMPLETE membership, in alphabetical order */ ]
 }
 ```
+
+### Two different rules, often confused
+
+They are unrelated, and conflating them leads to wrong code:
+
+1. **The class-flooding cap** limits **top-level rows in the result array**
+   to at most 3 members per class, and is why a class card appears at all.
+   It is a *ranking* rule.
+2. **A class card's `members` array is complete and uncapped.** It lists
+   every member of the class in alphabetical order -- not the members that
+   matched the query, and not a top-3 subset. `"web server"` returns a
+   `WebServer` card whose `members` holds all 41.
+
+So do not call `members --class X` to "get the rest" after reading a card
+from `query --json`: you already have all of them. And do not conclude a
+class has only the few members you see.
+
+Note that **text mode truncates the card's member list for display**
+("`... and N more -- run 4d-language-oop members --class X`") while
+`--json` does not. Verify claims about the JSON shape against `--json`
+output; the text rendering is a presentation of it, not a description of
+it.
 
 A **member** result (`resultType: "member"`), e.g. `Collection.multiSort`
 from the same query:

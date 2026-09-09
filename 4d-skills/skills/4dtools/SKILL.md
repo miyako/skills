@@ -63,7 +63,11 @@ this skillset provisioned `4d-language-classic` into `tools/4dlsp/`,
 alongside `tool4d-lsp-stdio`, back when `4dlsp` was the only skill doing
 language lookup. That mapping no longer matches the "named after the
 skill that depends on it" rule below now that `4dlang` owns lookup for
-both languages, hence the move.)
+both languages, hence the move.) More precisely: `tools/4dlsp/` named a
+*skill*, not a capability, so it became wrong the moment a second
+consumer appeared. Two skills both reaching into a directory named after
+one of them is how such a path rots, and the rename fixes the naming
+defect rather than merely relocating a file.
 
 ```
 <working-repo>/
