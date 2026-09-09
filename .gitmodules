@@ -20,3 +20,6 @@
 [submodule "vendor/4d-language-oop"]
 	path = vendor/4d-language-oop
 	url = https://github.com/miyako/4d-language-oop.git
+[submodule "vendor/4d-catalog-diagram"]
+	path = vendor/4d-catalog-diagram
+	url = https://github.com/miyako/4d-catalog-diagram.git

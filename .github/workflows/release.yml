@@ -1927,6 +1927,318 @@ jobs:
   # ---------------------------------------------------------------------------
   # Create GitHub Release
   # ---------------------------------------------------------------------------
+  # 4d-catalog-diagram (4D catalog visualiser) - Linux
+  # ---------------------------------------------------------------------------
+  catalog-diagram-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-unknown-linux-musl
+            runner: ubuntu-24.04
+          - arch: arm64
+            target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      ARTIFACT: 4d-catalog-diagram-linux-${{ matrix.arch }}
+      TARGET_DIR: ${{ github.workspace }}/vendor/4d-catalog-diagram-target
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install musl tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Build 4d-catalog-diagram
+        working-directory: vendor/4d-catalog-diagram
+        run: |
+          cargo build \
+            --release \
+            --locked \
+            --target "${{ matrix.target }}" \
+            --target-dir "${{ env.TARGET_DIR }}"
+
+          strip \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram" || true
+
+          file \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram"
+
+      - name: Smoke test
+        working-directory: vendor/4d-catalog-diagram
+        run: |
+          ./.github/smoke-test.sh \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram"
+
+      - name: Archive
+        run: |
+          mkdir -p staging
+
+          cp \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram" \
+            staging/4d-catalog-diagram
+
+          tar \
+            -cJf "${{ env.ARTIFACT }}.tar.xz" \
+            -C staging \
+            4d-catalog-diagram
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # 4d-catalog-diagram (4D catalog visualiser) - macOS (signed + notarized)
+  # ---------------------------------------------------------------------------
+  catalog-diagram-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-apple-darwin
+            runner: macos-13
+          - arch: arm64
+            target: aarch64-apple-darwin
+            runner: macos-14
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      ARTIFACT: 4d-catalog-diagram-macos-${{ matrix.arch }}
+      TARGET_DIR: ${{ github.workspace }}/vendor/4d-catalog-diagram-target
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build 4d-catalog-diagram
+        working-directory: vendor/4d-catalog-diagram
+        run: |
+          cargo build \
+            --release \
+            --locked \
+            --target "${{ matrix.target }}" \
+            --target-dir "${{ env.TARGET_DIR }}"
+
+          strip -x \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram"
+
+          file \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram"
+
+      - name: Smoke test
+        working-directory: vendor/4d-catalog-diagram
+        run: |
+          ./.github/smoke-test.sh \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram"
+
+      - name: Import signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          TMP_DIR=$(mktemp -d)
+          CERT_FILE="$TMP_DIR/cert.p12"
+          KEYCHAIN_FILE="$TMP_DIR/build.keychain-db"
+
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
+
+          security create-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security set-keychain-settings \
+            -lut 21600 \
+            "$KEYCHAIN_FILE"
+
+          security unlock-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security import "$CERT_FILE" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_FILE"
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security list-keychains \
+            -d user \
+            -s "$KEYCHAIN_FILE" login.keychain-db
+
+          echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
+          echo "TMP_DIR=$TMP_DIR" >> "$GITHUB_ENV"
+
+      - name: Sign binary
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" |
+            head -1 |
+            sed 's/.*"\(.*\)".*/\1/')
+
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --sign "$IDENTITY" \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram"
+
+      - name: Notarize binary
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE=$(mktemp /tmp/4d-catalog-diagram.XXXXXX.zip)
+
+          ditto \
+            -c \
+            -k \
+            --keepParent \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram" \
+            "$ZIP_FILE"
+
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait
+
+      - name: Archive
+        run: |
+          mkdir -p staging
+
+          cp \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram" \
+            staging/4d-catalog-diagram
+
+          tar \
+            -cJf "${{ env.ARTIFACT }}.tar.xz" \
+            -C staging \
+            4d-catalog-diagram
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_FILE:-}" ]; then
+            security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+          fi
+
+          if [ -n "${TMP_DIR:-}" ]; then
+            rm -rf "$TMP_DIR"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
+  # 4d-catalog-diagram (4D catalog visualiser) - Windows
+  # ---------------------------------------------------------------------------
+  catalog-diagram-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            target: x86_64-pc-windows-msvc
+            runner: windows-2022
+          - arch: arm64
+            target: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      ARTIFACT: 4d-catalog-diagram-windows-${{ matrix.arch }}
+      TARGET_DIR: ${{ github.workspace }}/vendor/4d-catalog-diagram-target
+      # Static CRT, so the binary runs without a Visual C++ redistributable.
+      RUSTFLAGS: -C target-feature=+crt-static
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Build 4d-catalog-diagram
+        working-directory: vendor/4d-catalog-diagram
+        run: cargo build --release --locked --target "${{ matrix.target }}" --target-dir "${{ env.TARGET_DIR }}"
+
+      - name: Smoke test
+        working-directory: vendor/4d-catalog-diagram
+        shell: bash
+        run: |
+          ./.github/smoke-test.sh \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram.exe"
+
+      - name: Archive
+        shell: bash
+        run: |
+          mkdir -p staging
+
+          cp \
+            "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram.exe" \
+            staging/4d-catalog-diagram.exe
+
+          tar \
+            -cJf "${{ env.ARTIFACT }}.tar.xz" \
+            -C staging \
+            4d-catalog-diagram.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
   release:
     needs:
       - jq-linux
@@ -1947,6 +2259,9 @@ jobs:
       - _4d-language-oop-linux
       - _4d-language-oop-macos
       - _4d-language-oop-windows
+      - catalog-diagram-linux
+      - catalog-diagram-macos
+      - catalog-diagram-windows
 
     runs-on: ubuntu-latest
 
