@@ -2017,7 +2017,10 @@ jobs:
         include:
           - arch: x64
             target: x86_64-apple-darwin
-            runner: macos-13
+            # macos-13 was retired on 2025-12-04 and silently queues forever.
+            # macos-15-intel is the supported x86_64 image (until late 2027)
+            # and keeps this binary tested on its own architecture.
+            runner: macos-15-intel
           - arch: arm64
             target: aarch64-apple-darwin
             runner: macos-14
