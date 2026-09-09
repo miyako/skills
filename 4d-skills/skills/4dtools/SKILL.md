@@ -23,6 +23,7 @@ Currently the release provides platform-specific builds of:
 * `boon` (JSON Schema validator)
 * `tool4d-lsp-stdio` (4D LSP bridge for code validation)
 * `4d-language-classic` (natural-language lookup service for 4D classic-language commands)
+* `4d-language-oop` (natural-language lookup service for the 4D object (OOP) language class reference)
 
 These tools are implementation dependencies of the 4D skills. They are not
 themselves 4D skills.
@@ -50,7 +51,19 @@ is genuinely needed by more than one skill, install it directly under
 | `xmllint` | `tools/4dcatalog/` | `4dcatalog` only |
 | `boon` | `tools/4dform/` | `4dform` only |
 | `tool4d-lsp-stdio` | `tools/4dlsp/` | `4dlsp` only |
-| `4d-language-classic` | `tools/4dlsp/` | `4dlsp` only |
+| `4d-language-classic` | `tools/4dlang/` | `4dlang` only |
+| `4d-language-oop` | `tools/4dlang/` | `4dlang` only |
+
+`4d-language-classic` and `4d-language-oop` are natural-language lookup
+tools for the two 4D language subsets and are consumed together by the
+single `4dlang` skill (see `skills/4dlang/SKILL.md`), so they share one
+destination directory rather than each getting its own -- they are not
+each `4dlsp`-only the way `tool4d-lsp-stdio` is. (An earlier revision of
+this skillset provisioned `4d-language-classic` into `tools/4dlsp/`,
+alongside `tool4d-lsp-stdio`, back when `4dlsp` was the only skill doing
+language lookup. That mapping no longer matches the "named after the
+skill that depends on it" rule below now that `4dlang` owns lookup for
+both languages, hence the move.)
 
 ```
 <working-repo>/
@@ -61,7 +74,9 @@ is genuinely needed by more than one skill, install it directly under
       boon                     (or boon.exe on Windows)
     4dlsp/
       tool4d-lsp-stdio         (or tool4d-lsp-stdio.exe on Windows)
+    4dlang/
       4d-language-classic      (or 4d-language-classic.exe on Windows)
+      4d-language-oop          (or 4d-language-oop.exe on Windows)
   Project/
     ...
 ```
@@ -167,8 +182,9 @@ rm -f "$TMP_FILE"
 
 For example, to provision `boon` for the `4dform` skill, set
 `TOOL=boon` and `DEST_DIR=tools/4dform`; to provision
-`tool4d-lsp-stdio` or `4d-language-classic` for `4dlsp`, set
-`DEST_DIR=tools/4dlsp`.
+`tool4d-lsp-stdio` for `4dlsp`, set `DEST_DIR=tools/4dlsp`; to provision
+`4d-language-classic` or `4d-language-oop` for `4dlang`, set
+`DEST_DIR=tools/4dlang`.
 
 ### Windows (PowerShell)
 
@@ -196,8 +212,9 @@ Remove-Item $tmp
 & "$destDir/${tool}.exe" --version
 ```
 
-As above, set `$destDir = "tools/4dform"` for `boon`, or
-`$destDir = "tools/4dlsp"` for `tool4d-lsp-stdio`/`4d-language-classic`.
+As above, set `$destDir = "tools/4dform"` for `boon`,
+`$destDir = "tools/4dlsp"` for `tool4d-lsp-stdio`, or
+`$destDir = "tools/4dlang"` for `4d-language-classic`/`4d-language-oop`.
 
 ## Provisioning Multiple Tools
 
@@ -209,8 +226,10 @@ Common sets:
 - 4dcatalog needs: `xmllint` (`tools/4dcatalog/xmllint`)
 - 4dform needs: `boon` (`tools/4dform/boon`)
 - 4dlsp needs: `tool4d-lsp-stdio` (`tools/4dlsp/tool4d-lsp-stdio`,
-  macOS and Windows only -- no Linux build) and `4d-language-classic`
-  (`tools/4dlsp/4d-language-classic`, all platforms)
+  macOS and Windows only -- no Linux build)
+- 4dlang needs: `4d-language-classic` (`tools/4dlang/4d-language-classic`,
+  all platforms) and `4d-language-oop`
+  (`tools/4dlang/4d-language-oop`, all platforms)
 
 ## Verification
 
@@ -220,7 +239,8 @@ After installation, verify each tool can run:
 tools/4dcatalog/xmllint --version
 tools/4dform/boon --help
 tools/4dlsp/tool4d-lsp-stdio --version
-tools/4dlsp/4d-language-classic --help
+tools/4dlang/4d-language-classic --help
+tools/4dlang/4d-language-oop --help
 ```
 
 On Windows, append `.exe`:
@@ -229,7 +249,8 @@ On Windows, append `.exe`:
 & tools\4dcatalog\xmllint.exe --version
 & tools\4dform\boon.exe --help
 & tools\4dlsp\tool4d-lsp-stdio.exe --version
-& tools\4dlsp\4d-language-classic.exe --help
+& tools\4dlang\4d-language-classic.exe --help
+& tools\4dlang\4d-language-oop.exe --help
 ```
 
 A successful download is not sufficient. Treat installation as successful
@@ -291,7 +312,8 @@ The dependency relationships are:
 4dcatalog --> xmllint             --> 4dtools provisions tools/4dcatalog/xmllint
 4dform    --> boon                --> 4dtools provisions tools/4dform/boon
 4dlsp     --> tool4d-lsp-stdio    --> 4dtools provisions tools/4dlsp/tool4d-lsp-stdio
-4dlsp     --> 4d-language-classic --> 4dtools provisions tools/4dlsp/4d-language-classic
+4dlang    --> 4d-language-classic --> 4dtools provisions tools/4dlang/4d-language-classic
+4dlang    --> 4d-language-oop     --> 4dtools provisions tools/4dlang/4d-language-oop
 ```
 
 The individual 4D skills should concentrate on 4D-specific behavior,
