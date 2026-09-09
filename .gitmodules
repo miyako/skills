@@ -17,3 +17,6 @@
 [submodule "vendor/4d-language-classic"]
 	path = vendor/4d-language-classic
 	url = https://github.com/miyako/4d-language-classic.git
+[submodule "vendor/4d-language-oop"]
+	path = vendor/4d-language-oop
+	url = https://github.com/miyako/4d-language-oop.git
