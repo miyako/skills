@@ -455,7 +455,7 @@ After any modification, validate the resulting file against the DTD.
 When the user asks to see, diagram, chart, map, or explore a catalog's schema
 rather than edit it, use `4d-catalog-diagram`. It reads the same
 `.4DCatalog` file and writes an interactive single-file HTML diagram, an SVG,
-or a PNG.
+a PNG, or plain-text Mermaid/Graphviz source.
 
 ```sh
 tools/4dcatalog/4d-catalog-diagram Project/Sources/catalog.4DCatalog
@@ -466,7 +466,16 @@ external assets, so it opens straight from disk with no server.
 
 If `tools/4dcatalog/4d-catalog-diagram` does not exist, provision it first by
 reading `skills/4dtools/SKILL.md`. Do not fall back to XSLT, Graphviz,
-Mermaid, or a hand-written renderer — this tool exists to replace those.
+Mermaid, or a hand-written renderer — this tool exists to replace those. When
+the user specifically wants a Mermaid `erDiagram` to paste into a document, or
+Graphviz source to feed to `dot`, use `-f mmd` / `-f dot` rather than writing
+that source by hand:
+
+```sh
+tools/4dcatalog/4d-catalog-diagram Project/Sources/catalog.4DCatalog -f mmd -o -
+```
+
+Both write to stdout with `-o -`, so they can be piped or appended directly.
 
 To answer a question about the schema instead of drawing it, ask for JSON:
 
@@ -488,10 +497,16 @@ A whole catalog is usually too much to look at. Narrow it:
 | Everything matching a pattern | `--tables-match '^INVOICE'` |
 | What one field joins to | `--field TABLE.FIELD` |
 | An image to paste into a document | `-f png --scale 2` |
+| Mermaid source for a Markdown file | `-f mmd` |
+| Graphviz source for another pipeline | `-f dot` |
 
 Tables just outside the selection are drawn as dimmed stubs so the boundary is
 visible; `--external-refs hide` removes them and `--external-refs include`
 draws them in full.
+
+In the HTML output, `file.html#TABLE` opens focused on one table and
+`file.html#TABLE.FIELD` also highlights one field, which makes a rendered
+diagram linkable from a review comment or an issue.
 
 The tool never modifies the catalog, so it is safe to run before validating.
 Note that it is deliberately permissive — it will happily draw a file that
