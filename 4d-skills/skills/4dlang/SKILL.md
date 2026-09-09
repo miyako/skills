@@ -193,6 +193,19 @@ commands point at `https://developer.4d.com/docs/commands/<slug>` (and
 `.../docs/ViewPro/commands/...`, `.../docs/WritePro/commands/...`), OOP
 members and classes at `https://developer.4d.com/docs/API/<Class>Class`.
 
+OOP **member** links carry the member's section anchor, so they land on the
+member itself rather than the top of a page listing dozens of them:
+
+```
+Document.exists      https://developer.4d.com/docs/API/Document#exists
+4D.IMAPNotifier.new  https://developer.4d.com/docs/API/IMAPNotifierClass#4dimapnotifiernew
+```
+
+Cite the URL exactly as given. The anchor is not always the bare member
+name -- constructors use the fully-qualified form -- so do not reconstruct
+it from the member name. Class cards and classic commands have no anchor,
+which is correct: the page is already the right target.
+
 ### Two different rules, often confused
 
 They are unrelated, and conflating them leads to wrong code:
