@@ -168,7 +168,7 @@ A **class** result (`resultType: "class"`), e.g. from
   "score": 26.460016,
   "cardReason": "many members of this class matched; showing the class card instead of flooding the results",
   "instantiation": { "recipes": [ /* 3 recipes: literal, New collection, New shared collection */ ] },
-  "howToObtain": [ "$c:=[1; 2; 3]   [literal] -- Collection literal — the most idiomatic form.", "/* + 2 more */" ],
+  "howToObtain": [ "$c:=[1; 2; 3]   [literal] -- Collection literal — the most idiomatic form.", "/* + 2 more: this is the COMPLETE array (3 total, one per instantiation.recipes[] entry) -- also uncapped, elided here only for doc brevity */" ],
   "constructibleByUserCode": true,
   "memberCounts": { "total": 47, "declared": 47, "inherited": 0, "oop_function": 46, "oop_property": 1, "oop_constructor": 0 },
   "members": [ { "id": "Collection.at", "memberName": ".at", "kind": "oop_function", "summary": "Returns the element at the specified position in the collection" } /* + 46 more: the COMPLETE membership, in alphabetical order */ ]
@@ -186,6 +186,14 @@ They are unrelated, and conflating them leads to wrong code:
    every member of the class in alphabetical order -- not the members that
    matched the query, and not a top-3 subset. `"web server"` returns a
    `WebServer` card whose `members` holds all 41.
+
+The same "always complete" rule applies to `howToObtain` and
+`instantiation.recipes[]`: both list every recipe for obtaining an
+instance, never a truncated subset -- confirmed across `Collection` (3),
+`WebServer` (2), `Entity` (3), `DataStore` (2), and `File` (3), where
+`howToObtain.length` always equals `instantiation.recipes.length`
+exactly. There is no cap on either array; a card with many recipes shows
+all of them.
 
 So do not call `members --class X` to "get the rest" after reading a card
 from `query --json`: you already have all of them. And do not conclude a
