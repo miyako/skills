@@ -175,6 +175,21 @@ A **class** result (`resultType: "class"`), e.g. from
 }
 ```
 
+### `docPage` is a citable permalink
+
+Member results, class cards and every example block carry a `docPage`
+such as `https://developer.4d.com/docs/API/CollectionClass`. It is an
+official documentation URL and is safe to cite to the user verbatim.
+
+It is **version-less by design**. Do not "helpfully" rewrite it into a
+versioned form like `.../docs/21-R3/API/CollectionClass`: those URLs stop
+resolving once that release is superseded, so a pinned link is a link that
+will break. `4D.Transporter` has no API page and carries no `docPage`;
+absence is meaningful, so do not synthesise a URL from the class name.
+
+Text mode prints it as a `docs:` line. `4d-language-classic` has no
+equivalent field.
+
 ### Two different rules, often confused
 
 They are unrelated, and conflating them leads to wrong code:
