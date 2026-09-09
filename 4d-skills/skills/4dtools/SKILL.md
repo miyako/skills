@@ -24,6 +24,7 @@ Currently the release provides platform-specific builds of:
 * `tool4d-lsp-stdio` (4D LSP bridge for code validation)
 * `4d-language-classic` (natural-language lookup service for 4D classic-language commands)
 * `4d-language-oop` (natural-language lookup service for the 4D object (OOP) language class reference)
+* `4d-catalog-diagram` (renders a 4D catalog as an interactive HTML diagram, SVG, or PNG)
 
 These tools are implementation dependencies of the 4D skills. They are not
 themselves 4D skills.
@@ -53,6 +54,7 @@ is genuinely needed by more than one skill, install it directly under
 | `tool4d-lsp-stdio` | `tools/4dlsp/` | `4dlsp` only |
 | `4d-language-classic` | `tools/4dlang/` | `4dlang` only |
 | `4d-language-oop` | `tools/4dlang/` | `4dlang` only |
+| `4d-catalog-diagram` | `tools/4dcatalog/` | `4dcatalog` only |
 
 `4d-language-classic` and `4d-language-oop` are natural-language lookup
 tools for the two 4D language subsets and are consumed together by the
@@ -74,6 +76,7 @@ defect rather than merely relocating a file.
   tools/
     4dcatalog/
       xmllint                  (or xmllint.exe on Windows)
+      4d-catalog-diagram       (or 4d-catalog-diagram.exe on Windows)
     4dform/
       boon                     (or boon.exe on Windows)
     4dlsp/
@@ -188,7 +191,9 @@ For example, to provision `boon` for the `4dform` skill, set
 `TOOL=boon` and `DEST_DIR=tools/4dform`; to provision
 `tool4d-lsp-stdio` for `4dlsp`, set `DEST_DIR=tools/4dlsp`; to provision
 `4d-language-classic` or `4d-language-oop` for `4dlang`, set
-`DEST_DIR=tools/4dlang`.
+`DEST_DIR=tools/4dlang`. `4d-catalog-diagram` shares `4dcatalog`'s
+directory with `xmllint`, so it uses `DEST_DIR=tools/4dcatalog` as
+well.
 
 ### Windows (PowerShell)
 
@@ -227,7 +232,10 @@ tools that are not needed by the current operation.
 
 Common sets:
 
-- 4dcatalog needs: `xmllint` (`tools/4dcatalog/xmllint`)
+- 4dcatalog needs: `xmllint` (`tools/4dcatalog/xmllint`) for validation, and
+  `4d-catalog-diagram` (`tools/4dcatalog/4d-catalog-diagram`) only when the
+  user asks to see or diagram the schema. Validation is far more common than
+  visualisation, so do not provision the diagram tool pre-emptively.
 - 4dform needs: `boon` (`tools/4dform/boon`)
 - 4dlsp needs: `tool4d-lsp-stdio` (`tools/4dlsp/tool4d-lsp-stdio`,
   macOS and Windows only -- no Linux build)
@@ -241,6 +249,7 @@ After installation, verify each tool can run:
 
 ```sh
 tools/4dcatalog/xmllint --version
+tools/4dcatalog/4d-catalog-diagram --version
 tools/4dform/boon --help
 tools/4dlsp/tool4d-lsp-stdio --version
 tools/4dlang/4d-language-classic --help
@@ -251,6 +260,7 @@ On Windows, append `.exe`:
 
 ```powershell
 & tools\4dcatalog\xmllint.exe --version
+& tools\4dcatalog\4d-catalog-diagram.exe --version
 & tools\4dform\boon.exe --help
 & tools\4dlsp\tool4d-lsp-stdio.exe --version
 & tools\4dlang\4d-language-classic.exe --help

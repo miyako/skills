@@ -2,7 +2,8 @@
 name: 4dcatalog
 description: >
   Work with 4D Catalog source files (.4DCatalog), including understanding,
-  modifying, and validating their XML structure against the 4D Catalog DTD.
+  modifying, and validating their XML structure against the 4D Catalog DTD,
+  and visualizing the schema they describe as a diagram.
 ---
 
 # 4D Catalog
@@ -448,6 +449,69 @@ Do NOT change the `uuid` when renaming.
 - Do not reuse the id or UUID of a previously deleted field.
 
 After any modification, validate the resulting file against the DTD.
+
+## Visualizing a catalog
+
+When the user asks to see, diagram, chart, map, or explore a catalog's schema
+rather than edit it, use `4d-catalog-diagram`. It reads the same
+`.4DCatalog` file and writes an interactive single-file HTML diagram, an SVG,
+a PNG, or plain-text Mermaid/Graphviz source.
+
+```sh
+tools/4dcatalog/4d-catalog-diagram Project/Sources/catalog.4DCatalog
+```
+
+That writes `catalog.html` next to the input: one self-contained file with no
+external assets, so it opens straight from disk with no server.
+
+If `tools/4dcatalog/4d-catalog-diagram` does not exist, provision it first by
+reading `skills/4dtools/SKILL.md`. Do not fall back to XSLT, Graphviz,
+Mermaid, or a hand-written renderer — this tool exists to replace those. When
+the user specifically wants a Mermaid `erDiagram` to paste into a document, or
+Graphviz source to feed to `dot`, use `-f mmd` / `-f dot` rather than writing
+that source by hand:
+
+```sh
+tools/4dcatalog/4d-catalog-diagram Project/Sources/catalog.4DCatalog -f mmd -o -
+```
+
+Both write to stdout with `-o -`, so they can be piped or appended directly.
+
+To answer a question about the schema instead of drawing it, ask for JSON:
+
+```sh
+tools/4dcatalog/4d-catalog-diagram inspect Project/Sources/catalog.4DCatalog
+```
+
+The JSON lists every table, field, type and relation, plus an `analysis` block
+naming tables with no primary key, isolated tables, and the most connected
+tables. Prefer this over reading the raw XML when the question is about shape
+rather than syntax.
+
+A whole catalog is usually too much to look at. Narrow it:
+
+| Intent | Flags |
+|--------|-------|
+| One table and its immediate relations | `--focus TABLE --depth 1` |
+| A named set of tables | `--tables A,B,C` |
+| Everything matching a pattern | `--tables-match '^INVOICE'` |
+| What one field joins to | `--field TABLE.FIELD` |
+| An image to paste into a document | `-f png --scale 2` |
+| Mermaid source for a Markdown file | `-f mmd` |
+| Graphviz source for another pipeline | `-f dot` |
+
+Tables just outside the selection are drawn as dimmed stubs so the boundary is
+visible; `--external-refs hide` removes them and `--external-refs include`
+draws them in full.
+
+In the HTML output, `file.html#TABLE` opens focused on one table and
+`file.html#TABLE.FIELD` also highlights one field, which makes a rendered
+diagram linkable from a review comment or an issue.
+
+The tool never modifies the catalog, so it is safe to run before validating.
+Note that it is deliberately permissive — it will happily draw a file that
+fails DTD validation, so do not treat a successful render as evidence that the
+catalog is valid.
 
 ## DTD Errors
 
