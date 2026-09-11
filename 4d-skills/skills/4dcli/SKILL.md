@@ -159,12 +159,12 @@ While researching, any of these means **stop researching and invoke**:
 * You are about to request a download URL that differs from one that
   just returned `404` only in how the branch or version is spelled. A
   `404` means the branch/version pair is wrong, or that version is not
-  served. Re-check the pairing table under "Obtaining tool4d" **once**.
-  If your target pair is not in that table, **stop and report** -- do
-  not enumerate variants. There is no directory listing at that
-  endpoint, so guessing cannot converge, and probing variants has
-  already led to the false conclusion that the endpoint serves no
-  R-releases. It does.
+  publicly released -- betas are not published at that endpoint.
+  Re-check the pairing table under "Obtaining tool4d" **once**. If your
+  target pair is not in that table, **stop and report** -- do not
+  enumerate variants. There is no directory listing at that endpoint, so
+  guessing cannot converge, and probing variants has already led to the
+  false conclusion that the endpoint serves no R-releases. It does.
 * You are about to re-run an identical command, unchanged, expecting
   different output.
 * You are about to download tool4d without having completed PREFLIGHT
@@ -201,6 +201,10 @@ Reference: https://blog.4d.com/4d-versioning-feature-releases-lts-releases-expla
 Fixes land in feature releases first and may be backported to LTS later.
 This matters when choosing a binary: a fix you depend on may not yet be
 in the LTS you have installed.
+
+Being a released version and being downloadable are not the same thing:
+the newest feature release is often still in beta and is not published at
+the download endpoint. See "Obtaining tool4d", Step 1.
 
 ## Version Requirements
 
@@ -252,9 +256,25 @@ the search order that `tool4d-lsp-stdio` uses (documented under
 "Prerequisites" in `skills/4dlsp/SKILL.md`) lists the conventional
 locations, and "Binary Paths" above gives the typical macOS layout.
 
-A local installation is often *newer* than what the download endpoint
-serves: at time of writing `21 R4` is installable locally but 404s at the
-endpoint. Download only when no suitable local build is found.
+Download only when no suitable local build is found.
+
+**The endpoint publishes released versions only.** A `404` for a version
+newer than the newest released one means that version is **not publicly
+released** -- typically still in beta, which 4D distributes to beta
+participants rather than publishing here. It does not mean the endpoint
+is stale, broken, or that you built the URL wrong. This is a terminal
+condition: do not retry, do not probe spellings, do not look for a
+mirror. See the Stuck Detector above.
+
+A locally installed build *newer* than anything the endpoint serves is
+therefore most likely a beta install. Using it is legitimate when it is
+already on the host -- that is exactly the "prefer an existing
+installation" case -- but do not expect to download it, and do not
+report the download as temporarily unavailable.
+
+At time of writing the newest publicly available builds are `21 R3` and
+`21.2` LTS; `21 R4` is in beta and 404s here. Those version numbers date
+quickly -- the rule above does not.
 
 ### Step 2: Download
 
