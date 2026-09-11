@@ -194,6 +194,15 @@ destinations that `4dtools` uses (see "Installation Location" in
 it is a per-skill tool consumed only by `4dcli`, so it follows the same
 layout.
 
+**Before extracting, confirm `tools/` is ignored in the target repo.**
+An unpacked tool4d is about 108 MB across 145 files, and no single file
+exceeds GitHub's 100 MB limit -- so an accidental commit is *accepted*
+and permanently bloats the repository rather than being rejected. Check
+the working repo's `.gitignore` and append a `tools/` entry if absent,
+leaving existing entries untouched. The skills repository ignores
+`tools/` already, but tools are installed in the repo being worked on,
+which usually does not.
+
 ```sh
 mkdir -p tools/4dcli
 tar -xJf tool4d_arm64.tar.xz -C tools/4dcli
@@ -207,21 +216,54 @@ bits, so no `chmod` is normally needed:
 | `tool4d_arm64.tar.xz`, `tool4d_x86_64.tar.xz` | `tool4d.app/` | `tools/4dcli/tool4d.app/Contents/MacOS/tool4d` |
 | `tool4d_win.tar.xz` | `tool4d/` | `tools\4dcli\tool4d\tool4d.exe` |
 
-On macOS the archive is downloaded, so clear the quarantine attribute or
-Gatekeeper will block it:
+On macOS, clear the quarantine attribute **if present** -- browser
+downloads and some transports set it, and Gatekeeper then blocks the
+bundle. A `curl` download as prescribed above does not set it (it sets
+only `com.apple.provenance`), but the command is harmless and idempotent:
 
 ```sh
-xattr -dr com.apple.quarantine tools/4dcli/tool4d.app
+xattr -l tools/4dcli/tool4d.app | grep -q quarantine \
+  && xattr -dr com.apple.quarantine tools/4dcli/tool4d.app
 ```
 
+#### Pointing `4dlsp` at it
+
 `tools/4dcli/` is **not** in any of the four locations
-`tool4d-lsp-stdio` searches, so a tool4d installed there is invisible to
-`4dlsp` unless you say where it is. Export `TOOL4D_PATH` (search-order
-entry 1) or pass `--tool`:
+`tool4d-lsp-stdio` searches (see "Prerequisites" in
+`skills/4dlsp/SKILL.md`), so a tool4d installed there is invisible to
+`4dlsp` unless every invocation is told where it is.
+
+Pass `--tool <path-to-tool4d>` on each `tool4d-lsp-stdio` invocation.
+This is the reliable method and the default one to use:
+
+```sh
+tools/4dlsp/tool4d-lsp-stdio validate \
+  --tool tools/4dcli/tool4d.app/Contents/MacOS/tool4d \
+  --workspace Project/ Sources/Methods/foo.4dm
+```
+
+`--tool` is accepted by `validate`, `check-syntax` and the one-shot
+subcommands (`hover`, `completion`, `goto-definition`,
+`document-symbols`) alike. There is no config file or persisted setting
+that records the path.
+
+`TOOL4D_PATH` is the environment-variable equivalent (the same
+search-order entry 1) and is a convenience for an interactive shell only:
 
 ```sh
 export TOOL4D_PATH="$PWD/tools/4dcli/tool4d.app/Contents/MacOS/tool4d"
 ```
+
+An `export` applies only to the shell process that runs it and must be
+repeated in every new shell. If each command runs in a fresh process --
+as it does in most agent harnesses -- the export will appear to work on
+the first call and then fail with "tool4d not found" on the next. **Use
+`--tool` in that case**, not `export`.
+
+The one place `TOOL4D_PATH` is durable is a host-registered MCP server,
+where the host stores it as part of the server's configuration and sets
+it on every launch -- see the environment-variable note in
+`4d-skills/AGENTS.md`.
 
 Do not install tool4d globally and do not modify the user's PATH.
 

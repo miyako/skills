@@ -95,6 +95,13 @@ shared by more than one consumer, in which case it stays directly under
 
 Do not install them globally and do not modify the user's PATH.
 
+Before downloading, confirm the working repo ignores `tools/`, and add
+that entry to its `.gitignore` if absent without disturbing existing
+entries. This repository ignores `tools/` already, but tools are
+installed in the repo being worked on, which often does not -- and a
+provisioned binary that slips under GitHub's 100 MB per-file limit will
+be accepted and permanently bloat that repository rather than rejected.
+
 ## Platform Detection
 
 Detect the operating system and CPU architecture before downloading.
