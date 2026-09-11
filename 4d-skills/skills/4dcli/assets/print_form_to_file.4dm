@@ -15,7 +15,7 @@ $formName:=$userParams[0]
 var $formPage : Integer
 $formPage:=Num($userParams[1])
 var $screenshotPath : Text
-$screenshotPath:=$userParams[2]
+$screenshotPath:=$userParams.slice(2).join(":")
 
 If ($screenshotPath="")
 	return 

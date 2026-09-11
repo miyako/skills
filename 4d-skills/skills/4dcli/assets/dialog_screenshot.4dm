@@ -26,7 +26,7 @@ If ($formPage<1)
 End if 
 
 var $screenshotPath : Text
-$screenshotPath:=$params[2]
+$screenshotPath:=$params.slice(2).join(":")
 
 var $form : Object
 $form:={}

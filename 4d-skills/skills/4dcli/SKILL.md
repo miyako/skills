@@ -187,17 +187,31 @@ is complete.
 | `goto_page_then_screenshot` | -- | -- | Chain link. Never invoked as a startup method |
 | `screenshot_and_accept` | -- | -- | Chain link. Never invoked as a startup method |
 
-Shared behavior of the three entry points that take a path:
+All four entry points that take a path share the same `--user-param`
+shape, `FormName:Page:Path`:
 
-* `--user-param` is split on `:`, and fewer than three segments is a
-  silent no-op return. On Windows, a drive-letter path like `C:\out.png`
-  therefore **breaks the parsing** -- use a path without a colon, or a 4D
-  filesystem path such as `/PACKAGE/out.png`.
-* Page numbers below 1 are clamped to 1, and a page beyond the form's
-  page count is clamped to the last page, via `FORM GET PROPERTIES`.
+* The value is split on `:`, and fewer than three segments is a silent
+  no-op return. The **path may itself contain colons**: everything from
+  the third segment onward is rejoined, so a Windows drive-letter path
+  such as `MyForm:1:C:\out.png` resolves correctly to `C:\out.png`. The
+  form name and the page number must not contain a colon.
+* A 4D filesystem path such as `/PACKAGE/out.png` is still the better
+  choice where it works -- it is platform independent and sandboxed.
+* A page number below 1 is clamped to 1.
 * The parent directory of the output path is created if missing.
-* When `Application info.headless` is true they log the output path to
-  standard output and quit.
+
+The three tool4d entry points -- `project_form_to_image`,
+`print_form_to_file` and `run_project_form` -- additionally:
+
+* return without doing anything if the path is empty;
+* clamp a page beyond the form's page count to the last page, via
+  `FORM GET PROPERTIES`;
+* log the output path to standard output and quit when
+  `Application info.headless` is true.
+
+`dialog_screenshot` does none of those three: it cannot call
+`FORM GET PROPERTIES` before the form is open, and an empty path makes
+the chain accept the dialog without writing a file.
 
 `project_form_to_image` renders the **static template**, so it never
 reflects `On Load` or any `Form.xxx` value. That is a property of
