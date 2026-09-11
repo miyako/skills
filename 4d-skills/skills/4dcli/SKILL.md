@@ -4,8 +4,9 @@ description: >
   Run a 4D project from the command line with tool4d or the full 4D
   application: version requirements, binary paths, flags, startup-method
   patterns, automated testing, and the DIALOG + CALL FORM render cycle.
-  Use when executing 4D code headlessly, capturing form output, or wiring
-  4D into CI.
+  Ships installable source for six ready-made startup methods that
+  capture or execute a form. Use when executing 4D code headlessly,
+  capturing form output, or wiring 4D into CI.
 ---
 
 # 4D Command Line
@@ -15,6 +16,10 @@ description: >
 This skill covers **invoking** a 4D project from a shell -- the `tool4d`
 and `4D` binaries, their flags, and the startup-method patterns that make
 a headless run produce observable output.
+
+It also ships the source of six ready-made startup methods in `assets/`,
+which a project must contain before it can be driven this way. See
+"Bundled Startup Methods".
 
 It does not cover:
 
@@ -142,7 +147,159 @@ workflows, use `4D` **without** `--headless`.
 * **FAIL**: `ASSERT` triggers a dialog, headless mode auto-aborts, exit
   code is non-zero and no `PASS` is printed.
 
+## Bundled Startup Methods
+
+A startup method is the only way to make a headless 4D run do anything:
+`--startup-method` names a project method, and everything else arrives
+through `--user-param`. The six methods below cover form capture and form
+execution, and this skill ships their source in `assets/`:
+
+```
+skills/4dcli/assets/
+  project_form_to_image.4dm
+  print_form_to_file.4dm
+  run_project_form.4dm
+  dialog_screenshot.4dm
+  goto_page_then_screenshot.4dm
+  screenshot_and_accept.4dm
+```
+
+They are ordinary project methods, not 4D built-ins. A project that does
+not have them cannot be driven this way until they are installed -- see
+"Installing a Bundled Method" below.
+
+All six are generic: no table references, no project classes, no
+hardcoded paths. They are written untokenized and are verified to compile
+both in a project with `"tokenizedText": false` and in one that omits the
+key (tokenized default).
+
+### Contracts
+
+You do not need to read the asset files to use these. Each contract below
+is complete.
+
+| Method | `--user-param` | Binary | Effect |
+|---|---|---|---|
+| `project_form_to_image` | `FormName:Page:/out.png` | `tool4d` | Static-template screenshot to PNG. No CSS |
+| `print_form_to_file` | `FormName:Page:/out.pdf` | `tool4d` | Prints the form to PDF. CSS applied |
+| `run_project_form` | `FormName:Page:/out.json` | `4D`, no `--headless` | Opens the form, accepts it, writes the `Form` object as JSON |
+| `dialog_screenshot` | `FormName:Page:/out.png` | `4D`, no `--headless` | Runtime screenshot after `On Load`. Entry point of a three-method chain |
+| `goto_page_then_screenshot` | -- | -- | Chain link. Never invoked as a startup method |
+| `screenshot_and_accept` | -- | -- | Chain link. Never invoked as a startup method |
+
+Shared behavior of the three entry points that take a path:
+
+* `--user-param` is split on `:`, and fewer than three segments is a
+  silent no-op return. On Windows, a drive-letter path like `C:\out.png`
+  therefore **breaks the parsing** -- use a path without a colon, or a 4D
+  filesystem path such as `/PACKAGE/out.png`.
+* Page numbers below 1 are clamped to 1, and a page beyond the form's
+  page count is clamped to the last page, via `FORM GET PROPERTIES`.
+* The parent directory of the output path is created if missing.
+* When `Application info.headless` is true they log the output path to
+  standard output and quit.
+
+`project_form_to_image` renders the **static template**, so it never
+reflects `On Load` or any `Form.xxx` value. That is a property of
+`FORM SCREENSHOT`, not a limitation of the method -- see
+`skills/4dform/references/screenshot-rendering.md` for what the static
+template shows per object type. Use `dialog_screenshot` when you need the
+runtime appearance.
+
+### The `dialog_screenshot` Chain
+
+`dialog_screenshot` is one CLI entry point implemented as three methods,
+because of the rendering-cycle rule described under Pattern 4 below.
+Installing it means installing all three.
+
+State is handed between them on the form object:
+
+| Property | Set by | Read by |
+|---|---|---|
+| `Form.__page` | `dialog_screenshot` | `goto_page_then_screenshot` |
+| `Form.__screenshotPath` | `dialog_screenshot` | `screenshot_and_accept` |
+
+`dialog_screenshot` builds `$form`, assigns both properties, opens the
+form with `DIALOG($formName; $form; *)`, and issues
+`CALL FORM(goto_page_then_screenshot)`. That method navigates and chains
+`CALL FORM(screenshot_and_accept)`, which captures, writes the file,
+calls `ACCEPT`, and quits.
+
+**Caveat -- `formClass` and undeclared properties.** `__page` and
+`__screenshotPath` are assigned to the form object from outside the form.
+If the target form declares a `formClass`, the compiler checks
+`Form.xxx` accesses against the class and will emit **"Undeclared
+property 'xxx' used"** warnings for both. Fix it by declaring them in the
+form class:
+
+```4d
+property __page : Integer
+property __screenshotPath : Text
+```
+
+See the Form Class section of
+`skills/4dform/references/form-concepts.md`. These are warnings, not
+errors, so the capture still works -- but they will show up in `4dlsp`
+output and should not be mistaken for a defect in the form.
+
+**Caveat -- binary.** `dialog_screenshot` requires `4D` **without**
+`--headless`, and does not work under `tool4d` at all. Headless mode
+auto-answers dialog boxes, so `DIALOG` is dismissed before the chained
+`CALL FORM` can run, and the process may then hang. The same applies to
+`run_project_form`.
+
+### Installing a Bundled Method
+
+Copy the asset to the project's methods directory, keeping the filename:
+
+```
+<project>/Project/Sources/Methods/<name>.4dm
+```
+
+Install only the methods the current task needs. Do not install all six
+by reflex -- a screenshot task needs `project_form_to_image` alone.
+Installing `dialog_screenshot` means installing its two chain links as
+well.
+
+Before writing each file, check whether it already exists:
+
+| State | Action |
+|---|---|
+| Absent | Write it. Report that you added it |
+| Present, byte-identical | Do nothing. Report that it was already installed |
+| Present, different | **Stop. Never overwrite.** Report the difference and let the user decide |
+
+The third case is not a formality. The method may be the user's own code
+that happens to share a name, or a modified copy whose behavior the
+project depends on. Overwriting it silently changes program behavior.
+
+Create files only under `Project/Sources/Methods/`. Do not modify the
+`.4DProject` file, forms, classes, or anything else in the project as
+part of installing a method.
+
+After installing, validate with the `4dlsp` skill:
+
+```sh
+tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/<name>.4dm
+```
+
+**Caveat -- name collisions.** 4D method names are global, so
+`run_project_form` or `test`-like names can collide with an existing user
+method. If a name is taken and the existing method is unrelated, install
+under a different name -- and remember that `--startup-method` must then
+be given the new name. Renaming an entry point does not require editing
+the chain links, but renaming a chain link does require editing the
+`Formula(...)` reference that calls it.
+
+If the user declines the install, the contracts above are complete enough
+to hand-author an equivalent method, or to drive the project through a
+startup method it already has.
+
 ## Startup-Method Patterns
+
+The patterns below are for writing your own startup method when the
+bundled ones do not fit. They are the same techniques the bundled methods
+use.
 
 ### Pattern 1: Direct Test (no UI needed)
 

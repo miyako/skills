@@ -43,7 +43,9 @@ driven by a stylesheet, use the print-to-PDF output instead.
 
 `project_form_to_image` and `print_form_to_file` are project-specific
 helper methods, not built-in 4D commands. A project that does not define
-them cannot be captured this way until they are written.
+them cannot be captured this way until they are installed -- the `4dcli`
+skill ships their source and the install procedure, see
+`skills/4dcli/SKILL.md`.
 
 ## Static Template Behavior
 

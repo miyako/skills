@@ -98,6 +98,19 @@ this file:
 - `schemas/4dcatalog/base.dtd` -- 4D Catalog DTD
 - `schemas/4dform/formsSchema.json` -- 4D Form JSON Schema
 
+A skill may also ship 4D source templates in an `assets/` subdirectory
+next to its `SKILL.md`. These are distinct from `tools/` (executables
+provisioned by `4dtools`) and from `schemas/` (validation inputs): they
+are `.4dm` source intended to be copied into a user's project. Currently
+only `skills/4dcli/assets/` does this, providing the startup methods that
+drive a project from the command line.
+
+Copying a source asset into a project adds code the user will maintain,
+so treat it as a change to their project, not as tool provisioning:
+install only what the current task needs, never overwrite an existing
+file that differs, and validate the result. The owning `SKILL.md` states
+the exact procedure.
+
 Do not duplicate detailed artifact-specific instructions here. Those belong
 in the corresponding `SKILL.md`.
 
