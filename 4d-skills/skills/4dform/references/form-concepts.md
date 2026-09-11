@@ -2,7 +2,7 @@
 object: "form"
 json_type: null
 keywords: ["form", "project form", "table form", "subform", "page", "windowTitle", "windowSizingX", "windowSizingY", "margins", "onLoad", "onUnload", "formClass", "file structure", "4DForm"]
-summary: "Form-level concepts: project/table/subform types, file/directory structure, window & page properties, form-level events, form classes."
+summary: "Form-level concepts: project/table/subform types, file/directory structure, window & page properties, entry order, form-level events and the event cycle, font themes, icons, CSS, data sources, form classes, and object-method wiring."
 ---
 
 # 4D Form Concepts
@@ -42,6 +42,10 @@ Table forms are organized by **table number** (not table name). The table number
 - **Object methods**: `Forms/<FormName>/ObjectMethods/<ObjectName>.4dm`
 
 ### Example Directory Layout
+
+Only the form-owned subtree is shown here. For the rest of the project
+layout (`.4DProject`, `catalog.4DCatalog`, `menus.json`, `roles.json`,
+`Methods/`, `.gitignore`), see `Project/AGENTS.md`.
 
 ```
 Project/
@@ -537,13 +541,13 @@ button {
 }
 ```
 
-## Filesystem Paths: POSIX vs. Platform
+## Filesystem Paths in Form Properties
 
-Reference: https://developer.4d.com/docs/Concepts/paths#filesystem-pathnames, https://developer.4d.com/docs/commands/file, https://developer.4d.com/docs/API/FileClass
+Reference: https://developer.4d.com/docs/Concepts/paths#filesystem-pathnames
 
-### 4D Filesystem Pathnames
-
-4D defines virtual **filesystem pathnames** that map to project-relative folders. These are not real POSIX paths — they are 4D-specific aliases resolved at runtime:
+Picture and icon properties in a `.4DForm` (and in CSS `url()`) are written
+as 4D **filesystem pathnames**. These are virtual, project-relative aliases
+resolved at runtime, not real POSIX paths:
 
 | Filesystem | Designates |
 |-----------|-----------|
@@ -554,42 +558,14 @@ Reference: https://developer.4d.com/docs/Concepts/paths#filesystem-pathnames, ht
 | `/RESOURCES` | Current project resources folder |
 | `/SOURCES` | Project sources folder |
 
-These provide **OS independence** (no hardcoded platform paths) and **security** (sandboxed — code cannot access above the filesystem root).
+They provide OS independence (no hardcoded platform paths) and security
+(sandboxed -- code cannot reach above the filesystem root).
 
-### `File()` and `.platformPath`
-
-`File()` and `Folder()` accept only **absolute pathnames** — either a filesystem pathname or a full platform path (with `fk platform path` constant). Relative paths are not accepted.
-
-Many legacy commands (`READ PICTURE FILE`, `WRITE PICTURE FILE`, `DOCUMENT TO BLOB`, etc.) expect a **platform path** (macOS: `/Users/.../`, Windows: `C:\...`), not a filesystem pathname. The `File` object bridges the two:
-
-```4d
-var $file : 4D.File
-$file:=File("/RESOURCES/Images/grid2x2.png")  // 4D filesystem pathname
-READ PICTURE FILE($file.platformPath; $image) // .platformPath → native OS path
-```
-
-This is cleaner than manually building platform paths with `Get 4D folder` + `Folder separator`:
-
-```4d
-// Verbose legacy approach — avoid
-READ PICTURE FILE(Get 4D folder(Current resources folder)+"Images"+Folder separator+"grid2x2.png"; $image)
-```
-
-**Key properties of `4D.File`:**
-
-| Property | Returns | Use for |
-|----------|---------|---------|
-| `.path` | 4D filesystem path (`/RESOURCES/...`) | 4D API calls that accept filesystem paths |
-| `.platformPath` | Native OS path (`/Users/.../` or `C:\...`) | Legacy commands expecting platform paths |
-| `.name` | Filename with extension | Display, logging |
-| `.exists` | Boolean | Guard before reading |
-
-The same pattern applies to `Folder()` for directory references. Use `.file()` and `.folder()` on a folder object for **relative** navigation within a known root:
-
-```4d
-$folder:=Folder("/RESOURCES/Images")
-$file:=$folder.file("grid2x2.png")  // relative path within the folder
-```
+Form properties take the filesystem pathname directly, so `/RESOURCES/...`
+is normally all a form needs. Converting one to a native OS path in 4D code
+(`File()`, `4D.File.platformPath`, `Folder()`, and the legacy commands that
+require platform paths) is language-level, not form-level: look the API up
+via the `4dlang` skill rather than guessing it here.
 
 ## Data Sources
 
@@ -695,28 +671,14 @@ Class constructor
 
 Reference: https://developer.4d.com/docs/Concepts/classes#property
 
-## Variable Declarations
+## Variable Declarations in Form Code
 
-All local variables should be explicitly declared with `var`:
-```4d
-var $name : Text
-var $count : Integer
-var $list : Object
-```
-
-Undeclared variables generate **compilation errors** (not just warnings).
-The syntax checker (`Compile project` with empty `targets`) catches these.
-
-**Function return values**: If a function returns a value, you must capture it.
-Calling a function as a procedure (ignoring the return value) generates an error:
-```4d
-// ERROR: "This function has been called as a procedure"
-Get database parameter(User param value; $text)
-
-// CORRECT: capture the return value
-var $unused : Real
-$unused:=Get database parameter(User param value; $text)
-```
+Declare every local variable with `var` in `method.4dm` and
+`ObjectMethods/*.4dm`; an undeclared variable is a compilation error, not a
+warning. This is `.4dm` code, not form JSON -- validate it with the `4dlsp`
+skill (`skills/4dlsp/SKILL.md`) rather than relying on inspection, and look
+up command and function signatures via `4dlang` (`skills/4dlang/SKILL.md`)
+before writing the call.
 
 ## Object Method Wiring
 
@@ -737,49 +699,26 @@ form JSON:
 Without the `"method"` property, the `.4dm` file is orphaned and never invoked.
 Similarly, without `"events"`, the method won't receive any events even if wired.
 
-## Version Encoding
+## Project Compatibility Version
 
-The `.4DProject` file's `compatibilityVersion` encodes the 4D version:
+The form is loaded by whichever 4D version opens the project, and that is
+governed by `compatibilityVersion` in the `.4DProject` file. The encoding
+and the tool4d compatibility rule are owned by the `4dproject` skill --
+see `skills/4dproject/SKILL.md`.
 
-| Value | Version |
-|-------|---------|
-| `2101` | 21.1 |
-| `2120` | 21 R2 |
-| `2130` | 21 R3 |
-| `2009` | 20.9 |
-| `20A0` | 20 R10 |
+## Rendering a Form for Verification
 
-A newer tool4d can safely run an older `compatibilityVersion` project (e.g. tool4d 21 R3 running a `2101` project). The reverse also works, but the project may use commands or features that do not yet exist in the older version.
+To render a form to PNG or PDF from the command line, and to know what the
+static template actually shows per object type, see
+`screenshot-rendering.md`. For the tool4d binary itself -- version
+requirements, flags, startup methods, and the `DIALOG` + `CALL FORM` render
+cycle -- see the `4dcli` skill (`skills/4dcli/SKILL.md`).
 
-## CLI Commands for Testing
+## Application Settings that Affect Forms
 
-See `98-tool4d-cli.md` for centralized CLI reference (version requirements, binary paths, `FORM SCREENSHOT` behavior).
-
-### Screenshot (no CSS applied)
-
-```bash
-/Applications/4D\ 21\ R3/tool4d.app/Contents/MacOS/tool4d \
-  --startup-method=project_form_to_image \
-  --dataless \
-  --project=<path>/example.4DProject \
-  --user-param=<FormName>:<PageNumber>:<OutputPath.png>
-```
-
-### Print to PDF (CSS applied)
-
-```bash
-/Applications/4D\ 21\ R3/tool4d.app/Contents/MacOS/tool4d \
-  --startup-method=print_form_to_file \
-  --dataless \
-  --project=<path>/example.4DProject \
-  --user-param=<FormName>:<PageNumber>:<OutputPath.pdf>
-```
-
-Note: `FORM SCREENSHOT` does **not** apply CSS stylesheets. Use print form output to verify CSS styling.
-
-## Application Settings
-
-Application settings are stored in `Project/Sources/settings.4DSettings` (XML format).
+Application settings are stored in `Project/Sources/settings.4DSettings` (XML
+format). Only the form-facing shortcuts are covered here; for the settings
+file itself see `skills/4dsettings/SKILL.md`.
 
 Reference: https://developer.4d.com/docs/settings/overview
 
