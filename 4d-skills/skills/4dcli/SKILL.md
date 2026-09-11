@@ -2,8 +2,9 @@
 name: 4dcli
 description: >
   Run a 4D project from the command line with tool4d or the full 4D
-  application: version requirements, binary paths, flags, startup-method
-  patterns, automated testing, and the DIALOG + CALL FORM render cycle.
+  application: the invocation protocol to follow, a task router, version
+  requirements, binary paths, flags, startup-method patterns, automated
+  testing, and the DIALOG + CALL FORM render cycle.
   Ships installable source for six ready-made startup methods that
   capture or execute a form. Use when executing 4D code headlessly,
   capturing form output, or wiring 4D into CI.
@@ -32,6 +33,150 @@ It does not cover:
   `skills/4dform/references/screenshot-rendering.md`
 
 Reference: https://developer.4d.com/docs/Admin/cli
+
+## Task Router
+
+Find the row for what you are trying to do. Open the section it names,
+and use the binary it names. Choosing the wrong binary is a real and
+confusing failure, not a style preference -- see "Choosing the Right
+Engine".
+
+| Task | Open | Binary |
+|---|---|---|
+| Capture a form to PNG as the Form Editor draws it | "Contracts" -> `project_form_to_image` | `tool4d` |
+| Print a form to PDF with stylesheets applied | "Contracts" -> `print_form_to_file` | `tool4d` |
+| Screenshot a form as it looks *after* `On Load` | "The `dialog_screenshot` Chain", Pattern 4 | `4D`, **no** `--headless` |
+| Dump the `Form` object as JSON at runtime | "Contracts" -> `run_project_form` | `4D`, **no** `--headless` |
+| Run an automated test suite | "Automated Testing" | `tool4d` |
+| Run 4D code that needs no UI at all | Pattern 1 | `tool4d` |
+| Run a batch task that needs no `DIALOG` but needs the full app | "Choosing the Right Engine" | `4D --headless` (licensed) |
+| Install a bundled startup method into a project | "Installing a Bundled Method" | none |
+| Write your own startup method | "Startup-Method Patterns" | task-dependent; see "Choosing the Right Engine" |
+| Pass an argument into a startup method | Pattern 3, "Flags" | task-dependent |
+| Decide where a run may write its output | "Writing Output Files" | none |
+| Decide which version a feature needs | "Version Requirements" | none |
+| Obtain or install tool4d | "Obtaining tool4d" | none |
+| Make an installed tool4d visible to `4dlsp` | "Pointing `4dlsp` at it" | none |
+| Understand what a capture actually *shows* | `skills/4dform/references/screenshot-rendering.md` | none |
+
+### Reading budget
+
+Read this router plus the one or two sections your row names. Reading
+this file end to end is not required for any single task, and no task
+needs more than three of its sections.
+
+There is nothing to remember across turns. If you lose context, re-enter
+at PHASE: ROUTE and read the row for the current task again. Do not try
+to reconstruct what you had already read.
+
+## Invocation Protocol
+
+Follow these four phases in order. Announce the phase before each action,
+for example:
+
+```
+PHASE: PREFLIGHT -- locating tool4d and confirming its build
+```
+
+The announcement is not decoration. If you cannot name the phase you are
+in, you have drifted, and drifting into open-ended exploration is the
+known failure mode for this task.
+
+### PHASE: ROUTE (one step)
+
+Read the Task Router above. Name the task, the section you will open, and
+the binary the row requires. Do not list directories to "see what is
+there" -- the layout of this skill and of a 4D project is fixed and is
+given in this file.
+
+### PHASE: PREFLIGHT (before any invocation)
+
+Establish all four of these before running anything. Each is a command,
+not a judgement:
+
+1. **A binary exists.** Prefer an installation already on the host, and
+   check for one *before* downloading anything (see "Obtaining tool4d",
+   Step 1). On macOS the conventional layout is:
+
+   ```sh
+   ls -d /Applications/4D* 2>/dev/null
+   test -x tools/4dcli/tool4d.app/Contents/MacOS/tool4d
+   ```
+
+2. **Its version satisfies the task.** Both binaries accept `--version`,
+   print one line and exit `0`:
+
+   ```sh
+   "/Applications/4D 21 R3/tool4d.app/Contents/MacOS/tool4d" --version
+   # 21 R3 build 21R3.100186
+   ```
+
+   Compare the build number against "Version Requirements" -- that
+   section is stated in build numbers for this reason. Verified on macOS
+   with 21 R3; the flag has not been checked on Windows or Linux, so
+   treat a failure there as unknown rather than as a broken install, and
+   fall back to the version carried in the install path.
+
+3. **The project path resolves**, and the startup method the task needs
+   is present in it:
+
+   ```sh
+   test -f "<project>/Project/Sources/Methods/<name>.4dm"
+   ```
+
+   If it is absent, install it first -- see "Installing a Bundled
+   Method". A missing startup method is not an error 4D reports usefully.
+
+4. **The output path is inside the project scope**, or you have accepted
+   the sandboxing risk described under "Writing Output Files".
+
+### PHASE: INVOKE (one command)
+
+Run the command once, in the foreground, and keep its exit code. Always
+pass `--dataless` when the project may be open elsewhere.
+
+Do not re-run an unchanged command. If it failed, change something first
+-- the project, the method, the arguments or the binary -- and say what
+you changed.
+
+### PHASE: VERIFY
+
+Run the done-gate under "Definition of Done". The task is not finished
+until it passes, and a command that appeared to succeed is not evidence
+on its own.
+
+## Stuck Detector
+
+This detector applies to **research** -- PHASE: ROUTE and PHASE:
+PREFLIGHT. It never restricts legitimate repeated work. Re-running a
+command after fixing the project, reading back an output file you just
+produced, re-checking a version after installing a different build, and
+enumerating output files during the done-gate are all normal and
+expected.
+
+While researching, any of these means **stop researching and invoke**:
+
+* You are about to request a download URL that differs from one that
+  just returned `404` only in how the branch or version is spelled. A
+  `404` means the branch/version pair is wrong, or that version is not
+  served. Re-check the pairing table under "Obtaining tool4d" **once**.
+  If your target pair is not in that table, **stop and report** -- do
+  not enumerate variants. There is no directory listing at that
+  endpoint, so guessing cannot converge, and probing variants has
+  already led to the false conclusion that the endpoint serves no
+  R-releases. It does.
+* You are about to re-run an identical command, unchanged, expecting
+  different output.
+* You are about to download tool4d without having completed PREFLIGHT
+  step 1 on the host.
+* You are about to re-read a section of this file you have already read.
+* You are about to list a directory you have already listed in order to
+  decide what to do next.
+* Your last message began with "Let me look at", "Let me check whether",
+  or any other phrase that describes looking rather than doing.
+
+The recovery is always the same: return to the Task Router, take the row
+for the task, and run the one command that row leads to.
 
 ## What is tool4d
 
@@ -100,7 +245,8 @@ there, and do not propose adding it there.
 
 ### Step 1: Look for an existing installation first
 
-This is the primary path. Check whether a usable 4D or tool4d
+This is the primary path, and PREFLIGHT step 1 above makes it a command
+rather than a preference. Check whether a usable 4D or tool4d
 installation already exists on the host before downloading anything --
 the search order that `tool4d-lsp-stdio` uses (documented under
 "Prerequisites" in `skills/4dlsp/SKILL.md`) lists the conventional
@@ -314,6 +460,101 @@ workflows, use `4D` **without** `--headless`.
 * **PASS**: stdout contains `PASS`, exit code 0.
 * **FAIL**: `ASSERT` triggers a dialog, headless mode auto-aborts, exit
   code is non-zero and no `PASS` is printed.
+
+## Definition of Done
+
+A CLI task is complete when all three hold. Each is a shell check, not a
+judgement. Report each explicitly.
+
+1. **The process exited with the expected code.** For a run that is meant
+   to succeed that is `0`; "Exit Behavior" above defines the test-suite
+   case, where a non-zero code and the absence of `PASS` on stdout are
+   the failure signal.
+
+2. **The expected artifact exists and is non-empty** -- and was written
+   by *this* run. Delete it before invoking, so a stale file from an
+   earlier attempt cannot satisfy the check.
+
+3. **The process terminated by itself.** A run that never returns has not
+   succeeded, however plausible its output looks. This is what `QUIT 4D`
+   is for, and why "Where to Place `QUIT 4D`" places it in the last
+   chained method: with a non-blocking `DIALOG` the process stays alive
+   until something quits it.
+
+Putting the three together:
+
+```sh
+BIN="/Applications/4D 21 R3/tool4d.app/Contents/MacOS/tool4d"
+OUT="<project>/Project/output.png"
+
+rm -f "$OUT"                                   # gate 2: no stale artifact
+"$BIN" --project "<project>/x.4DProject" \
+       --startup-method project_form_to_image \
+       --user-param "MyForm:1:/PACKAGE/output.png" \
+       --dataless
+rc=$?                                          # gate 1
+
+test "$rc" -eq 0 && test -s "$OUT" && echo "DONE" || echo "NOT DONE (rc=$rc)"
+```
+
+The shell regaining control is gate 3. To bound a hang rather than wait
+on it, wrap the invocation:
+
+```sh
+timeout 120 "$BIN" ... ; rc=$?    # rc 124 means it hung
+```
+
+`timeout` comes from GNU coreutils and is not present on a stock macOS.
+Where it is unavailable, run in the foreground and treat a command that
+has not returned as a hang -- then check `QUIT 4D` placement, and check
+whether `DIALOG` was auto-dismissed because the run used a headless
+binary.
+
+For a test-suite run, gate 2 is the `PASS` marker rather than a file:
+
+```sh
+"$BIN" --dataless --startup-method=test_all --project=<project>.4DProject \
+  | tee /tmp/run.log
+rc=${PIPESTATUS[0]}
+test "$rc" -eq 0 && grep -q PASS /tmp/run.log && echo "DONE"
+```
+
+### What the done-gate cannot catch
+
+The gate proves that a file was produced. It never proves that the file
+shows what you asked for. A capture can exit `0`, write a valid,
+non-empty, correctly-sized PNG, and show the wrong thing -- with no
+error anywhere. The three ways this happens are all documented behavior,
+not speculation:
+
+* **Wrong content.** `FORM SCREENSHOT` called with a form name renders
+  the Form Editor's static template. It never runs `On Load` and never
+  reflects a `Form.xxx` value, so an input bound to `Form.myText` renders
+  the literal text `Form.myText`. The capture is correct; the
+  expectation was wrong. Use `dialog_screenshot` when you need the
+  runtime appearance.
+* **Wrong styling.** `FORM SCREENSHOT` does not apply CSS stylesheets;
+  printing to PDF does. A PNG that disagrees with the stylesheet is the
+  expected result of that path, not a defect.
+* **Wrong page.** A page number beyond the form's page count is clamped
+  to the last page, and a page below `1` is clamped to `1`. Clamping is
+  silent: you get a valid capture of a page you did not ask for. Confirm
+  the page count with `FORM GET PROPERTIES` rather than assuming the
+  request was honored.
+
+`skills/4dform/references/screenshot-rendering.md` is the authority on
+what a capture shows, per object type and per property. Read it before
+concluding from an image that a form is wrong -- it is the single most
+common source of false alarms. Do not modify a form to "fix" something
+that section says the static template never renders.
+
+Two adjacent failures are **not** in this class, because the gate does
+catch them: running a `DIALOG`-based method under a headless binary
+either produces no file or hangs, and a `--user-param` with fewer than
+three colon-separated segments returns silently without writing one.
+Gates 2 and 3 catch both. Note that the form name and page number must
+not themselves contain a colon, or the value splits into the wrong
+segments.
 
 ## Bundled Startup Methods
 
