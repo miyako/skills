@@ -69,6 +69,10 @@ apply conditional form behavior such as dark-mode picture substitution.
 This was a bug, not a design limitation of `tool4d`. Until 21.1 LTS is
 confirmed to have the fix, use tool4d 21 R3 or later.
 
+`21 R3` is an **R-release**, not LTS. If you need to download it, see
+"Obtaining tool4d" below -- the two trains use different `branch` values
+and are not interchangeable.
+
 ### Workaround for Older Builds
 
 If an older build is unavoidable, use the full 4D application in headless
@@ -92,23 +96,134 @@ Treat this as a workaround, not a preference.
 
 `tool4d` is a 4D product download, not one of the helper binaries that
 `4dtools` provisions from this skillset's own releases. Do not look for it
-there.
+there, and do not propose adding it there.
+
+### Step 1: Look for an existing installation first
+
+This is the primary path. Check whether a usable 4D or tool4d
+installation already exists on the host before downloading anything --
+the search order that `tool4d-lsp-stdio` uses (documented under
+"Prerequisites" in `skills/4dlsp/SKILL.md`) lists the conventional
+locations, and "Binary Paths" above gives the typical macOS layout.
+
+A local installation is often *newer* than what the download endpoint
+serves: at time of writing `21 R4` is installable locally but 404s at the
+endpoint. Download only when no suitable local build is found.
+
+### Step 2: Download
 
 ```
 https://resources-download.4d.com/release/{branch}/{version}/latest/{platform}/tool4d_{suffix}.tar.xz
 ```
 
-| Parameter | Examples |
-|---|---|
-| branch | `21.x`, `20.x` |
-| version | `21.1`, `21 R2` |
-| platform | `win`, `mac` |
-| suffix | `win`, `x86_64`, `arm64` |
+No authentication is required.
 
-No authentication is required. Before downloading, check whether a usable
-4D or tool4d installation already exists on the host -- the search order
-that `tool4d-lsp-stdio` uses (documented under "Prerequisites" in
-`skills/4dlsp/SKILL.md`) lists the conventional locations.
+#### branch and version must be chosen as a matching pair
+
+`branch` and `version` are **not** independent parameters. There are two
+parallel release trains, and a branch from one train never pairs with a
+version from the other. Pick a row, then use both of its values:
+
+| Train | branch | version |
+|---|---|---|
+| LTS | `{N}.x` | `{N}.{minor}` |
+| R-release | `{N} Rx` | `{N} R{n}` |
+
+The R-release branch and version both contain a **literal space**, which
+must be percent-encoded as `%20` in the URL. `21R.x`, `21R`, `21.R` and
+`21R3` are all wrong and all 404.
+
+Complete worked example for each train -- macOS Apple Silicon:
+
+```
+# LTS 21.1
+https://resources-download.4d.com/release/21.x/21.1/latest/mac/tool4d_arm64.tar.xz
+
+# R-release 21 R3
+https://resources-download.4d.com/release/21%20Rx/21%20R3/latest/mac/tool4d_arm64.tar.xz
+```
+
+The `FORM SCREENSHOT` requirement under "Version Requirements" above is
+**21 R3**, an R-release. Use the `21%20Rx` / `21%20R3` pair for it, not
+the `21.x` LTS branch.
+
+`20.x` / `20 Rx` is the **oldest train served**. There is no `19.x` at
+this endpoint; a reader targeting 4D 19 or earlier must obtain it
+elsewhere.
+
+#### platform and suffix are a matrix, not two free columns
+
+| platform | suffix | Target |
+|---|---|---|
+| `mac` | `arm64` | Apple Silicon |
+| `mac` | `x86_64` | Intel Mac |
+| `win` | `win` | Windows x64 |
+
+These three rows are the whole set. There is **no Windows ARM build** --
+`win` + `arm64` does not exist, and its 404 is permanent, not a transient
+outage. There is no `linux` platform here either.
+
+#### Verify the download, never trust a 200 on a path
+
+Any *directory* path on this host returns **HTTP 200** with an 87-byte
+HTML login-redirect stub -- not a 404 and not a listing. `release/`,
+`release/21.x/` and `release/21.x/21.1/latest/mac/` all behave this way.
+A truncated or mistyped path that lands on a directory therefore looks
+like success to a status-code check. There is also no directory listing,
+so valid versions cannot be enumerated by browsing; that is why the
+known-good pairs above are carried here.
+
+So: verify with `Content-Length` on the `.tar.xz` itself, never trust a
+200 on a path.
+
+```sh
+curl -sIL "$url" | grep -i '^content-length:' | tail -1
+```
+
+`-L` is required: the endpoint answers `302` and redirects to a CDN, so
+an unredirected `curl -I` reports neither the size nor the real status.
+Expect tens of megabytes -- verified archives are 23-27 MB. An
+`87`-byte or `text/html` response means the path resolved to a directory
+stub, and a real missing file returns `404`.
+
+### Step 3: Install and make it discoverable
+
+Extract to `tools/4dcli/` in the working repo, alongside the tool
+destinations that `4dtools` uses (see "Installation Location" in
+`skills/4dtools/SKILL.md`). tool4d is not provisioned by `4dtools`, but
+it is a per-skill tool consumed only by `4dcli`, so it follows the same
+layout.
+
+```sh
+mkdir -p tools/4dcli
+tar -xJf tool4d_arm64.tar.xz -C tools/4dcli
+```
+
+The archive unpacks a single top-level directory and preserves execute
+bits, so no `chmod` is normally needed:
+
+| Archive | Unpacks to | Binary |
+|---|---|---|
+| `tool4d_arm64.tar.xz`, `tool4d_x86_64.tar.xz` | `tool4d.app/` | `tools/4dcli/tool4d.app/Contents/MacOS/tool4d` |
+| `tool4d_win.tar.xz` | `tool4d/` | `tools\4dcli\tool4d\tool4d.exe` |
+
+On macOS the archive is downloaded, so clear the quarantine attribute or
+Gatekeeper will block it:
+
+```sh
+xattr -dr com.apple.quarantine tools/4dcli/tool4d.app
+```
+
+`tools/4dcli/` is **not** in any of the four locations
+`tool4d-lsp-stdio` searches, so a tool4d installed there is invisible to
+`4dlsp` unless you say where it is. Export `TOOL4D_PATH` (search-order
+entry 1) or pass `--tool`:
+
+```sh
+export TOOL4D_PATH="$PWD/tools/4dcli/tool4d.app/Contents/MacOS/tool4d"
+```
+
+Do not install tool4d globally and do not modify the user's PATH.
 
 ## Flags
 
@@ -470,6 +585,8 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
 
 ## Tool Dependencies
 
-This skill needs a `tool4d` or `4D` installation on the host, obtained as
-described under "Obtaining tool4d" above. Report the detected version
-before relying on any behavior that is version-dependent.
+This skill needs a `tool4d` or `4D` installation on the host. Prefer an
+existing one; otherwise download and install it as described under
+"Obtaining tool4d" above, and set `TOOL4D_PATH` so `4dlsp` can find it.
+Report the detected version before relying on any behavior that is
+version-dependent.
