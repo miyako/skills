@@ -87,13 +87,22 @@ Run the done-gate below. The task is not finished until it passes.
 
 ## Stuck Detector
 
-Any of these means **stop researching and start building**:
+This detector applies to **research** -- PHASE: ROUTE and PHASE: READ. It
+never restricts work on the artifacts you are building or validating:
+re-reading a `form.4DForm` you are editing, re-listing `ObjectMethods/`
+during the done-gate, and reading back a file you just wrote are all
+normal and expected.
 
-* You are about to read a file you have already read.
-* You are about to list a directory you have already listed.
+While researching, any of these means **stop researching and start
+building**:
+
+* You are about to read a file under `references/` that you have already
+  read.
+* You are about to list a directory in order to decide what to read next,
+  having already listed it.
 * You are about to list a directory "to understand the structure".
-* Three consecutive reads or lists have happened with no file write
-  between them.
+* Three consecutive reference reads or exploratory listings have happened
+  with no file write between them.
 * Your last message began with "Let me look at", "Let me examine", or any
   other phrase that describes looking rather than doing.
 
@@ -226,6 +235,25 @@ artifact; `.4dm` validation gates the code. Both must pass and neither is
 sufficient alone. `jq empty` is not schema validation and does not count
 toward any of the three.
 
+### What the done-gate cannot catch
+
+Schema validation does **not** reject a misspelled or invented property
+name. The schema deliberately does not set `additionalProperties: false`,
+because the Modification rules require preserving properties that are not
+understood. The practical consequence is that `"lefft": 5` on a button
+validates clean and the property is simply ignored at runtime -- the
+object silently renders at the wrong position with no error anywhere.
+
+This is the one failure class the done-gate misses, and inventing a
+plausible-looking property name is exactly the mistake to expect. Treat
+`references/property-reference.md` as the authority on whether a property
+name is real. If you cannot find a property there or in the object's
+reference file, you are inventing it -- do not write it.
+
+Do not add `additionalProperties: false` to the schema to close this gap.
+`AGENTS.md` forbids modifying a schema to change what passes, and the
+permissiveness here is intentional.
+
 ## Schema
 
 The 4D Form schema is:
@@ -256,10 +284,11 @@ When validating a `.4DForm`:
 A successful JSON parse alone must not be reported as successful 4D Form
 validation.
 
-Use `boon` for JSON Schema validation. For example:
+Use `boon` for JSON Schema validation, via its provisioned path (see Tool
+Dependencies below):
 
 ```
-boon schemas/4dform/formsSchema.json <file>
+tools/4dform/boon schemas/4dform/formsSchema.json <file>
 ```
 
 Do not assume that `jq` alone performs JSON Schema validation.
