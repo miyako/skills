@@ -9,7 +9,7 @@ summary: "How a form renders when captured from the CLI: the two capture command
 
 A rendered capture is the only way to see a `.4DForm` without opening the
 IDE. It is a useful sanity check, but it is **not** validation -- schema
-validation is the done-gate (see `SKILL.md`). Use a capture to confirm
+validation is the done-gate (see `skills/4dform/SKILL.md`). Use a capture to confirm
 layout and styling, not correctness.
 
 For the tool4d binary, its version requirements, and the runtime patterns

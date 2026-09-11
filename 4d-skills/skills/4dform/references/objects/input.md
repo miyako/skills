@@ -152,7 +152,7 @@ Watermark text shown when the object's value is empty (string types), or for dat
 { "choiceList": ["Red", "Green", "Blue"] }
 ```
 
-An input can carry the same `choiceList` property used by drop-down list/combo box/hierarchical list (inline array/collection, or a named list from the toolbox). This turns the input into a value-constrained pop-up at runtime while keeping the object type `"input"` rather than `"combo"`. See Default value/Excluded List/Required List (`properties_RangeOfValues.md`) for the related "list of acceptable values" properties that also apply to inputs.
+An input can carry the same `choiceList` property used by drop-down list/combo box/hierarchical list (inline array/collection, or a named list from the toolbox). This turns the input into a value-constrained pop-up at runtime while keeping the object type `"input"` rather than `"combo"`. See Default value/Excluded List/Required List (https://developer.4d.com/docs/FormObjects/properties_RangeOfValues) for the related "list of acceptable values" properties that also apply to inputs.
 
 ## Display Formats by Expression Type
 
