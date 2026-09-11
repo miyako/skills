@@ -131,7 +131,8 @@ version from the other. Pick a row, then use both of its values:
 
 The R-release branch and version both contain a **literal space**, which
 must be percent-encoded as `%20` in the URL. `21R.x`, `21R`, `21.R` and
-`21R3` are all wrong and all 404.
+`21R3` are all wrong and all 404. Mixing trains 404s too: `21.x` paired
+with `21%20R3` does not resolve.
 
 Complete worked example for each train -- macOS Apple Silicon:
 
@@ -158,10 +159,14 @@ elsewhere.
 | `mac` | `arm64` | Apple Silicon |
 | `mac` | `x86_64` | Intel Mac |
 | `win` | `win` | Windows x64 |
+| `linux` | `linux` | Linux x86-64 |
 
-These three rows are the whole set. There is **no Windows ARM build** --
-`win` + `arm64` does not exist, and its 404 is permanent, not a transient
-outage. There is no `linux` platform here either.
+Linux offers a single artifact, `tool4d_linux`, with no architecture
+variants: `linux/tool4d_x86_64.tar.xz` and `linux/tool4d_arm64.tar.xz`
+both 404. The binary it contains is an x86-64 ELF.
+
+There is **no Windows ARM build** -- `win` + `arm64` does not exist, and
+its 404 is permanent, not a transient outage.
 
 #### Verify the download, never trust a 200 on a path
 
@@ -195,13 +200,14 @@ it is a per-skill tool consumed only by `4dcli`, so it follows the same
 layout.
 
 **Before extracting, confirm `tools/` is ignored in the target repo.**
-An unpacked tool4d is about 108 MB across 145 files, and no single file
-exceeds GitHub's 100 MB limit -- so an accidental commit is *accepted*
-and permanently bloats the repository rather than being rejected. Check
-the working repo's `.gitignore` and append a `tools/` entry if absent,
-leaving existing entries untouched. The skills repository ignores
-`tools/` already, but tools are installed in the repo being worked on,
-which usually does not.
+An unpacked tool4d is upwards of 100 MB (the macOS arm64 build is about
+108 MB across 145 files; the Linux build contains a single 93 MB
+`bin/tool4d`). No individual file exceeds GitHub's 100 MB limit, so an
+accidental commit is *accepted* and permanently bloats the repository
+rather than being rejected. Check the working repo's `.gitignore` and
+append a `tools/` entry if absent, leaving existing entries untouched.
+The skills repository ignores `tools/` already, but tools are installed
+in the repo being worked on, which usually does not.
 
 ```sh
 mkdir -p tools/4dcli
@@ -215,6 +221,11 @@ bits, so no `chmod` is normally needed:
 |---|---|---|
 | `tool4d_arm64.tar.xz`, `tool4d_x86_64.tar.xz` | `tool4d.app/` | `tools/4dcli/tool4d.app/Contents/MacOS/tool4d` |
 | `tool4d_win.tar.xz` | `tool4d/` | `tools\4dcli\tool4d\tool4d.exe` |
+| `tool4d_linux.tar.xz` | `bin/` | `tools/4dcli/bin/tool4d` |
+
+The Linux archive's top-level directory is the generic name `bin`, so
+extract it into `tools/4dcli/` as above rather than somewhere it could
+collide with an existing `bin/`.
 
 On macOS, clear the quarantine attribute **if present** -- browser
 downloads and some transports set it, and Gatekeeper then blocks the
