@@ -72,15 +72,25 @@ in the `skills/` directory relative to this file:
 | Artifact | Skill | File path |
 |----------|-------|-----------|
 | `.4DCatalog` (database schema) | 4dcatalog | `skills/4dcatalog/SKILL.md` |
-| `.4DForm` (form definition) | 4dform | `skills/4dform/SKILL.md` |
+| `.4DForm` (form design + validation) | 4dform | `skills/4dform/SKILL.md` |
 | `.4DProject` (project definition) | 4dproject | `skills/4dproject/SKILL.md` |
 | `.4DSettings` (settings) | 4dsettings | `skills/4dsettings/SKILL.md` |
 | `.4dm` code validation / LSP / MCP | 4dlsp | `skills/4dlsp/SKILL.md` |
 | 4D command / OOP class member lookup | 4dlang | `skills/4dlang/SKILL.md` |
+| Running tool4d / 4D from the command line | 4dcli | `skills/4dcli/SKILL.md` |
 | Tool provisioning | 4dtools | `skills/4dtools/SKILL.md` |
 
 Read the applicable `SKILL.md` before making structural changes to a
 proprietary 4D artifact.
+
+The `4dform` skill also carries per-object form reference material under
+`skills/4dform/references/`. Do not read those files directly -- route to
+them through the table in `skills/4dform/SKILL.md`, which states how many
+of them a task may open.
+
+`4dcli` is the only skill that runs the 4D or `tool4d` binary itself. It
+is separate from `4dtools`, which provisions this skillset's own helper
+binaries and does not provision 4D.
 
 Schemas referenced by skills are in the `schemas/` directory relative to
 this file:
