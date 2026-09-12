@@ -1,0 +1,139 @@
+{
+  "$4d": {
+    "version": "1",
+    "kind": "form"
+  },
+  "windowSizingX": "variable",
+  "windowSizingY": "variable",
+  "windowMinWidth": 300,
+  "windowMinHeight": 400,
+  "windowMaxWidth": 32767,
+  "windowMaxHeight": 32767,
+  "rightMargin": 20,
+  "bottomMargin": 20,
+  "events": ["onLoad", "onUnload"],
+  "windowTitle": "Dropdown Examples",
+  "destination": "detailScreen",
+  "method": "method.4dm",
+  "pages": [
+    { "objects": {} },
+    {
+      "objects": {
+        "titleLabel": {
+          "type": "text",
+          "left": 20,
+          "top": 20,
+          "width": 300,
+          "height": 24,
+          "text": "Dropdown List Examples",
+          "fontBold": true,
+          "fontSize": 16
+        },
+        "objectLabelText": {
+          "type": "text",
+          "left": 20,
+          "top": 60,
+          "width": 150,
+          "height": 20,
+          "text": "Object-based dropdown:"
+        },
+        "dropObject": {
+          "type": "dropdown",
+          "left": 20,
+          "top": 85,
+          "width": 180,
+          "height": 20,
+          "dataSource": "Form.dropObject",
+          "dataSourceTypeHint": "object",
+          "method": "ObjectMethods/dropObject.4dm",
+          "events": ["onClick", "onDataChange"]
+        },
+        "objectResultLabel": {
+          "type": "text",
+          "left": 210,
+          "top": 85,
+          "width": 200,
+          "height": 20,
+          "text": "",
+          "fontColor": "#0066CC"
+        },
+        "arrayLabelText": {
+          "type": "text",
+          "left": 20,
+          "top": 130,
+          "width": 150,
+          "height": 20,
+          "text": "Array-based dropdown:"
+        },
+        "dropArray": {
+          "type": "dropdown",
+          "left": 20,
+          "top": 155,
+          "width": 180,
+          "height": 20,
+          "dataSource": "asColor",
+          "dataSourceTypeHint": "arrayText",
+          "method": "ObjectMethods/dropArray.4dm",
+          "events": ["onClick", "onDataChange"]
+        },
+        "arrayResultLabel": {
+          "type": "text",
+          "left": 210,
+          "top": 155,
+          "width": 200,
+          "height": 20,
+          "text": "",
+          "fontColor": "#0066CC"
+        },
+        "choiceLabelText": {
+          "type": "text",
+          "left": 20,
+          "top": 200,
+          "width": 150,
+          "height": 20,
+          "text": "Choice list dropdown:"
+        },
+        "dropChoice": {
+          "type": "dropdown",
+          "left": 20,
+          "top": 225,
+          "width": 180,
+          "height": 20,
+          "dataSource": "Form.dropChoice",
+          "choiceList": ["Red", "Green", "Blue", "Yellow", "Purple"],
+          "saveAs": "value",
+          "method": "ObjectMethods/dropChoice.4dm",
+          "events": ["onClick", "onDataChange"]
+        },
+        "choiceResultLabel": {
+          "type": "text",
+          "left": 210,
+          "top": 225,
+          "width": 200,
+          "height": 20,
+          "text": "",
+          "fontColor": "#0066CC"
+        },
+        "infoText": {
+          "type": "text",
+          "left": 20,
+          "top": 280,
+          "width": 400,
+          "height": 80,
+          "text": "• Object-based: Recommended modern approach using Form.xxx with values, index, and currentValue.\n• Array-based: Traditional approach using 4D arrays (deprecated but still supported).\n• Choice list: Simple approach for static lists with fixed values.",
+          "fontSize": 11
+        },
+        "resetButton": {
+          "type": "button",
+          "left": 20,
+          "top": 370,
+          "width": 100,
+          "height": 24,
+          "text": "Reset",
+          "method": "ObjectMethods/resetButton.4dm",
+          "events": ["onClick"]
+        }
+      }
+    }
+  ]
+}
