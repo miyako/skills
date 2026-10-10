@@ -10,6 +10,13 @@ workflows for working with 4D source projects and their associated files.
 When working on a 4D project, prefer the most specific 4D skill available
 rather than treating a 4D artifact as a generic JSON or XML document.
 
+All paths in this file and in the skills (`skills/...`, `schemas/...`) are
+relative to the folder that contains this `AGENTS.md` -- the skillset root.
+In a consumer repository the skillset is usually mounted as a git submodule
+at `.agents/`, so `skills/4dform/SKILL.md` is
+`.agents/skills/4dform/SKILL.md` there. Paths such as `Project/...` and
+`tools/...` always refer to the repository being worked on.
+
 ## 4D Source Artifacts
 
 Recognize the following 4D-specific artifacts:
@@ -32,9 +39,9 @@ command-line tools used by the other 4D skills.
 
 Use `4dtools` when a required tool is not available on the host.
 
-Tools provisioned by `4dtools` are installed under:
-
-	tools/
+Tools provisioned by `4dtools` are installed under `tools/` at the root of
+the repository being worked on -- never inside the skillset (e.g. not under
+`.agents/`).
 
 Every tool currently provisioned is used by exactly one 4D skill, so
 each is installed into a subdirectory named after that skill (e.g.
@@ -42,6 +49,10 @@ each is installed into a subdirectory named after that skill (e.g.
 keeping each skill's tooling isolated. A future tool genuinely needed by
 more than one skill would instead stay directly under `tools/`. See
 `skills/4dtools/SKILL.md` for the exact destination of each tool.
+
+Git-ignore only those per-skill directories, never the whole `tools/`
+folder: repositories may commit their own scripts there. The canonical
+`.gitignore` is in `skills/4dproject/SKILL.md`.
 
 Do not install these tools globally or modify the user's PATH.
 
@@ -67,26 +78,54 @@ Individual skills specify which tools they require.
 ## Skill Selection
 
 Use the most specific applicable skill. Each skill is a `SKILL.md` file
-in the `skills/` directory relative to this file:
+in the `skills/` directory relative to this file. Every topic has exactly
+one owning skill; other skills link to it instead of restating it.
 
-| Artifact | Skill | File path |
+### 4D artifacts and tooling
+
+| Task / artifact | Skill | File path |
 |----------|-------|-----------|
 | `.4DCatalog` (database schema) | 4dcatalog | `skills/4dcatalog/SKILL.md` |
-| `.4DForm` (form design + validation) | 4dform | `skills/4dform/SKILL.md` |
-| `.4DProject` (project definition) | 4dproject | `skills/4dproject/SKILL.md` |
+| `.4DForm` (form design + validation, list box defaults, layout geometry, doc index) | 4dform | `skills/4dform/SKILL.md` |
+| `.4DProject`, project layout, version detection, token suffixes, `.gitignore`, `menus.json` | 4dproject | `skills/4dproject/SKILL.md` |
 | `.4DSettings` (settings) | 4dsettings | `skills/4dsettings/SKILL.md` |
-| `.4dm` code validation / LSP / MCP | 4dlsp | `skills/4dlsp/SKILL.md` |
-| 4D command / OOP class member lookup | 4dlang | `skills/4dlang/SKILL.md` |
-| Running tool4d / 4D from the command line | 4dcli | `skills/4dcli/SKILL.md` |
+| `.4dm` validation / syntax check / LSP / MCP | 4dlsp | `skills/4dlsp/SKILL.md` |
+| 4D command / OOP class member lookup, doc and forum search | 4dlang | `skills/4dlang/SKILL.md` |
+| Running tool4d / 4D from the command line (tests, compile, render) | 4dcli | `skills/4dcli/SKILL.md` |
 | Tool provisioning | 4dtools | `skills/4dtools/SKILL.md` |
+
+### 4D development topics
+
+| Task | Skill | File path |
+|----------|-------|-----------|
+| Method attributes, `invisible`, Run Method dialog | 4dmethods | `skills/4dmethods/SKILL.md` |
+| `C_*` → `var` / `#DECLARE`, deprecated `_o_` commands | 4dmodernise | `skills/4dmodernise/SKILL.md` |
+| Stylesheets, dark mode, Liquid Glass / Fluent UI form themes | 4dcss | `skills/4dcss/SKILL.md` |
+| XLIFF localisation, `Localized string`, language-following attributes | 4dlocalise | `skills/4dlocalise/SKILL.md` |
+| Startup / first window, chaining forms, `DIALOG(...; *)` | 4dstartup | `skills/4dstartup/SKILL.md` |
+| 4D AI Kit, async callbacks and streaming | 4daikit | `skills/4daikit/SKILL.md` |
+
+### Technote-localisation repositories only
+
+These skills apply **only** in a repository created from
+`miyako/4d-technote-localisation-template` (a `technote.json` at the
+repository root). Ignore them everywhere else.
+
+| Task | Skill | File path |
+|----------|-------|-----------|
+| Localise the 4D demo under `demo/` (wrapper over the 4D skills) | technote-localise-4d-project | `skills/technote-localise-4d-project/SKILL.md` |
+| Change a term across glossary, text and figures | technote-apply-glossary | `skills/technote-apply-glossary/SKILL.md` |
+| Review and fix localised figures | technote-review-figures | `skills/technote-review-figures/SKILL.md` |
+| Replace the demo's sample data and recompute examples | technote-localise-demo-data | `skills/technote-localise-demo-data/SKILL.md` |
+| Publish the PDF and demo zip as a GitHub release | technote-release | `skills/technote-release/SKILL.md` |
 
 Read the applicable `SKILL.md` before making structural changes to a
 proprietary 4D artifact.
 
-The `4dform` skill also carries per-object form reference material under
-`skills/4dform/references/`. Do not read those files directly -- route to
-them through the table in `skills/4dform/SKILL.md`, which states how many
-of them a task may open.
+Several skills carry longer material under `references/` (and `4dform`
+a calculator under `scripts/`). Do not read those files directly -- route
+to them through the route table in the owning `SKILL.md`; `4dform`'s table
+also states how many of its files a task may open.
 
 `4dcli` is the only skill that runs the 4D or `tool4d` binary itself. It
 is separate from `4dtools`, which provisions this skillset's own helper
@@ -139,9 +178,9 @@ complete.
 
 If the workspace contains a `.4DProject` file and you create or modify
 `.4dm` files under `Project/Sources/`, use the `4dlsp` skill to validate
-them via the 4D LSP server. Directory-scoped instructions in
-`Project/Sources/AGENTS.md` describe the workflow. Read
-`skills/4dlsp/SKILL.md` for the full reference.
+them via the 4D LSP server. Read `skills/4dlsp/SKILL.md` -- in
+particular "When to use code intelligence" and "Syntax checking vs
+running code" -- for the workflow.
 
 For a project-wide compile-check pass without listing every file, use
 `check-syntax` instead of `validate` -- see `skills/4dlsp/SKILL.md` for
@@ -295,7 +334,15 @@ Keep artifact-specific knowledge in the corresponding skill.
 
 Keep machine-readable schemas in `schemas/`.
 
-Keep reusable tooling or environment-specific wrappers in `tools/`.
+Keep small helper scripts that run in place inside the owning skill
+(`skills/<name>/scripts/`); executables provisioned by `4dtools` go to the
+consumer repository's `tools/<skill>/`.
+
+Keep repository-specific rules (a template's README structure, branch
+conventions, a project's splash form) in that repository's own
+`AGENTS.md` or `.github/instructions/`, not in these skills.
+`MIGRATION.json` maps the old `.github/instructions/*.instructions.md`
+files to their new homes.
 
 Avoid duplicating the same 4D rules across multiple skills.
 
