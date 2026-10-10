@@ -45,7 +45,12 @@ References:
 - `OpenAIChatCompletionsParameters`: https://developer.4d.com/docs/aikit/Classes/openaichatcompletionsparameters
 - `OpenAIChatCompletionsStreamResult`: https://developer.4d.com/docs/aikit/Classes/openaichatcompletionsstreamresult
 - `OpenAIVision`: https://developer.4d.com/docs/aikit/Classes/openaivision
+- `OpenAIParameters` (callbacks, `extraHeaders`, `throw`): https://developer.4d.com/docs/aikit/Classes/openaiparameters
+- Files API: https://developer.4d.com/docs/aikit/Classes/openaifilesapi
 - Source: https://github.com/4d/4D-AIKit
+
+Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
+(MIT License).
 
 ## Rules
 
@@ -60,8 +65,20 @@ References:
 4. **Callbacks may run after the form closed:** test `Form#Null` before
    touching `Form` or form objects.
 5. **Reset accumulators** (`This._chatResult:=""`, ...) before each call.
-6. Write commands without token suffixes unless the exact token already
-   exists in the project (token rules in `skills/4dproject/SKILL.md`).
+6. **Results are objects.** `$result.choice` is an object: the text is
+   `$result.choice.message.content` (streamed chunks:
+   `$result.choice.delta.text`). Check `$result.success`; errors are in
+   `$result.errors`.
+7. **The models resource is plural:** `$client.models.list()` returns
+   `.models`. Some documentation examples write `$client.model`, which is
+   Undefined.
+8. **Compatible and local providers** (Ollama, LM Studio, Mistral...): pass
+   `baseURL` **and** an `apiKey` -- a dummy one for local servers that need
+   none (observed: without `apiKey` the client can be Null). Configured
+   provider names and model aliases are an alternative.
+9. Call providers through AI Kit, not raw `4D.HTTPRequest`.
+10. Write commands without token suffixes unless the exact token already
+    exists in the project (token rules in `skills/4dproject/SKILL.md`).
 
 ## Callback Model
 
@@ -86,15 +103,36 @@ This._chatResult:=""
 This.client.chat.completions.create($messages; $params)
 ```
 
-* `formula` receives every event; test `.success` and `.terminated` and
-  read `.choice.delta.text` for partial chunks. The documented alternative
-  is separate `onData` (chunks) and `onTerminate` (end) formulas, or
-  `onResponse` / `onError` for non-streamed calls.
+* `formula` (alias `onTerminate`) receives every event; test `.success`
+  and `.terminated` and read `.choice.delta.text` for partial chunks. The
+  documented alternatives are `onData` for chunks, or `onResponse` /
+  `onError` for non-streamed calls. The callback receives the same result
+  class the synchronous call would return. `throw` and `maxRetries` only
+  apply without a callback.
 * `extraHeaders` (e.g. `{docID: $docID}`) travels with the request; the
   callback reads it back as `$result.request.headers.docID`.
 * The call returns immediately; functions that returned the result must
   become fire-and-forget, and polling with `CALL WORKER` + `SET TIMER` goes
-  away.
+  away. **Everything that used to follow the call** (UI feedback, enabling
+  a button, the next step) moves into the callback -- it is the only place
+  that knows the request finished.
+* State needed by several form objects (e.g. the id of an uploaded file)
+  goes on `Form`, not on the class instance that made the call.
+* **Subforms:** in a callback, `Form` may designate the parent form, not
+  the subform. Capture the instance explicitly --
+  `var $self:=This` then `$params.formula:=Formula($self._onResult($1))` --
+  and update the subform through `$self`.
+* **Batches:** process items one at a time by starting the next request
+  from the callback of the previous one (keep a queue on `This`); the UI
+  refreshes between items without workers or timers.
+* **File uploads** follow the same model:
+  `$client.files.create($file; "user_data"; $fileParams)` with
+  `$fileParams:=cs.AIKit.OpenAIFileParameters.new(This)`,
+  `$fileParams.formula:=...` and optionally
+  `$fileParams.expires_after:={anchor: "created_at"; seconds: 3600}`. The
+  callback receives an `OpenAIFileResult`: on success, `.file.id` is what
+  `OpenAIMessage.addFileId()` needs. `extraHeaders` (e.g.
+  `{name: $file.fullName}`) carries context such as the file name.
 
 ## Steps
 
