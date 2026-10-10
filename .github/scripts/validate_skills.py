@@ -117,24 +117,32 @@ def main():
         check_links(f, text)
 
     mig = SKILLSET / "MIGRATION.json"
+    base = "https://github.com/miyako/skills/tree/main/4d-skills/skills/"
     try:
         data = json.loads(mig.read_text(encoding="utf-8"))
-        for old, entry in data["files"].items():
+        for old, entry in data["instructions"].items():
             status = entry.get("status")
-            if status not in ("skill", "repo-instruction", "deleted"):
+            if status not in ("skill", "instruction", "deleted"):
                 err(mig, f"{old}: bad status {status!r}")
             skill = entry.get("skill")
             if skill is not None and skill not in names:
                 err(mig, f"{old}: unknown skill {skill!r}")
             url = entry.get("url")
             if status == "skill":
-                expected = f"https://github.com/miyako/skills/tree/main/4d-skills/skills/{skill}"
-                if url != expected:
-                    err(mig, f"{old}: url should be {expected}")
+                if url != base + str(skill):
+                    err(mig, f"{old}: url should be {base}{skill}")
             elif url is not None:
                 err(mig, f"{old}: url must be null for status {status}")
+            if status == "instruction" and not entry.get("path"):
+                err(mig, f"{old}: missing path")
+        for old, entry in data["skills"].items():
+            skill = entry.get("skill")
+            if skill not in names:
+                err(mig, f"skills.{old}: unknown skill {skill!r}")
+            if entry.get("url") != base + str(skill):
+                err(mig, f"skills.{old}: url should be {base}{skill}")
     except (OSError, ValueError, KeyError, AttributeError) as e:
-        err(mig, f"invalid: {e}")
+        err(mig, f"invalid: {e!r}")
 
     if errors:
         print("\n".join(errors))

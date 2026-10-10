@@ -94,7 +94,8 @@ Many 4D repositories used to carry copies of the same
 folders. Their generic 4D content now lives in the skills above;
 repository-specific rules stay in each repository.
 [`4d-skills/MIGRATION.json`](4d-skills/MIGRATION.json) maps every old file to
-its new home (`status`: `skill`, `repo-instruction` or `deleted`).
+its new home (`instructions.<file>.status`: `skill`, `instruction` or
+`deleted`; legacy `.github/skills/` folders are under `skills`).
 
 | Old file | New home |
 |---|---|
