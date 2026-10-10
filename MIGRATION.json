@@ -1,175 +1,364 @@
 {
-  "$comment": "Maps old .github/instructions/*.instructions.md files and .github/skills/<name> skills found across the 4D repositories to their new home. status: skill = now a skill in miyako/skills (url = skill folder on main); repo-instruction = stays in the repository as the given instruction path (skill = the skill that now owns the generic part, if any); deleted = removed, nothing replaces it.",
-  "files": {
+  "$comment": "Maps the legacy .github/instructions/*.instructions.md files (and .github/copilot-instructions.md) and the legacy .github/skills/<name> skills found across the 4D repositories to their new home. instructions.<file>.status: skill = now a skill in miyako/skills (url = skill folder on main); instruction = stays repository-specific at `path` in the listed templates (skill = the skill that now owns any generic part; url null); deleted = removed, nothing replaces it. variants = every surveyed git blob sha of that file (for a skill: of its SKILL.md and files). templates = template repositories that carry it.",
+  "instructions": {
     "variable.declarations.instructions.md": {
       "status": "skill",
       "skill": "4dmodernise",
       "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dmodernise",
+      "templates": [
+        "4d-technote-localisation-template",
+        "HDI_Template"
+      ],
+      "variants": [
+        "0737c4dbf7fd29b7234026056e916732822fa618",
+        "09bbbd1e46e9bac41e01a9d1592b5d5309d1a529",
+        "3b71b637b764f9f97670a14a58a966e72cf2b6fc",
+        "4f1c54b31cb7b7569313c7d67f2201f9bb59441f",
+        "5107e13193cb636d4a86f2ad6ed3726b846f0650",
+        "728f1cb5828484d1034c3815290e355d83f07eed",
+        "e851ddb590c3fa37ae2b5df9b20ac0dcfe163591"
+      ],
       "note": "C_* to var / #DECLARE conversion: skills/4dmodernise/references/declarations.md. Version detection and token rules are owned by 4dproject."
     },
     "deprecated.commands.instructions.md": {
       "status": "skill",
       "skill": "4dmodernise",
       "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dmodernise",
+      "templates": [],
+      "variants": [
+        "78b33f741482d7d89f1b20d8b1be5a46e1847e60"
+      ],
       "note": "Deprecated (_o_) commands and their replacements: skills/4dmodernise/references/deprecated-commands.md."
     },
     "method.visibility.instructions.md": {
       "status": "skill",
       "skill": "4dmethods",
       "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dmethods",
+      "templates": [
+        "4d-technote-localisation-template",
+        "HDI_Template"
+      ],
+      "variants": [
+        "2e881ed3c1f59c51ff472a2600d51914e2ff2705",
+        "78b6b3c259ccbc76cf931966d061ccd68cab21b6",
+        "e1056f7068b26957ecfe3c1e9adbef027fdbb82c"
+      ],
       "note": "Method attributes (invisible, preemptive, shared, published, executedOnServer) in .4dm headers; what to hide from the Run Method dialog."
     },
     "menu.instructions.md": {
       "status": "skill",
       "skill": "4dproject",
       "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dproject",
+      "templates": [
+        "4d-technote-localisation-template",
+        "HDI_Template"
+      ],
+      "variants": [
+        "2447c2e43072f92af4220929cbb1c79952aab3b2",
+        "91225886afe9d0f433c9c03ba4b938624f8f5fe8",
+        "e09cec0fb7d5e894e878b6df1d09dcc1b3703582"
+      ],
       "note": "menus.json and standard actions: skills/4dproject/references/menus.md."
     },
     "listbox.instructions.md": {
       "status": "skill",
       "skill": "4dform",
       "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dform",
+      "templates": [
+        "4d-technote-localisation-template",
+        "HDI_Template"
+      ],
+      "variants": [
+        "59812c3d8dd1511c2eed8497dec7a0c1144690a7",
+        "6b840e1f8636e95b2ff2d54251c64e9a89a8d398"
+      ],
       "note": "List box defaults (truncateMode none, resizingMode legacy): skills/4dform/references/objects/listbox.md."
     },
     "css.instructions.md": {
       "status": "skill",
       "skill": "4dcss",
       "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dcss",
+      "templates": [
+        "4d-technote-localisation-template",
+        "HDI_Template"
+      ],
+      "variants": [
+        "07c6fdb3402c1c4621c4264b54342fafdd207b90",
+        "0a3ef4524b464fffc710c1c714ff0b022c1e375b",
+        "6ff3165f33c8889e44b62bdfe8f615481d4bc47e",
+        "731f55ad7a76e85999d1663d889ac216e38d3d0e",
+        "a6294bea41cf307b39b7a3a61fee382f9b171fb6",
+        "b80dd1919f2714121344c61f2032158a01d65648",
+        "c741235f1506a45a6e481624c5328aaf861a704c",
+        "e62bd29cd4692aa5f5ef8fe6a5d2405880ebda15",
+        "ed775adf444180d8db0fa1774324d9b21c8735e3"
+      ],
       "note": "Stylesheets and dark mode: skills/4dcss/SKILL.md and references/dark-mode.md."
     },
     "tahoe.css.instructions.md": {
       "status": "skill",
       "skill": "4dcss",
       "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dcss",
+      "templates": [
+        "4d-technote-localisation-template",
+        "HDI_Template"
+      ],
+      "variants": [
+        "03db7d42348a75c8110035212af9a5e9e87ae3b6",
+        "51bb1af0d9926641bda6f44a6f89c9e4c869fa85",
+        "5f637137077eec499ddc5fb98b73ce169f2a6720",
+        "719e1a968f0955ecae9d9db50a660707aeed9790",
+        "85e58e34851b462e29da7739e439e0a3f1e42a0a",
+        "cbeb4ef160ebe0257b5c326de90963bd83fedd6e"
+      ],
       "note": "Liquid Glass / Fluent UI form themes: skills/4dcss/references/form-themes.md."
     },
     "localisation.instructions.md": {
       "status": "skill",
       "skill": "4dlocalise",
       "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dlocalise",
+      "templates": [
+        "4d-technote-localisation-template",
+        "HDI_Template"
+      ],
+      "variants": [
+        "2ca8cef9b8334c620f2666b0b1b83fc0a0f59e56",
+        "4322af36c662e16c20e8a2a7d2b65b7a3770dfbd",
+        "4c5e8f76b3e7be7f747a814f791b71dc96bc303f",
+        "4ece3a1534b3c8a18d93f37c9102aa199030d8f3",
+        "c4b26a11aefe4fc022072ce2baf6c6caf4e7e2cd",
+        "d841630dc732a8e3e79ceed08f3d125e74630be6"
+      ],
       "note": "XLIFF, :xliff: references, Localized string, language-following attributes. The .gitignore and version rules moved to 4dproject."
     },
     "aikit.async.instructions.md": {
       "status": "skill",
       "skill": "4daikit",
       "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4daikit",
+      "templates": [
+        "4d-technote-localisation-template",
+        "HDI_Template"
+      ],
+      "variants": [
+        "02185d865307ff427ab2e53e3518ebcc0bcd7abd",
+        "829ac4e98e4dff52dc45ad2747f3142d1e0b9052"
+      ],
       "note": "4D AI Kit async callbacks and streaming; the window pattern is in 4dstartup."
     },
     "startup.instructions.md": {
-      "status": "repo-instruction",
+      "status": "instruction",
       "skill": "4dstartup",
       "url": null,
-      "instruction": ".github/instructions/hdi.startup.instructions.md",
-      "note": "Split: the generic non-blocking startup / form-chaining pattern is now the 4dstartup skill (https://github.com/miyako/skills/tree/main/4d-skills/skills/4dstartup); the HDI splash-form specifics stay in HDI repositories as hdi.startup.instructions.md."
+      "path": ".github/instructions/hdi.startup.instructions.md",
+      "templates": [
+        "HDI_Template"
+      ],
+      "variants": [
+        "00a4a20f34f804878605cd7e5c685d89a0700361",
+        "3f6a5db883e68149b0129dcda9c6a6e31d24f866",
+        "8f40aa8dbf44e8d242187570e378d98a6bdd6367",
+        "ab8e807a71b846c2d0dc5a5d8e61e1bca78b342a",
+        "f3a4c1df71080d1114ad3e16848f3fee02cb93e5",
+        "ffc167ca231e345ecbd78d892b49cd2d222bd5d2"
+      ],
+      "note": "Split: the generic non-blocking startup / form-chaining pattern is now the 4dstartup skill (https://github.com/miyako/skills/tree/main/4d-skills/skills/4dstartup); the HDI splash-form specifics stay in HDI repositories as hdi.startup.instructions.md. Repositories that are not HDI (e.g. technote-derived) have no splash form: delete the file there; the 4dstartup skill covers it."
     },
     "readme.structure.instructions.md": {
-      "status": "repo-instruction",
+      "status": "instruction",
       "skill": null,
       "url": null,
-      "instruction": ".github/instructions/readme.structure.instructions.md",
+      "path": ".github/instructions/readme.structure.instructions.md",
+      "templates": [
+        "HDI_Template"
+      ],
+      "variants": [
+        "39f8816582a130c7d83f1e2c45cd178a267e08db"
+      ],
       "note": "Repository-specific (HDI README structure); stays in HDI_Template and HDI repositories."
     },
     "readme.branches.instructions.md": {
-      "status": "repo-instruction",
+      "status": "instruction",
       "skill": null,
       "url": null,
-      "instruction": ".github/instructions/readme.branches.instructions.md",
+      "path": ".github/instructions/readme.branches.instructions.md",
+      "templates": [
+        "HDI_Template"
+      ],
+      "variants": [
+        "32027ed1d5f7866aebd632dee18577f80753c82f",
+        "5b5ae90769c69d760bbb8874135dd59adc4144dc",
+        "7cc5b8c21588220a3601c295167b06b695ed1007",
+        "9be9f508d1be9a17f49fa7ec666eb9af80637753"
+      ],
       "note": "Repository-specific (HDI branch/README conventions, HDI_Template variant without the token table); stays in HDI_Template and HDI repositories."
     },
     "readme.usage.guidance.instructions.md": {
       "status": "deleted",
       "skill": null,
       "url": null,
+      "templates": [
+        "4d-technote-localisation-template"
+      ],
+      "variants": [
+        "400b0b9048eba0a3098d958f71df284bb9b343fd",
+        "655b0c770d1be91415d67b7c5c3080c10786efbf"
+      ],
       "note": "Copilot token/model/session usage guidance was removed everywhere; strip any such README section."
     },
     "readme.hdi.instructions.md": {
       "status": "deleted",
       "skill": null,
       "url": null,
+      "templates": [],
+      "variants": [
+        "2b7a354dff824675d25536e8f6b9a20756294abf"
+      ],
       "note": "Older version of readme.structure.instructions.md; superseded by it."
     },
     "technote-translation.instructions.md": {
-      "status": "repo-instruction",
+      "status": "instruction",
       "skill": null,
       "url": null,
-      "instruction": ".github/instructions/technote-translation.instructions.md",
+      "path": ".github/instructions/technote-translation.instructions.md",
+      "templates": [
+        "4d-technote-localisation-template"
+      ],
+      "variants": [
+        "1ca98016ebf53072905b98e1695b000a21c42ad5",
+        "29a9dc4dcff8e2f031a5373bbdf7457ba50ab1f5",
+        "2df0814b70f628ef9dfe8467e515a8302fa92852",
+        "510413e9492aabeba4f20d3cf695fd667323b68f",
+        "57c6fec88a60479d7df082b35845745d56b8825c",
+        "7877f6a3e8d079221e809c4da9496da17a64dbaf",
+        "98929719063bf1bcccf30c09cb8d3f7b520cdd31",
+        "b585c9ec877a04974966a381c05db206f47fd637"
+      ],
       "note": "Technote pipeline reference; stays in the technote-localisation template and its derived repositories."
     },
     "copilot-instructions.md": {
-      "status": "repo-instruction",
+      "status": "instruction",
       "skill": null,
       "url": null,
-      "instruction": "AGENTS.md",
+      "path": "AGENTS.md",
+      "templates": [
+        "4d-technote-localisation-template"
+      ],
+      "variants": [
+        "31c199a020820ce035a41afc39628ad73b0d79dd",
+        "d00276f3e4718710a6e2caac94be3f13344461a1",
+        "f17f2e88a32b0f771bd80dd7d6137c478e60c046",
+        "fa9a521ee73fe6235914586f1d262578c2193dd1"
+      ],
       "note": "Repository-wide instructions move into the repository's root AGENTS.md (vendor-neutral); no .github/copilot-instructions.md."
     },
-    "apply-glossary": {
-      "status": "skill",
-      "skill": "technote-apply-glossary",
-      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/technote-apply-glossary",
-      "note": "Technote-localisation repositories only (technote.json at the root)."
-    },
-    "review-figures": {
-      "status": "skill",
-      "skill": "technote-review-figures",
-      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/technote-review-figures",
-      "note": "Technote-localisation repositories only (technote.json at the root)."
-    },
-    "localise-demo-data": {
-      "status": "skill",
-      "skill": "technote-localise-demo-data",
-      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/technote-localise-demo-data",
-      "note": "Technote-localisation repositories only (technote.json at the root)."
-    },
-    "release-technote": {
-      "status": "skill",
-      "skill": "technote-release",
-      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/technote-release",
-      "note": "Technote-localisation repositories only (technote.json at the root)."
-    },
-    "localise-4d-project": {
-      "status": "skill",
-      "skill": "technote-localise-4d-project",
-      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/technote-localise-4d-project",
-      "note": "Technote-specific parts (demo/ scope, tools/tool4d.py, commit split). The generic 4D rules moved to 4dlocalise, 4dstartup, 4dmodernise, 4dmethods, 4dform, 4dcss and 4dproject."
-    },
-    "4d-docs": {
-      "status": "skill",
-      "skill": "4dform",
-      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dform",
-      "note": "Verified developer.4d.com index for form objects: skills/4dform/references/docs-index.md. Doc and forum search fallback: 4dlang (\"When the lookup tools have no answer\")."
-    },
-    "4d-form-layout": {
-      "status": "skill",
-      "skill": "4dform",
-      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dform",
-      "note": "Form geometry rules: skills/4dform/references/layout.md."
-    },
-    "form_layout_calc.py": {
-      "status": "skill",
-      "skill": "4dform",
-      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dform",
-      "note": "Generalised calculator, now with --form to check a .4DForm page: skills/4dform/scripts/form_layout_calc.py."
-    },
     "4d-project-instructions.md": {
-      "status": "repo-instruction",
+      "status": "instruction",
       "skill": "4dproject",
       "url": null,
-      "instruction": ".github/instructions/4d-project-instructions.md",
+      "path": ".github/instructions/4d-project-instructions.md",
+      "templates": [],
+      "variants": [
+        "b880ed2a23c77ecafa3938e6e53cb6213355f878"
+      ],
       "note": "4d-catalog-tutorial only; not migrated yet (left untouched). Its topics are covered by 4dproject (project layout, .gitignore) and 4dcatalog."
     },
     "tool4d-cli.md": {
-      "status": "repo-instruction",
+      "status": "instruction",
       "skill": "4dcli",
       "url": null,
-      "instruction": ".github/instructions/tool4d-cli.md",
+      "path": ".github/instructions/tool4d-cli.md",
+      "templates": [],
+      "variants": [
+        "af5b9ecdb782dace59513b88b6b621829c656e99"
+      ],
       "note": "4d-catalog-tutorial only; not migrated yet (left untouched). Its topic is covered by 4dcli."
     },
     "plugin-dev.instructions.md": {
-      "status": "repo-instruction",
+      "status": "instruction",
       "skill": null,
       "url": null,
-      "instruction": ".github/instructions/plugin-dev.instructions.md",
+      "path": ".github/instructions/plugin-dev.instructions.md",
+      "templates": [],
+      "variants": [
+        "0de834cb41d9100ba5a88b3e40f93d6342adb151"
+      ],
       "note": "4D plugin repositories; out of scope for now (left untouched)."
+    }
+  },
+  "skills": {
+    "apply-glossary": {
+      "skill": "technote-apply-glossary",
+      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/technote-apply-glossary",
+      "note": "Technote-localisation repositories only (technote.json at the root).",
+      "templates": [
+        "4d-technote-localisation-template"
+      ],
+      "variants": [
+        "3e7371391335afd51ed17c50115d43ae4c34b322"
+      ]
+    },
+    "review-figures": {
+      "skill": "technote-review-figures",
+      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/technote-review-figures",
+      "note": "Technote-localisation repositories only (technote.json at the root).",
+      "templates": [
+        "4d-technote-localisation-template"
+      ],
+      "variants": [
+        "9243028c9811d152c58b7e17f35bcdd69626b906"
+      ]
+    },
+    "localise-demo-data": {
+      "skill": "technote-localise-demo-data",
+      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/technote-localise-demo-data",
+      "note": "Technote-localisation repositories only (technote.json at the root).",
+      "templates": [
+        "4d-technote-localisation-template"
+      ],
+      "variants": [
+        "c3f454700bf78764dbdad4122eeb6c9c6c3ec273"
+      ]
+    },
+    "release-technote": {
+      "skill": "technote-release",
+      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/technote-release",
+      "note": "Technote-localisation repositories only (technote.json at the root).",
+      "templates": [
+        "4d-technote-localisation-template"
+      ],
+      "variants": [
+        "70c69b7e62b7764a3a67df3a15f35a35d5576940"
+      ]
+    },
+    "localise-4d-project": {
+      "skill": "technote-localise-4d-project",
+      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/technote-localise-4d-project",
+      "note": "Technote-specific parts (demo/ scope, tools/tool4d.py, commit split). The generic 4D rules moved to 4dlocalise, 4dstartup, 4dmodernise, 4dmethods, 4dform, 4dcss and 4dproject.",
+      "templates": [
+        "4d-technote-localisation-template"
+      ],
+      "variants": [
+        "0fc286f442036d5d2b9931d6f91c35676b4dc4d4"
+      ]
+    },
+    "4d-docs": {
+      "skill": "4dform",
+      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dform",
+      "note": "Verified developer.4d.com index for form objects: skills/4dform/references/docs-index.md. Doc and forum search fallback: 4dlang (\"When the lookup tools have no answer\").",
+      "templates": [],
+      "variants": [
+        "22f92936ab459e2993505f307e3d1dd322a2ce5a"
+      ]
+    },
+    "4d-form-layout": {
+      "skill": "4dform",
+      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/4dform",
+      "note": "Form geometry rules: skills/4dform/references/layout.md. Its form_layout_calc.py is now skills/4dform/scripts/form_layout_calc.py (generalised, with --form to check a .4DForm page).",
+      "templates": [],
+      "variants": [
+        "0689c312d5134165ff8c6953cef6fe5e5d603614",
+        "2ca861ee9d40ea4ca2ac6b7703b341410e60b044"
+      ]
     }
   }
 }
