@@ -1,0 +1,71 @@
+name: Publish dist
+
+# Publishes the `dist` branch: the content of 4d-skills/ at the root, plus
+# README.md and VERSION. Consumer repositories mount it as a submodule:
+#   git submodule add -b dist https://github.com/miyako/skills.git .agents
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "4d-skills/**"
+      - "README.md"
+      - "VERSION"
+      - ".github/scripts/build_dist.sh"
+      - ".github/scripts/validate_skills.py"
+      - ".github/workflows/publish-dist.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-dist
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          submodules: false
+
+      - name: Validate skills
+        run: |
+          python3 -m pip install --quiet pyyaml
+          python3 .github/scripts/validate_skills.py
+
+      - name: Prepare dist worktree
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin dist >/dev/null; then
+            git fetch --depth=1 origin dist:refs/remotes/origin/dist
+            git worktree add -B dist "$RUNNER_TEMP/dist" origin/dist
+          else
+            git worktree add --detach "$RUNNER_TEMP/dist"
+            git -C "$RUNNER_TEMP/dist" checkout --orphan dist
+            git -C "$RUNNER_TEMP/dist" rm -rf --quiet .
+          fi
+
+      - name: Build dist content
+        run: .github/scripts/build_dist.sh "$RUNNER_TEMP/dist" HEAD
+
+      - name: Commit and push if changed
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/dist"
+          git add -A
+          if git rev-parse --verify --quiet HEAD >/dev/null && git diff --cached --quiet; then
+            echo "dist is up to date" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          version=$(cat VERSION)
+          git commit --quiet -m "dist: v${version} from ${GITHUB_SHA}" \
+            -m "Built from ${GITHUB_REPOSITORY}@${GITHUB_SHA} (VERSION ${version})."
+          git push origin HEAD:refs/heads/dist
+          echo "Published dist $(git rev-parse HEAD) from ${GITHUB_SHA} (v${version})" >> "$GITHUB_STEP_SUMMARY"
