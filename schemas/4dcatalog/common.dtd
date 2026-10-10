@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+	some useful definitions.
+	
+	color and coordinates should be put in a separate dtd.
+
+-->
+<!ELEMENT base_ref EMPTY>
+<!ATTLIST base_ref
+	uuid CDATA #REQUIRED
+	name CDATA #IMPLIED
+>
+<!ELEMENT table_ref (base_ref?)>
+<!ATTLIST table_ref
+	uuid CDATA #REQUIRED
+	name CDATA #IMPLIED
+>
+<!ELEMENT field_ref (table_ref?)>
+<!ATTLIST field_ref
+	uuid CDATA #REQUIRED
+	name CDATA #IMPLIED
+>
+<!ELEMENT index_ref EMPTY>
+<!ATTLIST index_ref
+	uuid CDATA #REQUIRED
+>
+<!ELEMENT color EMPTY>
+<!ATTLIST color
+	red CDATA #REQUIRED
+	green CDATA #REQUIRED
+	blue CDATA #REQUIRED
+	alpha CDATA #IMPLIED
+>
+<!ELEMENT coordinates EMPTY>
+<!ATTLIST coordinates
+	left CDATA #IMPLIED
+	top CDATA #IMPLIED
+	right CDATA #IMPLIED
+	bottom CDATA #IMPLIED
+	width CDATA #IMPLIED
+	height CDATA #IMPLIED
+>
+<!--
+
+	Field tips are always plain text.
+
+-->
+<!ELEMENT tip (#PCDATA)>
+<!--
+
+	Comments are rtf tagged text (with an attribute in clear (for read only)
+
+-->
+<!ELEMENT comment (#PCDATA)>
+<!ATTLIST comment
+  format CDATA #IMPLIED
+ >
+
+<!--
+
+	QuickTime SCSpatialSettings structure
+
+-->
+<!ELEMENT qt_spatial_settings EMPTY>
+<!ATTLIST qt_spatial_settings
+	codec_type CDATA #REQUIRED
+	depth NMTOKEN #REQUIRED
+	spatial_quality NMTOKEN #REQUIRED
+>
