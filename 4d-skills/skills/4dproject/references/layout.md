@@ -1,4 +1,4 @@
-# 4D Project Layout
+# 4D Project Layout and Boilerplate Files
 
 Reference: https://developer.4d.com/docs/Project/architecture
 
@@ -6,41 +6,31 @@ Given a project named `{ProjectName}`, the standard structure is:
 
 ```
 {ProjectName}/
-├── .gitignore
+├── .gitignore                         # see "## .gitignore" in ../SKILL.md
 ├── Project/
-│   ├── {ProjectName}.4DProject
+│   ├── {ProjectName}.4DProject        # see ../SKILL.md
 │   └── Sources/
-│       ├── catalog.4DCatalog          # Database schema (XML)
-│       ├── catalog_editor.json        # Visual layout for IDE (JSON)
+│       ├── catalog.4DCatalog          # database schema (XML) -- 4dcatalog skill
+│       ├── catalog_editor.json        # visual layout for the Structure editor (JSON)
 │       ├── folders.json               # Explorer folder definitions
-│       ├── menus.json                 # Menu bar definitions
-│       └── roles.json                 # Security/permissions
-└── Resources/
+│       ├── menus.json                 # menu bar definitions -- see menus.md
+│       ├── roles.json                 # security/permissions
+│       ├── settings.4DSettings        # structure settings -- 4dsettings skill
+│       ├── styleSheets*.css           # form stylesheets -- 4dcss skill
+│       ├── Methods/                   # project methods ({MethodName}.4dm)
+│       ├── Classes/                   # class definitions ({ClassName}.4dm)
+│       ├── DatabaseMethods/           # onStartup.4dm, onExit.4dm, ...
+│       ├── Triggers/                  # table triggers
+│       ├── Forms/{FormName}/          # project forms -- 4dform skill
+│       └── TableForms/{tableNum}/{FormName}/
+├── Resources/                         # images, XLIFF ({lang}.lproj/) -- 4dlocalise skill
+├── Documentation/                     # developer-written .md docs for methods/classes/forms
+└── Settings/                          # user settings (see "## .gitignore" in ../SKILL.md)
 ```
 
-## .gitignore
-
-```
-# Data folder
-[dD][aA][tT][aA]/
-
-# Derived data
-DerivedData/
-
-# Libraries
-Libraries/
-
-# User preferences
-userPreferences.*/
-
-# Uncomment (remove the following # ) to ignore Trash
-# Project/Trash
-
-# System files
-.DS_Store
-ehthumbs.db
-Thumbs.db
-```
+Each `.4dm` file maps to one method or class; the file name is the method
+or class name. Methods and classes are auto-discovered by 4D -- no
+registration is needed.
 
 ## catalog_editor.json
 
@@ -75,7 +65,9 @@ colors, field colors). For agent-generated projects, use a minimal version:
 
 ## menus.json
 
-Default menu bar with File (Quit), Edit (standard items), and Mode (Design):
+Default menu bar with File (Quit), Edit (standard items), and Mode (Design).
+Items use standard `"action"` values and 4D's built-in `Common*` XLIFF IDs;
+see `menus.md` before adding or changing menu items.
 
 ```json
 {
@@ -151,12 +143,12 @@ Default menu bar with File (Quit), Edit (standard items), and Mode (Design):
 
 ## Methods (.4dm files)
 
-Methods are plain text files in `Project/Sources/Methods/`. When
-`tokenizedText` is `false` in the `.4DProject` file, write **plain 4D code
-without token suffixes** (no `:C###` or `:K##:##`).
-
 **File**: `Project/Sources/Methods/{MethodName}.4dm`
 
 - Method names follow the same identifier rules (max 31 chars, no reserved
   names -- see the `4dcatalog` skill for the full list).
-- Methods are auto-discovered by 4D -- no registration needed.
+- The first line may carry method attributes (`//%attributes = {...}`) --
+  see the `4dmethods` skill.
+- Whether to write token suffixes (`:C###`) is governed by `tokenizedText`
+  and the token rules in `../SKILL.md`.
+- Validate every `.4dm` you write with the `4dlsp` skill.

@@ -365,15 +365,15 @@ destinations that `4dtools` uses (see "Installation Location" in
 it is a per-skill tool consumed only by `4dcli`, so it follows the same
 layout.
 
-**Before extracting, confirm `tools/` is ignored in the target repo.**
-An unpacked tool4d is upwards of 100 MB (the macOS arm64 build is about
-108 MB across 145 files; the Linux build contains a single 93 MB
+**Before extracting, confirm `/tools/4dcli/` is ignored in the target
+repo.** An unpacked tool4d is upwards of 100 MB (the macOS arm64 build is
+about 108 MB across 145 files; the Linux build contains a single 93 MB
 `bin/tool4d`). No individual file exceeds GitHub's 100 MB limit, so an
 accidental commit is *accepted* and permanently bloats the repository
-rather than being rejected. Check the working repo's `.gitignore` and
-append a `tools/` entry if absent, leaving existing entries untouched.
-The skills repository ignores `tools/` already, but tools are installed
-in the repo being worked on, which usually does not.
+rather than being rejected. Append `/tools/4dcli/` to the working repo's
+`.gitignore` if absent, leaving existing entries untouched -- ignore the
+per-skill directory, not all of `tools/` (see the ".gitignore" section of
+`skills/4dproject/SKILL.md`).
 
 ```sh
 mkdir -p tools/4dcli
@@ -439,8 +439,8 @@ the first call and then fail with "tool4d not found" on the next. **Use
 
 The one place `TOOL4D_PATH` is durable is a host-registered MCP server,
 where the host stores it as part of the server's configuration and sets
-it on every launch -- see the environment-variable note in
-`4d-skills/AGENTS.md`.
+it on every launch -- see the environment-variable note in the
+skillset's root `AGENTS.md`.
 
 Do not install tool4d globally and do not modify the user's PATH.
 

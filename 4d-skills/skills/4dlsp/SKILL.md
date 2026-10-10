@@ -368,6 +368,37 @@ tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMet
   compiler-verified example, which is more useful upfront than
   discovering a syntax mistake after the fact via `validate`/`hover`.
 
+## When to use code intelligence
+
+Use the one-shot `hover`/`completion`/`goto-definition`/`document-symbols`
+subcommands (see "MCP server" below) in these situations:
+
+- **Before using a 4D command you are not certain about** -- `hover` a
+  similar command in existing code to check its signature and arguments
+  (or look it up with the `4dlang` skill first).
+- **When you encounter an unfamiliar command** while reading code -- `hover`
+  it instead of guessing what it does.
+- **When asked whether existing code is correct** -- do not rely on
+  `validate` alone; `hover` every command you are asked to vouch for. "No
+  hover information available at this position" means the token is not a
+  recognized command, even if `validate` passed.
+- **To understand what a project method does** -- `goto-definition`.
+- **To see what a file contains before editing it** -- `document-symbols`.
+- **While writing new code** -- `completion` at the cursor position.
+
+## Syntax checking vs running code
+
+This skill is the single owner of **syntax checking**: use `validate` for the
+files you changed and `check-syntax` for a project-wide pass. Do not write a
+startup method or launch a 4D session just to check syntax.
+
+Running code is a different job, owned by the `4dcli` skill: executing a
+test method, rendering a form, or a full `Compile project` pass (which also
+reports typing errors across the whole project) needs `tool4d` or 4D. Some
+repositories ship their own wrapper for that (e.g. `tools/tool4d.py` in a
+technote-localisation repository); use it for running tests there, and
+still use this skill for syntax checks.
+
 ## MCP server
 
 The `mcp` subcommand starts a persistent server that keeps a tool4d LSP

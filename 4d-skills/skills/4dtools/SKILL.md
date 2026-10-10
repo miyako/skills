@@ -95,12 +95,15 @@ shared by more than one consumer, in which case it stays directly under
 
 Do not install them globally and do not modify the user's PATH.
 
-Before downloading, confirm the working repo ignores `tools/`, and add
-that entry to its `.gitignore` if absent without disturbing existing
-entries. This repository ignores `tools/` already, but tools are
-installed in the repo being worked on, which often does not -- and a
-provisioned binary that slips under GitHub's 100 MB per-file limit will
-be accepted and permanently bloat that repository rather than rejected.
+Before downloading, confirm the working repo's `.gitignore` ignores the
+destination directory of each tool you provision (`/tools/4dcatalog/`,
+`/tools/4dform/`, `/tools/4dlsp/`, `/tools/4dlang/`, and `/tools/4dcli/`
+for tool4d), and append any missing entry without disturbing existing
+ones. The canonical list is in the ".gitignore" section of
+`skills/4dproject/SKILL.md`. Do **not** ignore the whole `tools/` folder:
+some repositories commit their own scripts there. A provisioned binary
+that slips under GitHub's 100 MB per-file limit is accepted and
+permanently bloats the repository rather than being rejected.
 
 ## Platform Detection
 
