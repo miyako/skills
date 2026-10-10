@@ -422,6 +422,22 @@ one of the concrete subclasses (`File`/`ZipFile` for `Document`).
 5. Write the code, then validate it with the `4dlsp` skill -- a lookup
    result alone is not proof the code compiles.
 
+## When the lookup tools have no answer
+
+The two tools cover the language. For everything else -- form objects and
+their properties (see `skills/4dform/references/docs-index.md` for page
+slugs), settings, concepts, release notes -- or when a tool returns nothing:
+
+* **Documentation search:** `https://developer.4d.com/docs/search?q=<terms>`
+  and fetch the page; prefer the `docPage` permalink when a tool gave one.
+* **Forum search** (troubleshooting, past experience):
+  `https://discuss.4d.com/search?q=<terms>`. Results look like
+  `https://discuss.4d.com/t/<topic-slug>/<topic_id>`; the topic id is what
+  matters -- `https://discuss.4d.com/t/<topic_id>` is equivalent.
+
+Treat forum answers as hints to verify (with `4dlsp` or the docs), not as
+reference.
+
 ## Windows
 
 Use `tools\4dlang\4d-language-classic.exe` and

@@ -45,7 +45,7 @@ Table forms are organized by **table number** (not table name). The table number
 
 Only the form-owned subtree is shown here. For the rest of the project
 layout (`.4DProject`, `catalog.4DCatalog`, `menus.json`, `roles.json`,
-`Methods/`, `.gitignore`), see `Project/AGENTS.md`.
+`Methods/`, `.gitignore`), see `skills/4dproject/references/layout.md`.
 
 ```
 Project/
@@ -475,71 +475,11 @@ This gives explicit control over which icon is used per platform/theme, as an al
 
 ## CSS Stylesheets
 
-4D supports CSS for styling form objects. This uses CSS **syntax** but is not the web CSS specification.
-
-Reference: https://developer.4d.com/docs/FormEditor/stylesheets
-
-### Specificity (lowest → highest)
-
-1. Object **type** selector: `button { ... }`
-2. Object **class** selector: `.myClass { ... }` (matches the object's `class` property)
-3. Object **name/ID** selector: `#MyButton { ... }` (matches the object's JSON key name)
-4. **JSON property** defined directly on the object (strongest)
-5. `!important` declaration overrides the default priority
-
-### System Stylesheets (always loaded)
-
-```
-/SOURCES/styleSheets.css
-/SOURCES/styleSheets_mac.css
-/SOURCES/styleSheets_windows.css
-```
-
-### Custom Stylesheets
-
-Additional stylesheets can be loaded via the form's `css` property. They must use **file system paths** with reserved prefixes:
-
-- `/DATA/`, `/LOGS/`, `/PACKAGE/`, `/PROJECT/`, `/RESOURCES/`, `/SOURCES/`
-
-A CSS file adjacent to the `.4DForm` file can be referenced by filename only.
-
-### Media Queries
-
-```css
-@media (form-theme: mac-classic) { }
-@media (form-theme: win-classic) { }
-@media (form-theme: fluent-ui) {
-  @media (prefers-color-scheme: light) { }
-  @media (prefers-color-scheme: dark) { }
-}
-@media (form-theme: liquid-glass) { }
-```
-
-| Theme | Minimum Version |
-|-------|----------------|
-| `fluent-ui` | 4D 21 R2 |
-| `liquid-glass` | 4D 21 R3 |
-
-### CSS Example
-
-```css
-button {
-  text: "Click Me";
-  style: flat;
-}
-
-@media (prefers-color-scheme: light) {
-  button {
-    stroke: #000080;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  button {
-    stroke: #7FFFD4;
-  }
-}
-```
+Form objects can take their appearance from stylesheets via the `class`
+property. Stylesheet files, 4D CSS syntax, specificity (a property in the
+form JSON beats CSS), dark mode and the `form-theme` media queries
+(Fluent UI, Liquid Glass) are owned by the `4dcss` skill
+(`skills/4dcss/SKILL.md`).
 
 ## Filesystem Paths in Form Properties
 

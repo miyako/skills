@@ -2,8 +2,11 @@
 name: 4dform
 description: >
   Design, modify, and validate 4D Form source files (.4DForm): form and
-  object JSON structure, per-object reference material, the authoring
-  protocol to follow, and schema validation against the 4D Form schema.
+  object JSON structure, per-object reference material (including list box
+  display defaults), layout geometry (rendered vs declared size, alignment,
+  overlap checks with form_layout_calc.py), an index of the official form
+  documentation pages, the authoring protocol to follow, and schema
+  validation against the 4D Form schema.
 ---
 
 # 4D Form
@@ -28,9 +31,14 @@ table below.
 * `.4dm` code validation -- `skills/4dlsp/SKILL.md`
 * 4D command and OOP class syntax -- `skills/4dlang/SKILL.md`
 * project layout, `.gitignore`, `menus.json`, `roles.json` --
-  `Project/AGENTS.md`
+  `skills/4dproject/SKILL.md`
+* stylesheets, dark mode, Liquid Glass / form themes --
+  `skills/4dcss/SKILL.md`
+* XLIFF and `:xliff:` labels -- `skills/4dlocalise/SKILL.md`
 * `compatibilityVersion` and `tokenizedText` -- `skills/4dproject/SKILL.md`
 * running tool4d or 4D from a shell -- `skills/4dcli/SKILL.md`
+* the startup method and the window a form opens in --
+  `skills/4dstartup/SKILL.md`
 * provisioning `boon` and the other helper binaries --
   `skills/4dtools/SKILL.md`
 
@@ -170,7 +178,8 @@ Open only the file for the object(s) the task touches.
 
 | Task involves | Open |
 |---|---|
-| Form structure: pages, events, window sizing, entry order, form class, data sources, CSS, fonts, icons | `references/form-concepts.md` |
+| Form structure: pages, events, window sizing, entry order, form class, data sources, fonts, icons | `references/form-concepts.md` |
+| Stylesheets, `class`, dark mode, Liquid Glass / Fluent UI, button heights | `skills/4dcss/SKILL.md` |
 | Button | `references/objects/button.md` |
 | Checkbox / three-state | `references/objects/checkbox.md` |
 | Radio button / radioGroup | `references/objects/radio-button.md` |
@@ -194,6 +203,9 @@ Open only the file for the object(s) the task touches.
 | Static text / label / rotation / dynamic reference | `references/objects/text.md` |
 | Hierarchical list / tree / ListRef / choice list | `references/objects/list.md` |
 | Picture input: interactive SVG, mouse tracking, clickable map, drawing tool | `references/objects/picture-input.md` |
+| List box: columns, footers, `truncateMode`, `resizingMode` (display defaults) | `references/objects/listbox.md` |
+| Positioning, sizing, aligning, spacing objects; rendered vs declared size; overlap checks | `references/layout.md` (+ `scripts/form_layout_calc.py`) |
+| Official doc page for an object type, property group or event | `references/docs-index.md` |
 | SVG rendering engine: supported elements, filters, `SVG SET ATTRIBUTE` | `references/objects/svg-rendering.md` |
 | Resolving a property name: JSON key, CSS name, getter/setter command | `references/property-reference.md` |
 | What a `FORM SCREENSHOT` or printed capture actually shows | `references/screenshot-rendering.md` |
