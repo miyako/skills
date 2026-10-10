@@ -39,7 +39,7 @@ hardcoded values in `.4DForm` JSON:
 |---|---|
 | Dark mode, hardcoded colours, `automatic`, listbox row colours, meta-source colours | `references/dark-mode.md` |
 | Liquid Glass, Fluent UI, button/dropdown heights, `form-theme`, `FORM theme` | `references/form-themes.md` |
-| Where to put a rule, specificity, syntax | this file |
+| Where to put a rule, specificity, syntax, what CSS cannot do | this file |
 
 References:
 - CSS in 4D: https://developer.4d.com/docs/FormEditor/stylesheets
@@ -139,6 +139,22 @@ Visual properties are safe in CSS: `fill`, `stroke`, `alternateFill`,
   properties set only in CSS -- one more reason to keep them in JSON.
 * `borderStyle` / `borderRadius` change the rendered size of the object;
   see `skills/4dform/references/layout.md`.
+
+## Limits
+
+| Limit | Rule |
+|---|---|
+| Not settable from CSS | `method`, `type`, `class`, `events`, and the list attributes `choiceList`, `excludedList`, `labels`, `list`, `requiredList` |
+| Web alias + 4D value | 4D-specific values (e.g. `sunken`) work only with the 4D name: `borderStyle: sunken;`, not `border-style: sunken;` |
+| `borderRadius` | Documented for Input, Rectangle and Text Area (inputs / text areas only with `none`, `solid` or `dotted` borders). On buttons it was observed to round only the fill while a `solid` border stays square: use `fill` + `borderStyle: none` for rounded flat buttons. |
+| Vertical text alignment | `verticalAlign` applies to list boxes, columns, headers and footers only; inputs have none. To centre text visually in an input, make its `height` close to the line height (observed). |
+| List box `verticalAlign` | `automatic` (default) means **bottom** for text (top for pictures). Set `verticalAlign: middle` explicitly on list box classes. |
+
+Reference: https://developer.4d.com/docs/FormObjects/propertiesText#vertical-alignment,
+https://developer.4d.com/docs/FormObjects/propertiesCoordinatesAndSizing#corner-radius
+
+Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
+(MIT License).
 
 ## Verification
 

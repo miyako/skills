@@ -20,6 +20,18 @@ schema: tables, fields, primary keys, indexes, and relations.
 Do not treat a `.4DCatalog` as generic XML. XML well-formedness is necessary
 but is not sufficient to establish that the artifact is a valid 4D Catalog.
 
+### Not in this skill
+
+| Topic | Skill |
+|---|---|
+| Querying, saving, importing data through ORDA (`ds`, `fromCollection`, vector queries) | `4dorda` |
+| Entity / dataclass classes in `Project/Sources/Classes/` | `4dorda` |
+| Per-language field naming (`nameEN` / `nameJA`) | `4dlocalise` |
+| Project layout (`Project/Sources/`, `Resources/`) | `4dproject` |
+
+Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
+(MIT License).
+
 ## Creating a new catalog
 
 When instructed to create a new database schema:
@@ -57,6 +69,26 @@ first by reading `skills/4dtools/SKILL.md`.
 
 If `xmllint` is not available, provision it first by reading
 `skills/4dtools/SKILL.md`.
+
+### When 4D refuses the catalog
+
+4D reports an unreadable catalog with generic messages (observed: "XML
+structure elements definition is damaged", "Impossible to import the
+structure") without naming the culprit. Usual causes:
+
+* an attribute the DTD does not declare (e.g. `auto_delete` on a relation,
+  `path` on a field) -- DTD validation reports it;
+* a value outside an attribute's enumeration (e.g. `foreign_key="automatic"`;
+  it is `true` or `false`) -- DTD validation reports it;
+* the same `uuid` used twice -- the DTD does **not** catch it. Check with:
+
+```sh
+grep -oE '<(base|table|field|index|relation) [^>]*uuid="[^"]*"' Project/Sources/catalog.4DCatalog \
+  | grep -oE ' uuid="[^"]*"' | sort | uniq -d
+```
+
+(no output = no duplicates; only defining elements are matched, not
+`field_ref` / `table_ref` / `field_uuid` references).
 
 ## Schema
 
@@ -203,6 +235,23 @@ Also avoid 4D keywords: `If`, `Else`, `End if`, `For`, `While`, `Repeat`,
 
 **Invalid type codes** (will cause 4D to reject/strip the field): `2`, `7`,
 `11`, `13`, `15`, `16`, `17`, `19`, `20`. Always use the codes listed above.
+
+Catalogs saved by recent 4D versions were observed to declare text fields
+as `type="10"` without `limiting_length` (older ones use `type="14"`). When
+modifying a catalog, keep the form it already uses; when creating one,
+follow the table above.
+
+**Vector field (4D 21+)** -- an Object field restricted to `4D.Vector`
+values, required for vector similarity queries
+(`skills/4dorda/references/queries.md`):
+
+```xml
+<field name="embedding" uuid="{UUID}" type="21" blob_switch_size="2147483647" id="5">
+  <field_extra class_id="4D.Vector"/>
+</field>
+```
+
+`<field_extra>` must stay the last child of `<field>`.
 
 ## Field Attributes
 

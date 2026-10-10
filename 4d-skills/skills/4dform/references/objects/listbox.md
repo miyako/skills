@@ -1,8 +1,8 @@
 ---
 object: "listbox"
 json_type: "listbox"
-keywords: ["listbox", "list box", "column", "footer", "truncateMode", "withEllipsis", "resizingMode", "legacy", "rightToLeft", "column width", "minWidth"]
-summary: "List box display defaults: no truncate-with-ellipsis on columns and footers, legacy (last column grows) resizing, column width properties, audit script."
+keywords: ["listbox", "list box", "column", "footer", "truncateMode", "withEllipsis", "resizingMode", "legacy", "rightToLeft", "column width", "minWidth", "rowHeight", "currentItemSource", "verticalAlign"]
+summary: "List box display defaults: no truncate-with-ellipsis on columns and footers, legacy (last column grows) resizing, column width properties, rowHeight / selection binding / vertical alignment, audit script."
 ---
 
 # 4D List Box -- Display Defaults
@@ -78,6 +78,32 @@ Use `"rightToLeft"` only as a deliberate design decision, never as a
 side effect of a default. With `"legacy"`, the column properties `width`,
 `minWidth`, `maxWidth` and `resizable` are respected; a sensible `minWidth`
 keeps content visible.
+
+With `"rightToLeft"`, column widths were observed to drift after repeated
+window resizes. If that mode is required, subscribe the form to `onResize`
+and restore the intended widths there with `LISTBOX SET COLUMN WIDTH`.
+
+## Other Properties Often Written Wrong
+
+| Property | Rule |
+|---|---|
+| `rowHeight` | A **string** with a unit: `"32px"` or `"2em"` (schema pattern `^(\d+)(px\|em)?$`). A bare number fails schema validation. |
+| `currentItemSource` | Collection / entity-selection list boxes: expression receiving the clicked element, e.g. `"Form.selected"`. `currentItemPositionSource` receives its position, `selectedItemsSource` all selected elements. |
+| `verticalAlign` | Default `automatic` aligns text to the **bottom** of the row; set `"middle"` explicitly (`skills/4dcss/SKILL.md`, "Limits"). |
+
+```json
+"lbEmployees": {
+	"type": "listbox",
+	"listboxType": "collection",
+	"dataSource": "Form.employees",
+	"currentItemSource": "Form.selected",
+	"rowHeight": "28px",
+	"verticalAlign": "middle"
+}
+```
+
+Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
+(MIT License).
 
 ## Audit
 

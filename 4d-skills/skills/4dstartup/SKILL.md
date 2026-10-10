@@ -98,7 +98,7 @@ End if
 | `SET MENU BAR(1)` | Keeps the menu bar installed after the window closes. |
 | `Plain form window` | A normal movable window. Never `Pop up form window` for a window with controls: pop-ups close when the user clicks outside and are not movable. It is also the default when the type is omitted. |
 | `SET WINDOW TITLE` | The title is what the reuse loop matches on. |
-| `DIALOG(form; data; *)` | `*` makes the dialog non-blocking in the worker; the window lives as long as the form. No `CLOSE WINDOW`. |
+| `DIALOG(form; data; *)` | `*` makes the dialog non-blocking in the worker; the window lives as long as the form. No `CLOSE WINDOW`. It needs the window opened just before by `Open form window` (without one: error -9909). |
 
 Rules:
 
