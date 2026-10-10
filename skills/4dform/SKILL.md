@@ -72,6 +72,8 @@ The reading budget for a whole task is:
 * `references/property-reference.md` -- only when resolving a specific
   property name you could not resolve from the object file
 * `references/screenshot-rendering.md` -- only when rendering a capture
+* `references/async-ui.md` -- only when the form runs long work (timers,
+  workers, HTTP callbacks)
 
 You will never need more than three reference files for a single-object
 task. There is no prerequisite chain to follow and nothing to remember
@@ -203,7 +205,9 @@ Open only the file for the object(s) the task touches.
 | Static text / label / rotation / dynamic reference | `references/objects/text.md` |
 | Hierarchical list / tree / ListRef / choice list | `references/objects/list.md` |
 | Picture input: interactive SVG, mouse tracking, clickable map, drawing tool | `references/objects/picture-input.md` |
-| List box: columns, footers, `truncateMode`, `resizingMode` (display defaults) | `references/objects/listbox.md` |
+| List box: columns, footers, `truncateMode`, `resizingMode`, `rowHeight`, selection binding | `references/objects/listbox.md` |
+| Subform container: `Form` inside a subform, parent ↔ subform calls, subform pages | `references/objects/subform.md` |
+| Long operations without freezing the form: `SET TIMER`, `CALL FORM`, async callbacks | `references/async-ui.md` |
 | Positioning, sizing, aligning, spacing objects; rendered vs declared size; overlap checks | `references/layout.md` (+ `scripts/form_layout_calc.py`) |
 | Official doc page for an object type, property group or event | `references/docs-index.md` |
 | SVG rendering engine: supported elements, filters, `SVG SET ATTRIBUTE` | `references/objects/svg-rendering.md` |

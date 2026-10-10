@@ -453,6 +453,7 @@ Do not install tool4d globally and do not modify the user's PATH.
 | `--dataless` | No data file. Use whenever the project may be open elsewhere, to avoid lock conflicts |
 | `--user-param` | A single text argument, read back with `Get database parameter(User param value; $text)` |
 | `--headless` | Full `4D` only: run without a GUI. Requires a license |
+| `--skip-onstartup` | Do not run the `On Startup` database method (which typically opens windows) before `--startup-method` |
 
 ## Choosing the Right Engine
 
@@ -896,6 +897,16 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   to stdout when headless and showing UI otherwise.
 * Output format: JSON is easiest to parse; use `JSON Stringify($obj; *)`
   for pretty-printing.
+* `LOG EVENT(Into system standard outputs; $message)` prints to stdout,
+  the simplest way to get short results out of a headless run.
+* Omit `--dataless` only when a test must read or write records, and run
+  it on a copy of the data file.
+* Runtime error line numbers count from the start of the **method or
+  function** (the `Function` line is line 1), not from the start of the
+  class file.
+* tool4d may fail to resolve a project's dependencies (components): expect
+  an error when opening the project or when code calls a component. Test
+  component-free code paths, or use full 4D.
 
 ## Tool Dependencies
 

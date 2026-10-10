@@ -16,7 +16,11 @@ A Form is the basic unit of user interface definition in 4D. Forms are defined i
 - **Subform**: a form embedded in another form (like an iframe in HTML). Subforms create a local coordinate system within their container. Subforms can themselves contain subforms.
 
 Reference: https://developer.4d.com/docs/FormEditor/forms
+
 JSON schema: https://developer.4d.com/docs/FormEditor/jsonReference
+
+Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
+(MIT License).
 
 ## File Structure
 
@@ -521,6 +525,28 @@ Use `OBJECT Get pointer` to dereference the dynamic variable data source of a fo
 
 Reference: https://developer.4d.com/docs/commands/object-get-pointer
 
+### Null-Safe Expressions
+
+A `dataSource` expression is evaluated on every redraw. Reading a property
+of a **Null** value raises a runtime error at display time (observed as
+error -10716), whereas a property of
+an undefined property just yields undefined. Typical trap:
+`"dataSource": "Form.current.employer.name"` while nothing is selected or
+the relation is empty. Bind to a form-class getter that guards Null instead
+of writing a long path inline:
+
+```4d
+Function get employerName() : Text
+	If (This.current=Null) || (This.current.employer=Null)
+		return ""
+	End if
+	return This.current.employer.name
+```
+
+```json
+"dataSource": "Form.employerName"
+```
+
 ## Form Class
 
 Since 4D 20 R8, you can associate a user class with a form. This enables:
@@ -587,6 +613,20 @@ Reference: https://developer.4d.com/docs/commands/dialog
 - **Object passed to `DIALOG`** takes precedence over the `formClass` property
 - **`formClass` only** (no object passed) → 4D auto-instantiates the class
 - **Neither** → `Form` returns a generic empty object
+- An **undefined** formData argument counts as not passed: the `formClass`
+  is still instantiated
+- In a **subform**, `Form` is the object bound to the subform container,
+  not an instance of the subform's `formClass` --
+  `references/objects/subform.md`
+
+### Opening the Window
+
+`DIALOG` displays the form in the **last opened window**. Call
+`Open form window(form; ...)` first: it sizes the window from the form's
+`width` / `height` and `windowMinWidth` / `windowMaxWidth` (and height
+equivalents). `DIALOG(form; data; *)` with no window opened raises error
+-9909. Which window type to use and the non-blocking pattern are owned by
+`skills/4dstartup/SKILL.md`.
 
 ### Lifecycle
 

@@ -37,7 +37,7 @@ description: >
 |---|---|
 | Finding the strings to replace in `menus.json`, forms, `.4dm` | `references/what-to-localise.md` |
 | Names/labels stored per language in the data | `references/language-attributes.md` |
-| XLIFF files, IDs, groups, Common IDs, line breaks | this file |
+| XLIFF files, IDs, groups, Common IDs, line breaks, runtime language switch | this file |
 
 References:
 - `:xliff:` references in form object titles: https://developer.4d.com/docs/FormObjects/propertiesObject#title
@@ -66,7 +66,8 @@ Resources/
   language**. A language without its `.lproj` folder cannot be selected
   with `SET DATABASE LOCALIZATION` -- the call fails silently.
 * File names carry a capitalised language suffix: `{name}{LANG}.xlf`
-  (`menuEN.xlf`, never `menu.xlf`).
+  (`menuEN.xlf`, never `menu.xlf`). Use the `.xlf` extension (files named
+  `.xliff` were observed to be ignored).
 * Group strings by purpose (menus, messages, one file per form) rather than
   in one monolithic file.
 
@@ -109,6 +110,28 @@ $text:=Replace string(Localized string("Welcome_SiteCount"); "{n}"; String($coun
 ```
 
 with `{n} sites` in English and `観光名所 {n} 件` in Japanese.
+
+**Where `:xliff:` resolves.** Only in static JSON properties. A value
+built in code -- a drop-down or tab `values` collection, a label set with
+`OBJECT SET TITLE` -- must use `Localized string`. An input `placeholder`
+accepts `":xliff:ID"` only as its whole value, never mixed with static
+text. `Localized string` returns `""` and sets `OK` to 0 when the ID is
+missing; fall back to a default rather than displaying an empty label.
+
+## Switching Language at Runtime
+
+* `SET DATABASE LOCALIZATION("ja")` affects only what is displayed **after**
+  the call. Forms and subforms already loaded keep their labels: reopen
+  them, or re-apply titles with
+  `OBJECT SET TITLE(*; "lblName"; Localized string("Name_Label"))`
+  (labels and buttons take `OBJECT SET TITLE`, not `OBJECT SET VALUE`).
+* Collections built with `Localized string` for drop-downs and tabs must be
+  rebuilt after the switch; keep the selected `index` and restore it.
+* Language codes use a dash (`"fr-ca"`), `.lproj` folders an underscore
+  (`fr_ca.lproj`).
+
+Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
+(MIT License).
 
 ## XLIFF Rules
 

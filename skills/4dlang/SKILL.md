@@ -5,6 +5,10 @@ description: >
   language and the 4D object (OOP) language, via 4d-language-classic and
   4d-language-oop. The two corpora overlap (classic `File` vs OOP `4D.File`),
   so query both and compare rather than picking one language up front.
+  Also covers language pitfalls that compile but misbehave: left-to-right
+  operator evaluation, case-insensitive text comparison and the @ wildcard,
+  object literal keys, Formula and This capture, .call() arguments,
+  4D.HTTPRequest body types and callbacks, commonly mis-guessed signatures.
 ---
 
 # 4D Language Lookup
@@ -23,6 +27,22 @@ Both are deterministic, offline lookup tools over a compiler-verified IR --
 not language models. The same query always returns the same result on any
 machine. Neither substitutes for `validate`/`check-syntax` (see the `4dlsp`
 skill) -- always still compile-check the code you write.
+
+### Not in this skill
+
+| Topic | Skill |
+|---|---|
+| Compile check, diagnostics, hover / definition | `4dlsp` |
+| ORDA queries, entities, locking, `fromCollection` | `4dorda` |
+| Rewriting `C_*` / deprecated `_o_` commands | `4dmodernise` |
+| Form JSON and form object properties | `4dform` |
+
+## Route Table
+
+| Task involves | Open |
+|---|---|
+| Looking up a command or class member | this file |
+| Operator precedence, text comparison, literals, `Formula` / `This`, `.call()`, `4D.HTTPRequest`, mis-guessed command signatures | `references/pitfalls.md` |
 
 ## Why one skill, not two
 

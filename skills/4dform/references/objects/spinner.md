@@ -35,6 +35,8 @@ The spinner has no scale, no min/max, no graduations. It is purely binary:
 
 The animation does not start automatically when the form loads. You must set the data source to 1 by code or use a static value like `"dataSource": "1"`.
 
+Setting 0 only stops the animation; the object itself stays in the form. To take it out of view when the work ends, also call `OBJECT SET VISIBLE(*; "mySpinner"; False)` (pattern: `references/async-ui.md`).
+
 ## Data Source
 
 The data source controls only the running/stopped state. Any non-zero value starts the animation.

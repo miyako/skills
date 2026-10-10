@@ -96,6 +96,25 @@ Examples (editor offsets, bordered input with radius 8 = 9 px per side):
   touch and 20 px for a 2 px visual clearance.
 * `--solve 300 30 --border --radius 8 --editor` → declare `width 282`.
 
+## Runtime Geometry
+
+| Command | Meaning |
+|---|---|
+| `OBJECT SET COORDINATES(*; name; left; top {; right; bottom})` | **Absolute** form coordinates; `right` / `bottom` are corner coordinates, not width / height. |
+| `OBJECT MOVE(*; name; dx; dy {; dw; dh})` | Relative move / resize (add `*` as last parameter to make it absolute). |
+| `OBJECT GET COORDINATES(*; name; $l; $t; $r; $b)` | Current rectangle, after automatic resizing. |
+
+To size from a width: `OBJECT SET COORDINATES(*; $n; $l; $t; $l+$width; $t+$height)`.
+`sizingX` / `sizingY` (`grow`, `move`) already follow window resizes; use
+these commands only for layouts the static properties cannot express (e.g.
+a collapsible side panel), and recompute in `On Resize` if the window is
+resizable.
+
+Reference: https://developer.4d.com/docs/commands/object-set-coordinates
+
+Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
+(MIT License).
+
 ## Pitfalls
 
 - [ ] Editor vs live: measuring the Form Editor? editor offsets. Measuring a screenshot? live offsets.
