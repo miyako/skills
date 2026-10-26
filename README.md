@@ -47,6 +47,7 @@ Used only in repositories created from
 | [`technote-localise-4d-project`](skills/technote-localise-4d-project/SKILL.md) | Localising the 4D demo under `demo/` |
 | [`technote-apply-glossary`](skills/technote-apply-glossary/SKILL.md) | Changing a term across glossary, text and figures |
 | [`technote-review-figures`](skills/technote-review-figures/SKILL.md) | Reviewing and fixing localised figures |
+| [`technote-localise-screenshots`](skills/technote-localise-screenshots/SKILL.md) | Mechanical screenshot text replacement with authoritative UI strings, context-correct fonts and rendering verification |
 | [`technote-localise-demo-data`](skills/technote-localise-demo-data/SKILL.md) | Replacing the demo's sample data and recomputing the examples |
 | [`technote-release`](skills/technote-release/SKILL.md) | Publishing the PDF and demo zip as a GitHub release |
 
