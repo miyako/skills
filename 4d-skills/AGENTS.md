@@ -117,6 +117,7 @@ repository root). Ignore them everywhere else.
 | Localise the 4D demo under `demo/` (wrapper over the 4D skills) | technote-localise-4d-project | `skills/technote-localise-4d-project/SKILL.md` |
 | Change a term across glossary, text and figures | technote-apply-glossary | `skills/technote-apply-glossary/SKILL.md` |
 | Review and fix localised figures | technote-review-figures | `skills/technote-review-figures/SKILL.md` |
+| Mechanically localise screenshot text (4D/demo UI, browser, native dialogs) with authoritative strings and context-correct fonts | technote-localise-screenshots | `skills/technote-localise-screenshots/SKILL.md` |
 | Replace the demo's sample data and recompute examples | technote-localise-demo-data | `skills/technote-localise-demo-data/SKILL.md` |
 | Publish the PDF and demo zip as a GitHub release | technote-release | `skills/technote-release/SKILL.md` |
 
