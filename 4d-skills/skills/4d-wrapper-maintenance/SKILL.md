@@ -131,6 +131,19 @@ isolated project. Pair deterministic scheduling doubles with relevant
 real-engine tests. Verify exact argument tokens and callback counts/order,
 not only source fragments or process exit code.
 
+Route Object guards for `OB Instance of` and project/component inheritance
+boundaries through `4dlang`'s pitfalls reference. Test subclasses belong in
+their parent's owning fixture component, not a host project extending it.
+
+Separate project/component initialization or tooling failures from startup
+method execution and failed code assertions. Preserve nonzero status, exact
+invocation/build, redacted scoped diagnostics and the last fresh checkpoint.
+A stack before the startup method does not establish a wrapper callback
+defect, nor does a subsequent passing run establish a fix or stability.
+If needed, predefine a small bounded startup-only diagnostic with independent
+exit and fresh-output assertions, stopping on failure. Do not retry until
+green, hide the initial failure, or mutate shared caches to make tests pass.
+
 Label results by tier: static inspection; mocked command construction /
 deterministic lifecycle; real 4D compile; real 4D execution; real native
 worker/server readiness; end-to-end inference (or the service's equivalent).
@@ -173,6 +186,14 @@ Cancel pending requests/timers, detach callbacks and release owned workers
 on disposal; no consumer callbacks after disposal. Preserve approved
 cancellation/termination notifications before detaching, and test that order.
 
+Across worker/process boundaries, verify that cancellation observes the
+same shared attempt token, not a copied ordinary object. Document ownership
+and synchronization using the target 4D shared-object contract. Test both
+orders at the final launch-versus-cancel boundary: checking a flag earlier
+is not serialization. Registry cleanup must remove only the owning generation
+on each terminal path and must not remove a newer attempt at the same key.
+Carry tokens/registries in adapter context, not upstream CLI options.
+
 ### Errors and streams
 
 Map native stdout/stderr/error/termination to the actual adapter callbacks.
@@ -183,12 +204,36 @@ fields or invoking callbacks. Route invalid events through the project's
 explicit diagnostic/error mechanism, not a success-shaped fallback.
 Guard callbacks by callable type and active lifetime, not just non-null.
 
+Callable does not necessarily mean subscribed: an inherited default empty
+`onError` can consume a failure and suppress fallback logging. Inventory how
+the project distinguishes an actual subscriber from its default no-op;
+preserve receiver/signature compatibility and select one diagnostic delivery
+path. Test no subscriber, inherited default and explicit subscriber, including
+forwarding failures, without silently swallowing or duplicating delivery.
+
+Exercise an error followed by termination **without a response**. In a
+queue-based controller, advancing/marking completion only on response can
+retain the failed worker indefinitely. Reconcile or abort owned command,
+message and context queues together under the approved failure policy, then
+verify terminal release and a later independent start with a distinct worker.
+This is a lifecycle test requirement derived from application evidence,
+not a claim that every native failure produces the same event sequence.
+Test synchronous process-constructor exceptions separately: injecting an
+error callback does not prove recovery when construction throws before any
+callback or worker object exists. Preserve engine errors and do not claim
+callback forwarding repairs that boundary.
+
 ### Downloads, local models and cache compatibility
 
 Cached completions may run inline inside construction or iteration;
 uncached completions may arrive later, out of order or more than once.
-Initialize pending/state before dispatch, deduplicate completion identity,
-and gate worker start exactly once after all required artifacts validate.
+Register **all** pending records before dispatching any cached or asynchronous
+completion. Give each record an identity including its destination and attempt
+generation; a provider oid alone must not collapse equal content at different
+destinations. Accept a completion only for a currently pending record in the
+active attempt, deduplicate it, and gate worker start exactly once after all
+required artifacts validate. Unknown/duplicate completions cannot start a
+worker; failed/cancelled/stale callbacks cannot reopen a terminal attempt.
 Avoid a constructor-completion plus explicit-start double path. Test empty,
 all-cached, mixed and failed queues, cancellation and reentrant callbacks.
 
