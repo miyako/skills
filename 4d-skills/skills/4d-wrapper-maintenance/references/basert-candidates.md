@@ -206,6 +206,51 @@ establish that every cached/duplicate-completion schedule starts once.
 
 ## Next-stage decision gates
 
+### Application-session follow-up (reported evidence, resolution pending)
+
+The applying session supplied artifacts under its session-local `files/`
+directory, inspected read-only on 2026-11-02. These are application-session
+records, **not independently rerun tests or a verified final patch revision**.
+Its `survey-remediation.md` names baseline
+`7e911a8c4cceb61f740fad4ffd1efc9718d20fc5` and reports real tool4d execution
+with controlled completion/worker dependencies plus a native shell stream
+probe. `survey-result.json` records start counts `0,1,2,3` after first,
+last, duplicate and unknown completions; one equal-oid completion removes
+both destinations. It also records stdout/stderr present in the native
+control but absent in production-controller subscribers despite retained
+response/responseError payloads. These strengthen the reported reproduction
+evidence, but do not prove actual duplicate native servers, final fix
+correctness, installed-host dependency resolution or inference.
+
+The resulting reusable lessons are destination-plus-generation callback
+identity, registration of the complete pending set before inline callbacks,
+terminal-attempt monotonicity, shared cancellation identity across workers,
+registry-generation cleanup and launch/cancel serialization. Adapter state
+must remain outside native CLI options. Default inherited empty error handlers
+need explicit subscriber-versus-no-op policy so fallback logging is not lost
+or delivered twice. The generic workflow and worksheet now include those
+boundary assertions; they do not prescribe one component implementation.
+
+The application also reported Object-type constraints for instance checks
+and cross-component subclass fixture failures. These language contracts
+were independently checked against official `OB Instance of` and
+`Class extends` documentation; their owning guidance is now in
+[4dlang's routed pitfalls reference](../../4dlang/references/pitfalls.md),
+not inferred from a failed BaseRT test.
+
+`tool4d-crash-analysis.md` records one initialization failure before the
+startup method, not an observed wrapper callback stack. `boot-probe-result.json`
+records three predetermined startup-only samples with exit 0 and a reached
+method marker. These artifacts support phase separation, not a diagnosed
+root cause, a runtime fix or stability. No machine-specific crash identifier
+or cache workaround is generalized here. Preserve the failed invocation
+and scoped diagnostics; do not retry until green or mutate shared caches.
+
+Final application regressions are still pending in the coordinator's report.
+**No candidate is marked resolved by this follow-up.** Obtain the final
+revision, test results by tier and remaining limitations before changing
+resolution status.
+
 Use the pinned later revision as the next-stage baseline and resolve
 component versions; run its harness only with authorization in an isolated
 checkout. Reproduce every candidate there, prioritize demonstrated failures,

@@ -80,7 +80,10 @@ Mark inapplicable cases with a reason; avoid a single ambiguous "tested".
 | Readiness failure / timeout / foreign listener | Bounded deadline; identity checked; never false ready | |
 | Timeout, cancel, terminate and ready at same boundary | One winning startup result; all owned tasks cleaned | |
 | Dispose, then delayed callbacks; restart, then old completion | No callbacks after disposal; no stale-generation state change | |
+| Cancellation crosses worker boundary; cancel races final launch | Same shared token observed; both orderings serialized per contract | |
+| Registry terminal cleanup races new attempt at same key | Only owning generation removed; all terminal paths release ownership | |
 | Missing/null/wrong-type event or callback | No unsafe field access/invocation; explicit diagnosis per contract | |
+| No error subscriber / inherited no-op / explicit subscriber | Exactly one intended diagnostic path; compatible receiver/signature | |
 | stdout/stderr text and configured binary chunks | Correct stream, encoding, receiver and event signature | |
 | Single/multiple model, spaced/Unicode/quoted paths | Exact token order/separators and paths received by child | |
 | Integer/real/zero/negative/decimal and collections | Supported numeric flags survive actual 4D coercion | |
@@ -88,6 +91,8 @@ Mark inapplicable cases with a reason; avoid a single ambiguous "tested".
 | Empty/all-cached/uncached/mixed downloads | Exactly one start only when all required files validate | |
 | Inline cache callback during iteration/construction | No double start, skipped item or uninitialized state | |
 | Duplicate/out-of-order completion; failure/cancel mid-download | Deduped completion; no start on failed/cancelled attempt | |
+| Same oid at distinct destinations; unknown or old-generation completion | Independent pending records; unknown/stale callback cannot start | |
+| First cached callback fires inline before dispatch loop advances | Whole pending set already registered; no premature terminal transition | |
 | Existing local file; absent/corrupt/incompatible file | Local path uses no unintended network; explicit invalid-input error | |
 | Equal-size changed data; revision change; offline legacy cache | Approved integrity/migration policy, no silent data replacement | |
 | Supported and unsupported OS/architecture/runtime/model | Correct approved gates, explicit errors and no partial object | |
@@ -106,6 +111,13 @@ Mark inapplicable cases with a reason; avoid a single ambiguous "tested".
 
 No undocumented promotion between tiers. Record failures and unavailable
 tools, not just successes.
+
+For tooling/initialization failures record exact invocation and engine build,
+redacted scoped diagnostics, independent exit status and last fresh checkpoint.
+Classify phase: project/component initialization, startup entered, code
+assertion, native process or service operation. If using a startup-only probe,
+predeclare sample count, deadline and stop-on-failure rule; retain the original
+failure even if samples pass. No retry-until-green or shared-cache mutation.
 
 | Project / checkout / revision | Contract differences | Approved patch / changed files | Validation tiers | Open decisions / rollout owner | Rollback/cache notes |
 |---|---|---|---|---|---|

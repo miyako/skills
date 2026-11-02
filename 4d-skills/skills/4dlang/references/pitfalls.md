@@ -1,7 +1,7 @@
 # 4D Language Pitfalls
 
-Rules that compile cleanly but behave differently from what an agent used
-to other languages expects. Look up exact signatures with the lookup tools
+Language constraints and rules that can compile cleanly but behave differently
+from what an agent used to other languages expects. Look up exact signatures with the lookup tools
 (`skills/4dlang/SKILL.md`); validate with `skills/4dlsp/SKILL.md`.
 
 Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
@@ -32,6 +32,27 @@ https://developer.4d.com/docs/Concepts/string
   silently: observed as the expression evaluating to Null once the source
   exceeds roughly 32 KB in compiled mode. Keep data in a file under
   `Resources/` and load it: `JSON Parse(File("/RESOURCES/data.json").getText())`.
+
+## Instance checks and inheritance boundaries
+
+* `OB Instance of(object; class)` requires an **Object** as its first
+  parameter, not an arbitrary Variant. Before checking a value that may
+  be a collection or scalar, establish its Object type with `Value type`
+  in a guard that prevents the instance check from executing otherwise.
+  Checking only `#Null` does not exclude collections/scalars. Do not rely
+  on an unchecked compound expression to protect the call.
+* A user class cannot extend a user class from another project or
+  component. Put a test subclass in the same project/component fixture
+  as its parent, or use composition at the boundary. The official class
+  reference warns that inheritance-rule violations are detected by the
+  compiler / check syntax, not necessarily the editor or interpreter.
+  Test doubles must respect the same boundary as production classes.
+
+References: https://developer.4d.com/docs/commands/ob-instance-of,
+https://developer.4d.com/docs/Concepts/classes#class-extends-classname
+
+These are official language contracts, not conclusions drawn from a
+particular wrapper's test failure. Check the target version before use.
 
 ## Formula, `This` and `.call()`
 
