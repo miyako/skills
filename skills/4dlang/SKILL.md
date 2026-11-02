@@ -42,7 +42,7 @@ skill) -- always still compile-check the code you write.
 | Task involves | Open |
 |---|---|
 | Looking up a command or class member | this file |
-| Operator precedence, text comparison, literals, `Formula` / `This`, `.call()`, `4D.HTTPRequest`, mis-guessed command signatures | `references/pitfalls.md` |
+| Operator precedence, text comparison, literals, Object guards for instance checks, inheritance boundaries, `Formula` / `This`, `.call()`, `4D.HTTPRequest`, mis-guessed command signatures | `references/pitfalls.md` |
 
 ## Why one skill, not two
 
