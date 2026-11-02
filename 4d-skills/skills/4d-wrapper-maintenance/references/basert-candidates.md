@@ -246,10 +246,56 @@ root cause, a runtime fix or stability. No machine-specific crash identifier
 or cache workaround is generalized here. Preserve the failed invocation
 and scoped diagnostics; do not retry until green or mutate shared caches.
 
-Final application regressions are still pending in the coordinator's report.
-**No candidate is marked resolved by this follow-up.** Obtain the final
-revision, test results by tier and remaining limitations before changing
-resolution status.
+### Final application handoff: bounded implementation status
+
+The later `implementation-handoff.md` and `final-4d-native.log` were read
+read-only on 2026-11-02. They report **uncommitted** application changes in
+branch `miyako-apply-4d-wrapper-maintenance`, based on
+`7e911a8c4cceb61f740fad4ffd1efc9718d20fc5`. There is no fixed implementation
+commit or merged status to cite. The following results are application
+artifacts inspected here, not tests independently rerun by this skill task.
+
+| Area | Reported implementation and bounded evidence | Status / remaining boundary |
+|---|---|---|
+| Stream routing (B2 subset) | Alias/reset/type guards and forwarding; real production controller with harmless native children checks payload, receiver, exit 7, one termination and component-local subclass | Implemented and tested for these fixtures, not full installed-host integration |
+| Error diagnostics (B2 subset) | Error bridge preserves native metadata and compatible receiver; live scoped logging reports zero fallback messages with subscriber, one without | Controlled native-shaped error injection verifies translation, not an actual synchronous launch-error callback |
+| Completion/cancellation follow-up | Destination/generation identities, all-record registration, terminal guards and shared registry; real 4D deterministic lifecycle fixtures include real cross-worker tokens | Implemented and tested at controlled lifecycle tier; external transfer cancellation and full public constructor/TCP runtime path not established |
+| Error without response | Owned command/message/context queues aborted so termination releases worker; controlled injection reports complete=true, workerRetained=false and distinct PID on reuse | Narrow reproduced lifecycle fixed in application; not constructor-exception recovery |
+| B1 readiness; B3 router; B4 cache; B5 platform policy | Launch-requested success, router branches, mutable-main/size-only cache and platform selection retained | Unchanged/deferred; no readiness or inference implementation |
+
+The final native command was
+`python3 scripts/test-4d-native.py --tool4d '<tool4d executable>' --check-logs`
+on tool4d 21 R4.100208, exit 0. The log distinguishes actual timeout/response/
+termination reuse from a controlled error-without-response schedule: the
+latter records zero responses, one error and one termination, completed state,
+released worker and a new process on reuse. This supports a transferable
+queue-cleanup regression requirement, not an undocumented universal native
+event-order guarantee.
+
+Two negative observations remain explicit. Blob-mode stderr events on that
+engine have empty text although `responseError` retains exact stderr; a
+controlled Blob event forwarding pass does not erase this native limitation.
+An actual missing executable throws POSX error 2 in `SystemWorker.new`, then
+inherited `_execute` reaches error -10716 without a worker; no native error
+or termination callback fires. The bridge tests **do not** establish recovery
+from this synchronous construction failure.
+
+The handoff also reports controlled real-4D lifecycle execution and genuine
+compiler checking of the fixture with zero errors/two fixture warnings,
+five Python safeguard tests, two-page static validation and whitespace
+checks passing. These do not establish whole installed-component compilation,
+resolved production dependencies, older 20.7-host compatibility or full
+public-constructor/TCP integration. An optional constructor/TCP runtime probe
+was inconclusive, not counted as a pass. Native BaseRT readiness, licensed
+engine/model behavior and inference were not exercised.
+
+The previously recorded package-initialization crash remains unexplained:
+later passing invocations do not establish its cause, fix or stability.
+External facade waiting and ongoing transfer I/O also remain outside the
+bounded fix. Thus the application has implemented/tested **narrow findings**,
+not resolved every B1-B5 concern or the full launch/error lifecycle. Obtain
+the eventual committed revision and deployment-specific results before
+claiming a shipped fix or broader resolution.
 
 Use the pinned later revision as the next-stage baseline and resolve
 component versions; run its harness only with authorization in an isolated

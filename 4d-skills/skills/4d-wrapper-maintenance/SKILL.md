@@ -211,6 +211,18 @@ preserve receiver/signature compatibility and select one diagnostic delivery
 path. Test no subscriber, inherited default and explicit subscriber, including
 forwarding failures, without silently swallowing or duplicating delivery.
 
+Exercise an error followed by termination **without a response**. In a
+queue-based controller, advancing/marking completion only on response can
+retain the failed worker indefinitely. Reconcile or abort owned command,
+message and context queues together under the approved failure policy, then
+verify terminal release and a later independent start with a distinct worker.
+This is a lifecycle test requirement derived from application evidence,
+not a claim that every native failure produces the same event sequence.
+Test synchronous process-constructor exceptions separately: injecting an
+error callback does not prove recovery when construction throws before any
+callback or worker object exists. Preserve engine errors and do not claim
+callback forwarding repairs that boundary.
+
 ### Downloads, local models and cache compatibility
 
 Cached completions may run inline inside construction or iteration;

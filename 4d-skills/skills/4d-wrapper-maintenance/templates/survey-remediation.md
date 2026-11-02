@@ -84,6 +84,8 @@ Mark inapplicable cases with a reason; avoid a single ambiguous "tested".
 | Registry terminal cleanup races new attempt at same key | Only owning generation removed; all terminal paths release ownership | |
 | Missing/null/wrong-type event or callback | No unsafe field access/invocation; explicit diagnosis per contract | |
 | No error subscriber / inherited no-op / explicit subscriber | Exactly one intended diagnostic path; compatible receiver/signature | |
+| Error then termination with no response | Owned command/message/context queues reconciled; complete and worker released; independent restart gets a distinct worker | |
+| Synchronous native constructor throw before worker/callback exists | Separate engine-error evidence and recovery assertion; injected onError is not a substitute | |
 | stdout/stderr text and configured binary chunks | Correct stream, encoding, receiver and event signature | |
 | Single/multiple model, spaced/Unicode/quoted paths | Exact token order/separators and paths received by child | |
 | Integer/real/zero/negative/decimal and collections | Supported numeric flags survive actual 4D coercion | |
