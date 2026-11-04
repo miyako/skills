@@ -1,5 +1,10 @@
 # BaseRT candidate evidence: a bounded worked example
 
+For the later default-branch source verification across selected wrappers,
+read the [2026-11-02 catalogue](2026-11-02-evidence.md). This file preserves
+older revision-limited evidence and application-reported experiments; do not
+treat its candidate statuses or uncommitted handoff as the current remote state.
+
 This is **not a generic defect list or a patch prescription**. Surveyed
 read-only on 2026-11-02: `miyako/BaseRT` primary checkout
 `/Users/miyako/.copilot/repos/BaseRT`, clean HEAD
