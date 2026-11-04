@@ -97,6 +97,8 @@ Mark inapplicable cases with a reason; avoid a single ambiguous "tested".
 | Synchronous native constructor throw before worker/callback exists | Separate engine-error evidence and recovery assertion; injected onError is not a substitute | |
 | New batch rejected on empty idle controller | Stage until acceptance; original error and prior context/handlers preserved; safe-state guard before any actual reuse; later-command rejection remains separate | |
 | Callback after method return / later mailbox turns | Actual native owner identity and bounded fixture lifetime; no invented identity or early headless-driver exit | |
+| Response-time versus termination-time native status | No fabricated status fields/undefined-as-nonzero; approved ordering lets explicit abort prevent dependent side effects through a late window | |
+| Resumptive callback error versus interrupted notification / owner death | Real resumed-error evidence separate from synthetic interrupted state; no owner-survival/cleanup claim after destructive ABORT timeout | |
 | stdout/stderr text and configured binary chunks | Correct stream, encoding, receiver and event signature | |
 | Intentional quiet default / sustained opt-in streams | No default verbose forwarding/buffering; approved output bound/overflow policy; lifecycle failures still explicit | |
 | Single/multiple model, spaced/Unicode/quoted paths | Exact token order/separators and paths received by child | |

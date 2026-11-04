@@ -203,6 +203,15 @@ exercise sustained opt-in output against its bound. Test error then termination
 without response, and synchronous `SystemWorker.new` failure separately:
 injected callbacks do not establish constructor-exception recovery.
 
+For dependent-command gating, observe exit-status timing on the actual engine.
+The [verified lifecycle case](controller-characterization.md#verified-follow-up-native-status-and-queue-ordering)
+found no response-time exit code and requires an approved termination-order
+migration for status-based aborts. Test a harmless dependent marker remains
+absent through a bounded late window, not merely that the abort callback ran.
+Keep queue clearing distinct from active-worker termination and context history.
+Identity-sensitive schedules must retain original worker references; do not
+deep-copy them into substitute objects and then claim identity preservation.
+
 ### Initial-idle native-constructor rejection
 
 **Detect/root cause:** find queue insertion, handler replacement and completion

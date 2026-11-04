@@ -255,6 +255,14 @@ fields or invoking callbacks. Route invalid events through the project's
 explicit diagnostic/error mechanism, not a success-shaped fallback.
 Guard callbacks by callable type and active lifetime, not just non-null.
 
+Verify when native exit status actually becomes available: a response event
+need not carry status, and undefined is not nonzero. Advancing dependents
+after a termination callback is an ordering migration requiring approval,
+not a blanket repair. Keep private lifecycle ownership independent of public
+event forwarding. A normally returning/resumed callback and a destroyed owner
+are different boundaries; no cleanup guarantee follows from synthetic
+interrupted-notification tests or after the owning process stops.
+
 Callable does not necessarily mean subscribed: an inherited default empty
 `onError` can consume a failure and suppress fallback logging. Inventory how
 the project distinguishes an actual subscriber from its default no-op;
