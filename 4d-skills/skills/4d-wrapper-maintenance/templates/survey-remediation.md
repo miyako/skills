@@ -27,6 +27,8 @@ code, and creates no permission to modify a consumer project.
 | Callbacks, receiver, arguments and owning process | | | | |
 | stdout/stderr/launch error/exit/cleanup | | | | |
 | Arguments and executable/cwd/environment | | | | |
+| Caller path spelling/context -> bound File/Folder -> native argv | | | | |
+| Native version macro/build/package -> 4D decoder -> host assertions | | | | |
 | Listening/model-ready/inference/cancellation/disposal | | | | |
 | Platform/architecture/runtime/model gates | | | | |
 
@@ -88,6 +90,11 @@ Mark inapplicable cases with a reason; avoid a single ambiguous "tested".
 | Synchronous native constructor throw before worker/callback exists | Separate engine-error evidence and recovery assertion; injected onError is not a substitute | |
 | stdout/stderr text and configured binary chunks | Correct stream, encoding, receiver and event signature | |
 | Single/multiple model, spaced/Unicode/quoted paths | Exact token order/separators and paths received by child | |
+| Public API with host DATA/RESOURCES and equivalent absolute native paths | Real host with source and compiled component; correct host fixture, materialized child path and equivalent useful outputs; caller request unchanged | |
+| Supported HFS/Windows spelling, Unicode/spaces; component-owned resources | Correct native path kind and argv; distinct host/component fixtures expose wrong context; component assets retain component context | |
+| Wrong-type/empty/NUL/relative/missing path | Explicit error and no launch; relative input rejected before 4D normalization | |
+| Font path resolves but selected font lacks requested glyphs | Coverage error retained (e.g. ZapfDingbats with `Office café`); no implicit font fallback | |
+| Newly built CLI version through public host API | Macro/CMake/package, strict 4D decoder and host assertions agree; supported patch accepted, unsupported versions still rejected | |
 | Integer/real/zero/negative/decimal and collections | Supported numeric flags survive actual 4D coercion | |
 | Boolean/null/reserved adapter arguments | No accidental adapter flags; documented forwarding preserved | |
 | Empty/all-cached/uncached/mixed downloads | Exactly one start only when all required files validate | |
@@ -128,5 +135,8 @@ failure even if samples pass. No retry-until-green or shared-cache mutation.
 
 - [ ] Deliver entry path, artifacts, findings and exact changed files.
 - [ ] State explicitly what was not changed or validated.
+- [ ] If release work is authorized, report publication separately from
+  read-only verification; inspect live revision/run status and diagnose
+  completed CI failures rather than calling them pending.
 - [ ] Leave blocked compatibility changes unapplied.
 - [ ] Stop at authorized handoff; no implicit commit/push/install/mass rollout.

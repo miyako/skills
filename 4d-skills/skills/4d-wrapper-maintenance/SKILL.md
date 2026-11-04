@@ -4,8 +4,9 @@ description: >
   Survey, verify, plan and surgically fix recurring patterns in 4D
   external-process, CLI and server wrappers: inheritance, worker and
   callback lifecycles, process-launched versus service-ready semantics,
-  downloads and cache reentrancy, argument construction, errors, platform
-  and runtime gates. Use for wrapper audits, startup failures, missing
+  downloads and cache reentrancy, component-to-native path resolution,
+  argument construction, errors, platform and runtime gates, release
+  version contracts. Use for wrapper audits, startup failures, missing
   streams, premature success, duplicate starts, or comparing wrappers
   across user-selected projects. Require per-project evidence and
   compatibility decisions, not blanket rewrites.
@@ -22,7 +23,7 @@ additional projects explicitly selected by the user.
 
 | Need | Read |
 |---|---|
-| Survey, lifecycle invariants and staged gates | this file |
+| Survey, lifecycle invariants, component-to-native paths and release gates | this file |
 | Copyable inventory, evidence ledger, plan and rollout checklist | [templates/survey-remediation.md](templates/survey-remediation.md) |
 | Concrete, revision-limited candidate evidence and regression lessons | [references/basert-candidates.md](references/basert-candidates.md) |
 | 4D syntax, `Formula` / `This` / `.call()`, HTTP request signatures | [4dlang](../4dlang/SKILL.md), then its routed references |
@@ -251,6 +252,64 @@ Specify legacy cache acceptance, verification cost, migration/offline use,
 redownload consent and rollback. Never equate every provider `oid` with
 the downloaded file's checksum.
 
+### Component-to-native file paths
+
+Resolve 4D context in the **component boundary**, then materialize an
+absolute native path before launching the CLI. Keep the low-level executable
+unaware of 4D aliases. A public Text parameter such as `fontFile` may accept
+`/DATA/MyFont.otf`, `/RESOURCES/Fonts/foo.otf`, an absolute native POSIX path,
+or a supported platform spelling (for example macOS HFS or Windows paths).
+Distinguish these spellings before choosing `fk posix path` versus
+`fk platform path`; do not reinterpret every string as the same path kind.
+
+Validate type, empty/invalid input, embedded NUL and relative paths **before**
+construction. Explicitly reject relative input: 4D can normalize it instead
+of raising an error. Classify aliases separately from native absolute paths;
+on Windows a drive-relative spelling is not an absolute path. Copy the
+caller's request before canonicalizing its path fields; preserve the original
+request and use the copy for native arguments. Capture construction,
+expansion and file-access errors through the project's explicit error path;
+never silently substitute a path, omit the argument or report success.
+
+When initially constructing a host-context alias **inside a component**,
+`File($path; fk posix path; *)` selects the host context (and `Folder`
+has the equivalent context choice). This is separate from expansion:
+`*` is not needed to expand an already-bound File/Folder object or an
+absolute native path. Do not blanket-add `*`: component-owned executable
+and resource lookups must retain their intended component context.
+
+For a bound File or Folder, the generic expansion prior art is
+[`miyako/llama-cpp`, `llama-cpp/Project/Sources/Classes/_CLI.4dm`](https://github.com/miyako/llama-cpp/blob/main/llama-cpp/Project/Sources/Classes/_CLI.4dm):
+
+```4d
+Function expand($in : Object)->$out : Object
+    $out:=OB Class($in).new($in.platformPath; fk platform path)
+```
+
+The `.platformPath` roundtrip is mandatory for reliable materialization:
+the original object's `.path` can still contain `/DATA` even after context
+selection. `OB Class($in)` preserves File versus Folder. This helper is
+correct; do not diagnose it as a llama.cpp expansion bug or replace it with
+a direct read of the original `.path`. After expansion, pass the resulting
+object's **`.path` on macOS** to a POSIX CLI, not its HFS `.platformPath`;
+on Windows pass the resulting **`.platformPath`**. Materialization does not
+replace the actual launch mechanism's argument quoting.
+
+Prove this boundary with source **and compiled component** tests in a real
+host, calling the public API with actual host DATA and RESOURCES fixtures,
+absolute native paths, supported HFS/platform spellings, and Unicode/spaces.
+Use distinct host/component resources to detect wrong-context resolution.
+Assert the child receives the fully materialized path, compare useful
+outputs for equivalent inputs, and assert the caller's request is unchanged.
+Test wrong type, empty, NUL, relative and missing-file inputs with explicit
+errors and no launch. A Python/native-only test with an already-expanded
+path bypasses the failing boundary and cannot establish this behavior.
+
+For font wrappers, keep path resolution distinct from glyph coverage:
+`missing_glyph` from ZapfDingbats for `Office café` is a valid coverage
+error, not evidence of failed expansion. Preserve it; do not add implicit
+font fallback to make a path regression pass.
+
 ### Arguments, platform and runtime
 
 Verify the real upstream CLI grammar for that binary version; do not
@@ -272,6 +331,23 @@ model format/version and required runtime capabilities. Approved unsupported
 combinations should fail explicitly before launch/download, not return a
 partially initialized object. An unused ARM helper alone does not justify
 rejecting every non-ARM machine in a generic wrapper.
+
+### Release versions and publication evidence
+
+For a component/CLI version change, bind the native version macro,
+CMake/package configuration, the 4D strict version decoder and host test
+assertions to the same intended version contract. Search all those surfaces,
+not only release metadata. Regression-test the newly built CLI's version
+through the public 4D API so a hardcoded previous-version check cannot reject
+the new patch release. Preserve the documented rejection of unsupported
+versions; do not relax a strict decoder to accept arbitrary output.
+
+Distinguish **release published** from **read-only post-publication
+verification**. Inspect live CI state for the exact revision/run before
+claiming work is waiting; a completed failed run requires prompt log
+inspection and diagnosis, not more waiting. Report publication status
+separately from pending or failed verification. Publishing does not authorize
+retagging, replacing assets, merging or rolling out to consumers.
 
 ## Done gate
 
