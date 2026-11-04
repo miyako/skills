@@ -13,9 +13,13 @@ code, and creates no permission to modify a consumer project.
 - [ ] Project compatibility version; actual 4D/tool4d build (or unknown):
 - [ ] OS, host/process/executable architecture; runtime version/provenance:
 - [ ] Resolved dependency revisions (distinguish `latest` declarations):
+- [ ] Prerequisite release/source, exact installed artifact/checksum and signing-byte scope:
+- [ ] Owner-approved stdout/stderr policy: suppressed by default or bounded opt-in; required lifecycle diagnostics:
 - [ ] Versioned upstream CLI/docs and model metadata source:
 - [ ] Existing tests and safety review (writes, downloads, builds, network):
 - [ ] Baseline command, exit status, assertions, logs and tier:
+- [ ] Compiler result versus engine exit; baseline warnings; compiled/interpreted mode; real/stub dependency graph:
+- [ ] If publishing: exact source/version/run/attempt, downloaded asset digests, post-mutation checksum scope, container versus payload acceptance and remaining runtime gaps:
 
 ## Inventory and contracts
 
@@ -42,9 +46,12 @@ Classification: confirmed defect | intentional | proposal | stale docs | candida
 Priority: P1 | P2 | other; rationale and reachability:
 Location: file, symbol, line range; immutable source link if available:
 Contract/version evidence and existing consumers:
+Owner decision: intentional resource/log policy versus missing required diagnostics:
 Expected behavior:
 Minimal safe reproduction (command or exact event schedule / inputs):
 Observed behavior; evidence tier; logs/artifacts; not-yet-run steps:
+Check kind/predicate: desired regression invariant versus observed candidate gap:
+Native trigger reproduced? Facade/controller lifetime and queue-policy decision:
 Impact:
 Confidence: high | medium | low; what remains unverified:
 Proposed surgical fix and owning layer (what / where / how):
@@ -52,7 +59,7 @@ Compatibility implications, alternatives and migration/rollback:
 Approval decision / owner / status:
 Regression assertion and required validation tier:
 Blockers (tools, versions, fixtures, budget or permissions):
-Disposition: fix | defer | intentional | docs-only; reason:
+Disposition: fix | characterize | defer | intentional | docs-only; reason:
 ```
 
 ## Plan and gates
@@ -66,6 +73,7 @@ Disposition: fix | defer | intentional | docs-only; reason:
 - [ ] Choose deterministic doubles plus real-4D/native tests and cost limits.
 - [ ] Define rollback including callbacks, cache identity and consumer docs.
 - [ ] Apply one isolated patch; review full diff and directly related docs.
+- [ ] Verify approved prerequisite release before consumer use; keep computation separate from consumer acceptance policy.
 
 ## Targeted test matrix
 
@@ -85,8 +93,12 @@ Mark inapplicable cases with a reason; avoid a single ambiguous "tested".
 | Missing/null/wrong-type event or callback | No unsafe field access/invocation; explicit diagnosis per contract | |
 | No error subscriber / inherited no-op / explicit subscriber | Exactly one intended diagnostic path; compatible receiver/signature | |
 | Error then termination with no response | Owned command/message/context queues reconciled; complete and worker released; independent restart gets a distinct worker | |
+| Synthetic error/late/duplicate event replay | Record current candidate state separately from desired recovery; no native/facade reachability claim from injection alone | |
 | Synchronous native constructor throw before worker/callback exists | Separate engine-error evidence and recovery assertion; injected onError is not a substitute | |
+| New batch rejected on empty idle controller | Stage until acceptance; original error and prior context/handlers preserved; safe-state guard before any actual reuse; later-command rejection remains separate | |
+| Callback after method return / later mailbox turns | Actual native owner identity and bounded fixture lifetime; no invented identity or early headless-driver exit | |
 | stdout/stderr text and configured binary chunks | Correct stream, encoding, receiver and event signature | |
+| Intentional quiet default / sustained opt-in streams | No default verbose forwarding/buffering; approved output bound/overflow policy; lifecycle failures still explicit | |
 | Single/multiple model, spaced/Unicode/quoted paths | Exact token order/separators and paths received by child | |
 | Integer/real/zero/negative/decimal and collections | Supported numeric flags survive actual 4D coercion | |
 | Boolean/null/reserved adapter arguments | No accidental adapter flags; documented forwarding preserved | |
@@ -97,6 +109,7 @@ Mark inapplicable cases with a reason; avoid a single ambiguous "tested".
 | First cached callback fires inline before dispatch loop advances | Whole pending set already registered; no premature terminal transition | |
 | Existing local file; absent/corrupt/incompatible file | Local path uses no unintended network; explicit invalid-input error | |
 | Equal-size changed data; revision change; offline legacy cache | Approved integrity/migration policy, no silent data replacement | |
+| Cached/fresh SHA-256 match, mismatch, hash failure, missing legacy/offline digest | Distinct verified/error/unverified status; approved startup gate; no automatic deletion/redownload unless authorized | |
 | Supported and unsupported OS/architecture/runtime/model | Correct approved gates, explicit errors and no partial object | |
 | Real service's minimal useful request | Expected output shape/model identity; no inference claim without this tier | |
 
@@ -113,6 +126,19 @@ Mark inapplicable cases with a reason; avoid a single ambiguous "tested".
 
 No undocumented promotion between tiers. Record failures and unavailable
 tools, not just successes.
+Record compiler JSON, assertion count/result and engine exit independently.
+A clean JSON report with a nonzero engine exit is not a clean build/runtime
+pass. State which real released dependencies are installed and which are
+stubbed; an isolated compiled fixture is not the full production graph.
+Preserve per-check kind/predicate and explicit investigation status: passing
+candidate checks may intentionally confirm a gap, not prove it fixed.
+Record hosted attempt allocation/execution status; a cancelled job with no
+runner or executed steps establishes neither a code failure nor a pass.
+For authorized publication, verify the actual uploaded/downloaded bytes and
+source/run/attempt binding. Record compiler warnings and container/payload
+acceptance separately from installed-consumer execution; a publisher badge
+does not establish any of these. Never reuse an earlier attempt's artifact
+to bypass an enforced same-attempt handoff after an allocation cancellation.
 
 For tooling/initialization failures record exact invocation and engine build,
 redacted scoped diagnostics, independent exit status and last fresh checkpoint.
