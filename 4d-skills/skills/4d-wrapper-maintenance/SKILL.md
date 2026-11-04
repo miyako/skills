@@ -25,8 +25,8 @@ Applicable to converters, utilities, daemons and HTTP services, not just
 inference engines. Models, provider downloads and AI endpoints below are
 examples, not prerequisites. For native source builds, artifact manifests,
 checksums, signing and cross-platform packaging, use
-`native-artifact-provenance` if available; this skill owns the 4D adapter
-contract, not a second native-build audit.
+[native-artifact-provenance](../native-artifact-provenance/SKILL.md);
+this skill owns the 4D adapter contract, not a second native-build audit.
 
 | Need | Read |
 |---|---|
@@ -199,7 +199,8 @@ a successful publisher. Final-byte inventories follow signing/stapling.
 Preserve explicitly nonfatal compiler diagnostics; accepted distribution is
 not diagnostic-free compilation or installed-wrapper runtime acceptance.
 Route signing, credential isolation and package mechanics to
-`native-artifact-provenance`; retain the adapter's compatibility policy.
+[native-artifact-provenance](../native-artifact-provenance/SKILL.md);
+retain the adapter's compatibility policy.
 
 ## Invariants to verify, not blanket edits
 
