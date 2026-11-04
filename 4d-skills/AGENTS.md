@@ -104,8 +104,6 @@ one owning skill; other skills link to it instead of restating it.
 | XLIFF localisation, `Localized string`, language-following attributes | 4dlocalise | `skills/4dlocalise/SKILL.md` |
 | Startup / first window, chaining forms, `DIALOG(...; *)` | 4dstartup | `skills/4dstartup/SKILL.md` |
 | 4D AI Kit, async callbacks and streaming | 4daikit | `skills/4daikit/SKILL.md` |
-| Components wrapping external executables/services: options/paths, discovery, lifecycle/readiness, events/errors, cleanup and evidence-led repair | 4d-wrapper-maintenance | `skills/4d-wrapper-maintenance/SKILL.md` |
-| Native builds, portable manifests/checksums, compiler harness isolation, release candidates and signing/notarization | native-artifact-provenance | `skills/native-artifact-provenance/SKILL.md` |
 | ORDA: queries, entity selections, null handling, saving and locking, `fromCollection`, vector queries | 4dorda | `skills/4dorda/SKILL.md` |
 
 ### Technote-localisation repositories only

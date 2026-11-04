@@ -51,9 +51,6 @@ https://developer.4d.com/docs/Concepts/string
 References: https://developer.4d.com/docs/commands/ob-instance-of,
 https://developer.4d.com/docs/Concepts/classes#class-extends-classname
 
-These are official language contracts, not conclusions drawn from a
-particular wrapper's test failure. Check the target version before use.
-
 ## Formula, `This` and `.call()`
 
 * `Formula(...)` copies the **values** of local variables when the formula
@@ -88,6 +85,26 @@ Reference: https://developer.4d.com/docs/API/FunctionClass
 * `.wait()` blocks the process (and its form) until the response arrives.
 
 Reference: https://developer.4d.com/docs/API/HTTPRequestClass
+
+## 4D.SystemWorker
+
+* Callback order: `onData` / `onDataError` zero or more times → `onError`
+  at most once (stops processing) → `onResponse` **only if no error** →
+  `onTerminate` always. Code that releases a worker, advances a queue or
+  marks completion only in `onResponse` leaks state after an error; do
+  cleanup in `onTerminate`.
+* `onDataError` is the process's stderr, not a failure signal. Many tools
+  log progress there. `onError` is a system/runtime error.
+* If the process cannot start, `4D.SystemWorker.new()` throws and returns
+  `Null` -- no callback fires. Handle that path separately.
+* A started process is not a ready service. For a server, poll its own
+  documented readiness endpoint with a deadline; an open port or the first
+  `onData` proves only that something launched.
+* `commandLine` is not run through a shell: shell builtins and pipes do
+  not work (use `cmd /c` or `/bin/sh -c` explicitly), and quoting must be
+  tested with paths containing spaces and quotes.
+
+Reference: https://developer.4d.com/docs/API/SystemWorkerClass
 
 ## Command Signatures Often Guessed Wrong
 
