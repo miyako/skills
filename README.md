@@ -34,8 +34,6 @@ owning skill; the others link to it.
 | [`4dlocalise`](4d-skills/skills/4dlocalise/SKILL.md) | XLIFF localisation, `Localized string`, attributes that follow the UI language |
 | [`4dstartup`](4d-skills/skills/4dstartup/SKILL.md) | The non-blocking startup window pattern and chaining forms |
 | [`4daikit`](4d-skills/skills/4daikit/SKILL.md) | 4D AI Kit: chat, vision, async callbacks and streaming |
-| [`4d-wrapper-maintenance`](4d-skills/skills/4d-wrapper-maintenance/SKILL.md) | Maintaining 4D components wrapping any external executable/service: targeted inspection, repair patterns, compatibility and source-pinned case studies |
-| [`native-artifact-provenance`](4d-skills/skills/native-artifact-provenance/SKILL.md) | Source-pinned native builds, compiler harness isolation, portable manifests, deterministic release candidates and exact signed/notarized package verification |
 | [`4dorda`](4d-skills/skills/4dorda/SKILL.md) | ORDA queries and placeholders, null handling, saving and locking, `fromCollection`, vector similarity |
 
 ### Technote-localisation repositories only
