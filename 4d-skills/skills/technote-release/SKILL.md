@@ -15,6 +15,12 @@ description: >
 > `tools/` paths below belong to that template. In any other repository,
 > do not use this skill.
 
+These releases distribute a PDF and demo, not an installable component.
+Use prefix-free tags in the examples below; this does not establish
+Dependency manager compatibility. For component distribution, route through
+[`4dproject`](../4dproject/SKILL.md) to its component release reference,
+including the separate **Follow 4D version** rule.
+
 1. **Preconditions:**
    - `make check` passes and `make` builds.
    - `git status` is clean (`make demo-zip` archives **committed** files only: `git archive HEAD:demo/<Name>`).
@@ -27,7 +33,7 @@ description: >
    `gh pr create`), and merge it once the user agrees. Releases are tagged on the default branch.
 4. **Confirm with the user (checkpoint):**
    - the README
-   - the tag (e.g. `v1.0.0`)
+   - the tag (e.g. `1.0.0`, with no leading `v`)
    - the release title (e.g. the translated document title)
    - the notes: a short description in the target language and/or English, plus what is included
    - the assets: `build/<stem>_<tgt>.pdf` and `build/<Name>.zip` for each project in `demo/`
@@ -39,10 +45,15 @@ description: >
    `userPreferences.*`.
 6. **Publish:**
    ```sh
-   git tag vX.Y.Z <default-branch-sha> && git push origin vX.Y.Z
-   gh release create vX.Y.Z build/*_<tgt>.pdf build/*.zip --title "…" --notes-file notes.md
+   git tag X.Y.Z <default-branch-sha> && git push origin X.Y.Z
+   gh release create X.Y.Z build/*_<tgt>.pdf build/*.zip --title "…" --notes-file notes.md
    ```
+   Before relying on automated builds, inspect the destination's
+   `.github/workflows/release.yml`: the original technote template triggers
+   only on `v*` tags. For prefix-free tags, update that filter to match the
+   chosen tag convention, or use its manual dispatch with the existing tag.
+   Do not assume pushing `1.0.0` triggers an unchanged template workflow.
    In the cloud agent, without permission to create releases: push the tag only if allowed, otherwise ask the user
-   to push it. `.github/workflows/release.yml` then builds the assets on Linux and attaches them. Tell the user that
+   to push it. The matching tag trigger or manual dispatch then builds the assets on Linux and attaches them. Tell the user that
    the Linux fonts differ from a macOS build.
 7. Report the release URL and the asset sizes. Delete temporary files (e.g. `notes.md`).
