@@ -87,7 +87,7 @@ one owning skill; other skills link to it instead of restating it.
 |----------|-------|-----------|
 | `.4DCatalog` (database schema) | 4dcatalog | `skills/4dcatalog/SKILL.md` |
 | `.4DForm` (form design + validation, list box defaults, layout geometry, doc index) | 4dform | `skills/4dform/SKILL.md` |
-| `.4DProject`, project layout, version detection, token suffixes, `.gitignore`, `menus.json` | 4dproject | `skills/4dproject/SKILL.md` |
+| `.4DProject`, project layout, version detection, token suffixes, `.gitignore`, `menus.json`, component release tags / Dependency manager version rules | 4dproject | `skills/4dproject/SKILL.md` |
 | `.4DSettings` (settings) | 4dsettings | `skills/4dsettings/SKILL.md` |
 | `.4dm` validation / syntax check / LSP / MCP | 4dlsp | `skills/4dlsp/SKILL.md` |
 | 4D command / OOP class member lookup, doc and forum search | 4dlang | `skills/4dlang/SKILL.md` |

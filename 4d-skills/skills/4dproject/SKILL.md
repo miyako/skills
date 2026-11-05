@@ -6,7 +6,8 @@ description: >
   command/constant token suffixes (:C123, :K12:34) in .4dm code, the project
   folder layout and boilerplate files (folders.json, menus.json, roles.json,
   catalog_editor.json), menus.json standard actions, and the canonical
-  .gitignore for 4D projects.
+  .gitignore for 4D projects, and component release version/tag conventions
+  for the Dependency manager.
 ---
 
 # 4D Project
@@ -21,6 +22,8 @@ This skill owns project-level knowledge that every other 4D skill relies on:
 * the canonical **`.gitignore`** for a 4D project
 * project layout and boilerplate files -- `references/layout.md`
 * `menus.json` standard actions vs method wrappers -- `references/menus.md`
+* component release versions, prefix-free Git tags and the Dependency manager's
+  **Follow 4D version** rule -- `references/component-releases.md`
 
 ### Not in this skill
 
@@ -40,6 +43,7 @@ This skill owns project-level knowledge that every other 4D skill relies on:
 |---|---|
 | Creating a project, the folder tree, `folders.json`, `roles.json`, `catalog_editor.json`, default `menus.json` | `references/layout.md` |
 | Adding/changing menu items, replacing `m_Quit`-style wrappers with `"action"` | `references/menus.md` |
+| Component release/version/tag, Dependency manager compatibility, GitHub preview/prerelease | `references/component-releases.md` |
 | Version, tokens, `.gitignore` | this file |
 
 ## File Format
