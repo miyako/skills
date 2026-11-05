@@ -15,7 +15,7 @@ owning skill; the others link to it.
 
 | Skill | Scope |
 |---|---|
-| [`4dproject`](skills/4dproject/SKILL.md) | The project as a whole: `.4DProject`, version detection, token suffixes, folder layout, `menus.json`, the canonical `.gitignore` |
+| [`4dproject`](skills/4dproject/SKILL.md) | The project as a whole: `.4DProject`, version detection, token suffixes, folder layout, `menus.json`, the canonical `.gitignore`, component release tags and Dependency manager version rules |
 | [`4dcatalog`](skills/4dcatalog/SKILL.md) | `.4DCatalog` database schema: structure, DTD validation, diagrams |
 | [`4dform`](skills/4dform/SKILL.md) | `.4DForm` JSON: objects, list box defaults, layout geometry and overlap checks, form documentation index, schema validation |
 | [`4dsettings`](skills/4dsettings/SKILL.md) | `.4DSettings` (placeholder) |
