@@ -28,6 +28,40 @@ not language models. The same query always returns the same result on any
 machine. Neither substitutes for `validate`/`check-syntax` (see the `4dlsp`
 skill) -- always still compile-check the code you write.
 
+### Corpus version and verification scope
+
+The source pins in this skillset use **21 R5 BETA**, from
+`miyako/4d-static-docs` commit
+`1dfd4e7eb832d19361f8ec1f4801603899087ca3`: 1,460 classic commands and
+528 OOP members across 51 class records. Installed binaries can be older:
+updating `.agents` does not replace `tools/4dlang/`. Reprovision both tools
+from a release that contains this snapshot using `4dtools`.
+
+`compilerVerified` means a clean `tool4d` **checkSyntax in fixture projects**,
+using build `21R5.100156`. It is not runtime execution, full-application
+compilation, or exhaustive argument-count validation. All 1,338 classic
+synthetic methods and 528 OOP synthetic methods passed that check; the 122
+classic View Pro commands have no synthetic examples. Unverified documentation
+examples remain labelled as such.
+
+OOP responses include additive `snapshot` provenance and, where applicable,
+`syntaxWarning` and example `verificationScope` fields. Read these before
+adapting an example. In particular, `Folder.new`'s documented trailing `*`
+is rejected by this compiler, and quota properties document
+`4D.QuotaManager` while the compiler accepts `4D.QuotaManagerClass`.
+Classic example provenance states its verification scope too.
+
+Both CLI repositories retain `data/vendor/r5_conflict_inventory.json` and
+`data/vendor/r5_snapshot.json`, with reviewed conflict dispositions and
+source-bound evidence. The inventory is not an exhaustive audit of all prose.
+For example, database parameter 135 documents seconds for GET and minutes
+for SET; do not assume identical units. Version-less `docPage` URLs can show
+newer documentation than an installed binary's embedded snapshot.
+
+The beta corpus is a reference, not the consumer project's target version.
+Check the project/runtime version before using newly returned APIs; validate
+against the intended runtime, not merely the corpus's R5 compiler.
+
 ### Not in this skill
 
 | Topic | Skill |
@@ -315,9 +349,9 @@ the `4d-language-oop` checkout):
    Declare a callback parameter at that type (`Function handle($request :
    4D.IncomingMessage) : 4D.OutgoingMessage`) -- do **not** write code that
    tries to construct one, e.g. `4D.IncomingMessage.new()` does not exist.
-5. **The remaining 19 of 50 classes** (`4D`, `Class`, `Collection`,
+5. **The remaining 20 of 51 class records** (`4D`, `Class`, `Collection`,
    `DataClass`, `DataStore`, `Email`, `Entity`, `EntitySelection`,
-   `FileHandle`, `Formula`, `OutgoingMessage`, `Session`, `Signal`,
+   `FileHandle`, `Formula`, `OutgoingMessage`, `QuotaManagerClass`, `Session`, `Signal`,
    `WebForm`, `WebFormItem`, `WebServer`, `ZipArchive`, `ZipFile`,
    `ZipFolder`) are obtained via a classic command (`$c:=[1; 2; 3]`,
    `$file:=File(...)`) or another object's member
@@ -349,10 +383,11 @@ even when not using `--json`.
 
 ## Two corpus subtleties
 
-**Multi-variant properties.** Nine properties declare more than one valid
+**Multi-variant properties.** Ten properties declare more than one valid
 type -- all alternatives are valid simultaneously, none is "the real one":
 `Email.bcc`/`.cc`/`.from`/`.to`/`.replyTo`/`.sender` are each `Text |
 Object | Collection`; `Document.original` is `4D.File | 4D.Folder`;
+`SMTPTransporter.certificate` is `4D.File | Blob`;
 `SystemWorker.response` is `Text | Blob`; `WebServer.characterSet` is
 `Number | Text`. The CLI labels these `MULTI-VARIANT`:
 
