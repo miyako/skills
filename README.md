@@ -89,6 +89,33 @@ Once mounted:
   [`4dproject`](4d-skills/skills/4dproject/SKILL.md) for the canonical
   `.gitignore`.
 
+## Updating language lookup data
+
+The CLI submodule pins use a **21 R5 BETA** snapshot from
+`miyako/4d-static-docs` commit
+`1dfd4e7eb832d19361f8ec1f4801603899087ca3`, containing 1,460 classic commands
+and 528 OOP members. Source documentation, syntax/constants captures,
+reviewed conflicts and fixture `checkSyntax` evidence are hash-bound upstream.
+This is not a runtime or full-application compilation guarantee.
+
+For a new 4D release, update and review both corpora in `4d-static-docs`
+first. In each CLI repository, import the same explicit upstream commit:
+
+```sh
+scripts/refresh-vendor.sh <source-commit> <local-4d-static-docs-clone>
+cargo test
+cargo build --release
+```
+
+Review lookup changes and beta/version provenance, commit and publish the
+two CLI revisions, then update their `vendor/` submodule pins here. Dispatch
+the **Build and Release** workflow with a release tag to publish new helper
+binaries. Updating `.agents` in a consumer repository does not replace its
+installed tools; reprovision both `tools/4dlang/` binaries using `4dtools`
+after the updated release is available. See
+[`4dlang`](4d-skills/skills/4dlang/SKILL.md#corpus-version-and-verification-scope)
+for verification limits and conflict inventory locations.
+
 ## Migration from `.github/instructions`
 
 Many 4D repositories used to carry copies of the same
