@@ -176,6 +176,10 @@ the installer also checks GitHub asset digests when provided and requires
 the upstream `release.json` asset to match the committed manifest pin. No
 checksum is guessed or embedded in these instructions.
 
+The root-only executable embeds the product and shared-library MIT
+notices. Run `tools/4dform/fourdform --license` to display them; no extra
+license-file extraction or source download is required.
+
 The script rejects unsupported platforms before any download, selects
 the exact pinned asset, verifies checksums before extracting only the
 regular executable, checks both architectures, `--version` and the
