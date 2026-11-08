@@ -14,9 +14,10 @@ layout and styling, not correctness.
 
 ## Standalone PNG Preview -- No 4D Runtime
 
-`fourdform` from the public
-[miyako/4d-form](https://github.com/miyako/4d-form) repository renders a
-`.4DForm` file to an actual PNG on macOS. Use the invocation in
+`fourdform`, built from
+[miyako/4d-form](https://github.com/miyako/4d-form) and distributed in
+`miyako/skills` releases, renders a `.4DForm` file to an actual PNG on
+macOS arm64 or x64. Use the invocation in
 `skills/4dform/SKILL.md`; installation belongs to `skills/4dtools/SKILL.md`.
 The parser and HTML renderer reuse pinned `4d-ql` libraries, with a
 macOS raster adapter producing the image.

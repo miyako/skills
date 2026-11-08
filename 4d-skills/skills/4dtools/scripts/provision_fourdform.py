@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install the pinned upstream fourdform release into a consumer repository."""
+"""Install fourdform from the latest skills release into a consumer repository."""
 
 import argparse
 import hashlib
@@ -27,18 +27,14 @@ class ProvisionError(Exception):
 
 def load_manifest(path):
     source = json.loads(path.read_text())
-    if source["schemaVersion"] != 1 or source["executable"] != "fourdform":
+    if (source["schemaVersion"] != 1 or source["executable"] != "fourdform"
+            or source["repository"] != "miyako/skills" or source["release"] != "latest"):
         raise ProvisionError("Unsupported fourdform release manifest")
-    macos = source["platforms"]["macos-universal"]
     return {
-        "source": source,
-        "repository": "miyako/4d-form",
+        "repository": source["repository"],
         "version": source["version"],
-        "release_tag": source["tag"],
-        "asset": macos["archive"],
-        "binary": macos["binary"],
-        "checksum_asset": macos["checksumFile"],
-        "macos_minimum": macos["minimumOS"],
+        "platforms": source["platforms"],
+        "checksum_asset": source["checksumFile"],
         "windows_handover": (
             "https://github.com/miyako/4d-form/blob/main/docs/WINDOWS-HANDOVER.md"
         ),
@@ -65,10 +61,13 @@ def check_platform(manifest):
         )
     if machine not in ("arm64", "x86_64"):
         raise ProvisionError(f"Unsupported macOS architecture: {machine}")
+    macos = manifest["platforms"]["macos-arm64" if machine == "arm64" else "macos-x64"]
     current = tuple(int(part) for part in platform.mac_ver()[0].split("."))
-    minimum = tuple(int(part) for part in manifest["macos_minimum"].split("."))
+    minimum = tuple(int(part) for part in macos["minimumOS"].split("."))
     if current < minimum:
-        raise ProvisionError(f"fourdform requires macOS {manifest['macos_minimum']} or newer")
+        raise ProvisionError(f"fourdform requires macOS {macos['minimumOS']} or newer")
+    return dict(manifest, asset=macos["archive"], binary=macos["binary"],
+                architecture=macos["architecture"])
 
 
 def run(arguments):
@@ -85,8 +84,10 @@ def run(arguments):
 
 def verify_binary(binary, manifest):
     architectures = set(run(["lipo", "-archs", binary]).split())
-    if not {"arm64", "x86_64"}.issubset(architectures):
-        raise ProvisionError("Release binary is not macOS universal (arm64 + x86_64)")
+    if manifest["architecture"] not in architectures:
+        raise ProvisionError(
+            f"Release binary does not support macOS {manifest['architecture']}"
+        )
     version = run([binary, "--version"])
     if version != f"fourdform {manifest['version']}":
         raise ProvisionError(f"Unexpected fourdform version: {version!r}")
@@ -97,8 +98,10 @@ def verify_binary(binary, manifest):
 
 
 def select_asset(release, manifest):
-    if release.get("tag_name") != manifest["release_tag"] or release.get("draft"):
-        raise ProvisionError("Release metadata does not match the pinned published tag")
+    tag = release.get("tag_name")
+    if (not isinstance(tag, str) or not re.fullmatch(r"[A-Za-z0-9._-]+", tag)
+            or release.get("draft") or release.get("prerelease")):
+        raise ProvisionError("Release metadata is not a published stable skills release")
     return release_asset(release, manifest, manifest["asset"])
 
 
@@ -112,10 +115,10 @@ def release_asset(release, manifest, name):
     asset = matches[0]
     prefix = (
         f"https://github.com/{manifest['repository']}/releases/download/"
-        f"{manifest['release_tag']}/"
+        f"{release['tag_name']}/"
     )
     if asset.get("browser_download_url") != prefix + name:
-        raise ProvisionError("Release asset URL is outside the pinned upstream release")
+        raise ProvisionError("Release asset URL is outside the selected skills release")
     digest = asset.get("digest")
     if digest is not None and (
         not isinstance(digest, str) or not re.fullmatch(r"sha256:[0-9a-fA-F]{64}", digest)
@@ -175,7 +178,7 @@ def ensure_ignore(root):
 
 
 def provision(root, manifest, replace=False):
-    check_platform(manifest)
+    manifest = check_platform(manifest)
     root = root.resolve(strict=True)
     if not root.is_dir():
         raise ProvisionError(f"Consumer repository root is not a directory: {root}")
@@ -197,17 +200,11 @@ def provision(root, manifest, replace=False):
         temporary = Path(temporary)
         metadata = temporary / "release.json"
         fetch(
-            f"https://api.github.com/repos/{manifest['repository']}/releases/tags/"
-            f"{manifest['release_tag']}", metadata
+            f"https://api.github.com/repos/{manifest['repository']}/releases/latest",
+            metadata
         )
         release = json.loads(metadata.read_text())
         asset = select_asset(release, manifest)
-        manifest_asset = release_asset(release, manifest, "release.json")
-        upstream_manifest = temporary / "upstream-release.json"
-        fetch(manifest_asset["browser_download_url"], upstream_manifest)
-        verify_digest(upstream_manifest, manifest_asset)
-        if load_manifest(upstream_manifest) != manifest:
-            raise ProvisionError("Upstream release.json differs from the committed release pin")
         checksum_asset = release_asset(release, manifest, manifest["checksum_asset"])
         checksums = temporary / manifest["checksum_asset"]
         fetch(checksum_asset["browser_download_url"], checksums)

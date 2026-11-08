@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Opt-in macOS smoke check: provision the public pinned release and render PNGs."""
+"""macOS smoke check: provision a skills release or test a built CLI and render PNGs."""
 
 import argparse
 import hashlib
@@ -80,10 +80,14 @@ def render(binary, output, *options, form=FORM):
     return png_info(output)
 
 
-def smoke(root):
+def smoke(root, binary=None):
     root.mkdir(parents=True, exist_ok=True)
     manifest = installer.load_manifest(installer.MANIFEST)
-    binary = installer.provision(root, manifest)
+    provisioned = binary is None
+    if provisioned:
+        binary = installer.provision(root, manifest)
+    else:
+        installer.verify_binary(binary, installer.check_platform(manifest))
     outputs = root / "preview-output"
     outputs.mkdir(exist_ok=True)
     pixels = {}
@@ -110,19 +114,23 @@ def smoke(root):
     )
     require(result.returncode != 0 and result.stderr.strip(), "Invalid input did not report failure")
     require(not invalid_output.exists(), "Invalid input produced a success-shaped PNG output")
-    require((root / ".gitignore").read_text().splitlines().count("/tools/4dform/") == 1,
-            "Consumer .gitignore does not contain exactly one scoped tool entry")
-    require(installer.provision(root, manifest) == binary, "Compatible installation was not reused")
-    print(f"Verified public release installation and PNG outputs: {root}")
+    if provisioned:
+        require((root / ".gitignore").read_text().splitlines().count("/tools/4dform/") == 1,
+                "Consumer .gitignore does not contain exactly one scoped tool entry")
+        require(installer.provision(root, manifest) == binary, "Compatible installation was not reused")
+    print(f"Verified fourdform binary and PNG outputs: {root}")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--consumer-root", required=True, type=Path,
                         help="isolated scratch consumer directory (not a real project)")
+    parser.add_argument("--binary", type=Path,
+                        help="test a locally built CLI without downloading a release")
     arguments = parser.parse_args()
     try:
-        smoke(arguments.consumer_root.resolve())
+        smoke(arguments.consumer_root.resolve(),
+              arguments.binary.resolve(strict=True) if arguments.binary else None)
     except (SmokeError, installer.ProvisionError, OSError, ValueError, KeyError,
             zlib.error, subprocess.TimeoutExpired) as error:
         print(f"fourdform live smoke failed: {error}", file=sys.stderr)

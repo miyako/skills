@@ -2280,6 +2280,188 @@ jobs:
           retention-days: 5
 
   # ---------------------------------------------------------------------------
+  # fourdform (standalone 4D form PNG renderer) - macOS (signed + notarized)
+  # ---------------------------------------------------------------------------
+  _fourdform-macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            cpu: x86_64
+            triple: x86_64-apple-macosx12.0
+            runner: macos-15-intel
+          - arch: arm64
+            cpu: arm64
+            triple: arm64-apple-macosx12.0
+            runner: macos-15
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      ARTIFACT: fourdform-macos-${{ matrix.arch }}
+      MACOSX_DEPLOYMENT_TARGET: "12.0"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build standalone fourdform
+        working-directory: vendor/4d-form
+        env:
+          # Scope SwiftPM's pinned bare dependency cache access to this step.
+          GIT_CONFIG_COUNT: "1"
+          GIT_CONFIG_KEY_0: safe.bareRepository
+          GIT_CONFIG_VALUE_0: all
+        run: |
+          swift build \
+            -c release \
+            --force-resolved-versions \
+            --product fourdform \
+            --triple "${{ matrix.triple }}"
+
+          BIN_DIR=$(swift build \
+            -c release \
+            --product fourdform \
+            --triple "${{ matrix.triple }}" \
+            --show-bin-path)
+
+          mkdir -p "$GITHUB_WORKSPACE/staging"
+          cp "$BIN_DIR/fourdform" "$GITHUB_WORKSPACE/staging/fourdform"
+          strip -x "$GITHUB_WORKSPACE/staging/fourdform"
+          file "$GITHUB_WORKSPACE/staging/fourdform"
+          test "$(lipo -archs "$GITHUB_WORKSPACE/staging/fourdform")" = "${{ matrix.cpu }}"
+          xcrun vtool -show-build "$GITHUB_WORKSPACE/staging/fourdform" |
+            grep -E 'minos[[:space:]]+12\.0([[:space:]]|$)'
+
+      - name: Import signing certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          SIGNING_DIR="$GITHUB_WORKSPACE/.fourdform-signing"
+          mkdir -p "$SIGNING_DIR"
+          CERT_FILE="$SIGNING_DIR/cert.p12"
+          KEYCHAIN_FILE="$SIGNING_DIR/build.keychain-db"
+          echo "KEYCHAIN_FILE=$KEYCHAIN_FILE" >> "$GITHUB_ENV"
+          echo "SIGNING_DIR=$SIGNING_DIR" >> "$GITHUB_ENV"
+
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERT_FILE"
+
+          security create-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security set-keychain-settings \
+            -lut 21600 \
+            "$KEYCHAIN_FILE"
+
+          security unlock-keychain \
+            -p "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security import "$CERT_FILE" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_FILE"
+
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_FILE"
+
+          security list-keychains \
+            -d user \
+            -s "$KEYCHAIN_FILE" login.keychain-db
+
+      - name: Sign binary
+        run: |
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_FILE" |
+            head -1 |
+            sed 's/.*"\(.*\)".*/\1/')
+
+          codesign \
+            --force \
+            --options runtime \
+            --timestamp \
+            --identifier com.miyako.fourdform \
+            --sign "$IDENTITY" \
+            staging/fourdform
+
+          codesign --verify --strict --verbose=2 staging/fourdform
+
+      - name: Verify version, help and standalone PNG rendering
+        run: |
+          python3 .github/scripts/smoke_fourdform_release.py \
+            --consumer-root "$RUNNER_TEMP/fourdform-smoke" \
+            --binary "$GITHUB_WORKSPACE/staging/fourdform"
+
+      - name: Notarize binary
+        env:
+          APPLE_ID: ${{ secrets.NOTARYTOOL_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.NOTARYTOOL_PASSWORD }}
+          TEAM_ID: ${{ secrets.NOTARYTOOL_TEAM_ID }}
+        run: |
+          ZIP_FILE="$SIGNING_DIR/fourdform.zip"
+
+          ditto \
+            -c \
+            -k \
+            --keepParent \
+            staging/fourdform \
+            "$ZIP_FILE"
+
+          xcrun notarytool submit "$ZIP_FILE" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$TEAM_ID" \
+            --wait \
+            --output-format json > "$SIGNING_DIR/notarization.json"
+
+          python3 - "$SIGNING_DIR/notarization.json" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1]) as response:
+              result = json.load(response)
+          status = result.get("status")
+          print(f"Notarization status: {status}")
+          if status != "Accepted":
+              raise SystemExit("Notarization was not accepted")
+          PY
+
+      - name: Archive
+        run: |
+          tar -cJf "${{ env.ARTIFACT }}.tar.xz" -C staging fourdform
+          test "$(tar -tJf "${{ env.ARTIFACT }}.tar.xz")" = fourdform
+
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_FILE:-}" ]; then
+            security delete-keychain "$KEYCHAIN_FILE" 2>/dev/null || true
+          fi
+
+          if [ -n "${SIGNING_DIR:-}" ]; then
+            rm -rf "$SIGNING_DIR"
+          fi
+          rm -rf "$RUNNER_TEMP/fourdform-smoke"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: ${{ env.ARTIFACT }}.tar.xz
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
   release:
     needs:
       - jq-linux
@@ -2303,6 +2485,7 @@ jobs:
       - catalog-diagram-linux
       - catalog-diagram-macos
       - catalog-diagram-windows
+      - _fourdform-macos
 
     runs-on: ubuntu-latest
 
@@ -2312,6 +2495,24 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
+
+      - name: Generate archive checksums
+        working-directory: artifacts
+        run: |
+          LC_ALL=C sha256sum -- *.tar.xz > SHA256SUMS
+          sha256sum --check SHA256SUMS
+          python3 - <<'PY'
+          from pathlib import Path
+
+          archives = sorted(path.name for path in Path(".").glob("*.tar.xz"))
+          names = [
+              line.split("  ", 1)[1]
+              for line in Path("SHA256SUMS").read_text().splitlines()
+          ]
+          if not archives or sorted(names) != archives:
+              raise SystemExit("SHA256SUMS must list every archive exactly once by basename")
+          print(f"Verified basename checksums for all {len(archives)} release archives")
+          PY
 
       - name: List assets
         run: |
@@ -2323,4 +2524,6 @@ jobs:
           tag_name: ${{ inputs.tag }}
           name: ${{ inputs.tag }}
           generate_release_notes: true
-          files: artifacts/*.tar.xz
+          files: |
+            artifacts/*.tar.xz
+            artifacts/SHA256SUMS

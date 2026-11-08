@@ -52,19 +52,18 @@ class ProvisionTests(unittest.TestCase):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name).resolve()
-        self.manifest = installer.load_manifest(installer.MANIFEST)
-        self.destination = self.root / installer.DESTINATION
-        self.metadata_url = (
-            f"https://api.github.com/repos/{self.manifest['repository']}/releases/tags/"
-            f"{self.manifest['release_tag']}"
-        )
-        self.prefix = (
-            f"https://github.com/{self.manifest['repository']}/releases/download/"
-            f"{self.manifest['release_tag']}/"
-        )
         self.system = self.mock("platform.system", return_value="Darwin")
         self.machine = self.mock("platform.machine", return_value="arm64")
         self.mac_version = self.mock("platform.mac_ver", return_value=("12.0", (), ""))
+        self.manifest = installer.check_platform(installer.load_manifest(installer.MANIFEST))
+        self.destination = self.root / installer.DESTINATION
+        self.metadata_url = (
+            f"https://api.github.com/repos/{self.manifest['repository']}/releases/latest"
+        )
+        self.prefix = (
+            f"https://github.com/{self.manifest['repository']}/releases/download/"
+            "v1.2.3/"
+        )
         self.run = self.mock("run", side_effect=self.command)
         self.fetch = self.mock("fetch", side_effect=self.download)
         self.set_release(package())
@@ -81,7 +80,7 @@ class ProvisionTests(unittest.TestCase):
 
     def command(self, arguments):
         if arguments[0] == "lipo":
-            return "x86_64 arm64"
+            return self.machine.return_value
         if arguments[1] == "--version":
             return "fourdform 0.1.0"
         return "--output --theme --page --scale --max-dimension --language"
@@ -89,19 +88,16 @@ class ProvisionTests(unittest.TestCase):
     def set_release(self, archive):
         checksum = hashlib.sha256(archive).hexdigest()
         sums = f"{checksum}  {self.manifest['asset']}\n".encode()
-        manifest_data = json.dumps(self.manifest["source"]).encode()
-        self.release = {"tag_name": "v0.1.0", "draft": False, "assets": [
+        self.release = {"tag_name": "v1.2.3", "draft": False, "prerelease": False, "assets": [
             {"name": name, "browser_download_url": self.prefix + name,
              "digest": "sha256:" + hashlib.sha256(data).hexdigest()}
             for name, data in (
-                (self.manifest["asset"], archive), ("SHA256SUMS", sums),
-                ("release.json", manifest_data)
+                (self.manifest["asset"], archive), ("SHA256SUMS", sums)
             )
         ]}
         self.downloads = {
             self.prefix + self.manifest["asset"]: archive,
             self.prefix + "SHA256SUMS": sums,
-            self.prefix + "release.json": manifest_data,
         }
 
     def download(self, url, destination):
@@ -126,14 +122,21 @@ class ProvisionTests(unittest.TestCase):
         self.assertEqual(self.destination.stat().st_mode & 0o777, 0o755)
         self.assertEqual((self.root / ".gitignore").read_text(), "existing-entry\n/tools/4dform/\n")
         self.assertEqual(script.read_text(), "echo project\n")
-        self.assertEqual(self.fetch.call_count, 4)
+        self.assertEqual(self.fetch.call_count, 3)
 
-    def test_both_macos_architectures_use_same_universal_archive(self):
+    def test_both_macos_architectures_select_matching_skills_archive(self):
         for machine in ("arm64", "x86_64"):
             with self.subTest(machine=machine):
                 self.machine.return_value = machine
+                self.manifest = installer.check_platform(self.manifest)
+                expected = "fourdform-macos-arm64.tar.xz" if machine == "arm64" else (
+                    "fourdform-macos-x64.tar.xz"
+                )
+                self.assertEqual(self.manifest["asset"], expected)
+                self.set_release(package())
                 self.provision(replace=True)
                 self.assertEqual(self.fetch.call_args[0][0], self.prefix + self.manifest["asset"])
+                self.assertEqual(self.fetch.call_args_list[-3][0][0], self.metadata_url)
 
     def test_windows_and_linux_fail_before_download_with_no_fake_binary(self):
         for system in ("Windows", "Linux"):
@@ -212,17 +215,14 @@ class ProvisionTests(unittest.TestCase):
             self.provision()
         self.assert_untouched()
 
-    def test_missing_or_changed_upstream_manifest_is_rejected(self):
-        asset = self.release["assets"].pop()
-        with self.assertRaisesRegex(installer.ProvisionError, "release.json"):
-            self.provision()
-        self.release["assets"].append(asset)
-        asset["digest"] = None
-        source = dict(self.manifest["source"], version="9.9.9")
-        self.downloads[self.prefix + "release.json"] = json.dumps(source).encode()
-        with self.assertRaisesRegex(installer.ProvisionError, "differs from the committed"):
-            self.provision()
-        self.assert_untouched()
+    def test_existing_universal_binary_can_be_reused(self):
+        self.provision()
+        self.fetch.reset_mock()
+        self.run.side_effect = lambda args: (
+            "x86_64 arm64" if args[0] == "lipo" else self.command(args)
+        )
+        self.provision()
+        self.fetch.assert_not_called()
 
     def test_missing_wrong_and_duplicate_checksums_are_rejected(self):
         for sums in (b"", b"not a checksum\n", (
@@ -249,15 +249,31 @@ class ProvisionTests(unittest.TestCase):
         self.assert_untouched()
 
     def test_untrusted_url_wrong_tag_and_draft_are_rejected(self):
-        for field, value in (("tag_name", "v9.9.9"), ("draft", True)):
+        for field, value in (("tag_name", ""), ("tag_name", "../other"),
+                             ("draft", True), ("prerelease", True)):
             with self.subTest(field=field):
                 original = self.release[field]
                 self.release[field] = value
-                with self.assertRaisesRegex(installer.ProvisionError, "pinned published tag"):
+                with self.assertRaisesRegex(installer.ProvisionError, "published stable"):
                     self.provision()
                 self.release[field] = original
         self.release["assets"][0]["browser_download_url"] = "https://example.invalid/binary"
-        with self.assertRaisesRegex(installer.ProvisionError, "outside the pinned"):
+        with self.assertRaisesRegex(installer.ProvisionError, "outside the selected"):
+            self.provision()
+        self.assert_untouched()
+
+    def test_upstream_repository_asset_url_is_rejected(self):
+        self.release["assets"][0]["browser_download_url"] = (
+            "https://github.com/miyako/4d-form/releases/download/v0.1.0/"
+            "fourdform-macos-universal.tar.xz"
+        )
+        with self.assertRaisesRegex(installer.ProvisionError, "selected skills release"):
+            self.provision()
+        self.assert_untouched()
+
+    def test_other_architecture_asset_is_not_a_fallback(self):
+        self.release["assets"][0]["name"] = "fourdform-macos-x64.tar.xz"
+        with self.assertRaisesRegex(installer.ProvisionError, "exactly one release asset"):
             self.provision()
         self.assert_untouched()
 
@@ -298,12 +314,12 @@ class ProvisionTests(unittest.TestCase):
         self.assertEqual(list(self.destination.parent.iterdir()), [self.destination])
         self.assertFalse((self.root / "leaked").exists())
 
-    def test_nonuniversal_wrong_version_and_missing_help_fail_before_install(self):
+    def test_wrong_architecture_version_and_missing_help_fail_before_install(self):
         for bad in ("architecture", "version", "help"):
             with self.subTest(bad=bad):
                 def command(arguments):
                     if bad == "architecture" and arguments[0] == "lipo":
-                        return "arm64"
+                        return "x86_64"
                     if bad == "version" and arguments[1] == "--version":
                         return "fourdform 9.9.9"
                     if bad == "help" and arguments[1] == "--help":
@@ -351,6 +367,29 @@ class PngVerificationTests(unittest.TestCase):
         self.pixels = self.chunk(b"IDAT", zlib.compress(b"\x00\xff\x00\x00\xff"))
         self.ending = self.chunk(b"IEND", b"")
         self.signature = b"\x89PNG\r\n\x1a\n"
+
+    def test_local_binary_smoke_never_provisions_or_downloads(self):
+        binary = self.output.parent / "fourdform"
+        binary.write_bytes(b"fixture binary")
+        root = self.output.parent / "consumer"
+
+        def rendered(binary, output, *options):
+            if "--max-dimension" in options:
+                theme = options[options.index("--theme") + 1]
+                return (256, 241), theme
+            scale = int(options[options.index("--scale") + 1])
+            return (440 * scale, 414 * scale), "pixels"
+
+        failure = subprocess.CompletedProcess([], 1, "", "Missing input")
+        with patch.object(smoke.installer, "provision") as provision, \
+                patch.object(smoke.installer, "verify_binary") as verify, \
+                patch.object(smoke.installer, "check_platform", return_value={}), \
+                patch.object(smoke, "render", side_effect=rendered), \
+                patch.object(smoke.subprocess, "run", return_value=failure):
+            smoke.smoke(root, binary)
+        provision.assert_not_called()
+        verify.assert_called_once_with(binary, {})
+        self.assertFalse((root / ".gitignore").exists())
 
     def chunk(self, kind, data):
         return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
