@@ -17,7 +17,7 @@ owning skill; the others link to it.
 |---|---|
 | [`4dproject`](skills/4dproject/SKILL.md) | The project as a whole: `.4DProject`, version detection, token suffixes, folder layout, `menus.json`, the canonical `.gitignore`, component release tags and Dependency manager version rules |
 | [`4dcatalog`](skills/4dcatalog/SKILL.md) | `.4DCatalog` database schema: structure, DTD validation, diagrams |
-| [`4dform`](skills/4dform/SKILL.md) | `.4DForm` JSON: objects, list box defaults, layout geometry and overlap checks, form documentation index, schema validation, standalone PNG previews with `fourdform` (macOS) |
+| [`4dform`](skills/4dform/SKILL.md) | `.4DForm` JSON: objects, list box defaults, layout geometry and overlap checks, form documentation index, schema validation, quick PNG assessment with `fourdform` (macOS), then 4D/tool4d captures for a second opinion when needed |
 | [`4dsettings`](skills/4dsettings/SKILL.md) | `.4DSettings` (placeholder) |
 | [`4dlsp`](skills/4dlsp/SKILL.md) | `.4dm` validation, syntax check and code intelligence with `tool4d-lsp-stdio` |
 | [`4dlang`](skills/4dlang/SKILL.md) | Classic command and OOP class member lookup; documentation and forum search |
@@ -88,6 +88,46 @@ Once mounted:
   only those directories, not the whole `tools/` folder -- see
   [`4dproject`](skills/4dproject/SKILL.md) for the canonical
   `.gitignore`.
+
+## Helper tool releases
+
+Helper binaries are built from pinned sources by the **Build and Release**
+workflow and published as assets of
+[`miyako/skills` releases](https://github.com/miyako/skills/releases).
+The `dist` branch carries skills and installers, not the binaries.
+Updating the skillset does not build or replace installed tools.
+
+`fourdform` follows this model: `_fourdform-macos` builds
+`fourdform-macos-arm64.tar.xz` and `fourdform-macos-x64.tar.xz` from the
+pinned `vendor/4d-form` source. The executable is named `fourdform`,
+without an underscore. The macOS 12+ builds use Developer ID signing and
+notarization; Windows rendering is still under development, and no
+Windows or Linux asset is available.
+
+After merging the release integration, dispatch **Build and Release**
+with a release tag before provisioning the new assets. The installer
+uses the latest stable skills release, verifies `SHA256SUMS` and available
+GitHub asset digests, and installs into `tools/4dform/fourdform`.
+It does not fall back to the older upstream release.
+
+From a **consumer 4D repository** with the skillset mounted at `.agents`:
+
+```sh
+python3 .agents/skills/4dtools/scripts/provision_fourdform.py --repo-root "$PWD"
+```
+
+The `miyako/skills` **source checkout** has no `.agents` submodule.
+To use its installer, pass the actual consumer repository path:
+
+```sh
+python3 4d-skills/skills/4dtools/scripts/provision_fourdform.py \
+  --repo-root /path/to/4d-project
+```
+
+Compatible existing installations are reused. Use `--replace` to
+explicitly reprovision, including migration from an older universal
+binary. See [`4dtools`](skills/4dtools/SKILL.md) for the complete
+installation and platform checks.
 
 ## Updating language lookup data
 
