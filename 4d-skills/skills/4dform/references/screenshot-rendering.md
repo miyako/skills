@@ -12,6 +12,32 @@ IDE. It is a useful sanity check, but it is **not** validation -- schema
 validation is the done-gate (see `skills/4dform/SKILL.md`). Use a capture to confirm
 layout and styling, not correctness.
 
+## Recommended Assessment Order
+
+For a quick visual assessment on macOS, use `fourdform` first. Inspect
+the PNG for the layout or appearance question at hand without starting
+4D or installing capture methods. A clear static preview need not be
+followed by a 4D capture automatically.
+
+For a second opinion, an uncertain or unsupported preview, or a platform
+where `fourdform` is unavailable, use the appropriate 4D/tool4d CLI
+workflow in `skills/4dcli/SKILL.md`. Report a failed preview before
+falling back, and identify which engine produced each result.
+
+`project_form_to_image` uses `FORM SCREENSHOT` for the Form Editor's
+static template, without executing form methods or applying CSS.
+`print_form_to_file` supplies a CSS-aware printed PDF, not a screen
+image. For runtime data or appearance after `On Load`, use full 4D
+without `--headless` and the `dialog_screenshot` chain instead.
+When the user explicitly requests one of these 4D-produced results,
+skip the quick preview and use the requested capture directly.
+
+Compare the relevant objects under matching page, language, and
+appearance settings where supported. Explain renderer limitations and
+differences; do not treat two agreeing images as validation of form code.
+If the required engine is unavailable, state that the second opinion
+is unavailable rather than manufacturing an equivalent result.
+
 ## Standalone PNG Preview -- No 4D Runtime
 
 `fourdform`, built from

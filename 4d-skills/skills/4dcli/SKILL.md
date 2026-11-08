@@ -43,6 +43,7 @@ Engine".
 
 | Task | Open | Binary |
 |---|---|---|
+| Quickly assess a `.4DForm` visually before requesting a 4D-produced second opinion | `skills/4dform/SKILL.md`, "Visual Assessment: Quick Preview First" | `fourdform` (macOS) |
 | Capture a form to PNG as the Form Editor draws it | "Contracts" -> `project_form_to_image` | `tool4d` |
 | Print a form to PDF with stylesheets applied | "Contracts" -> `print_form_to_file` | `tool4d` |
 | Screenshot a form as it looks *after* `On Load` | "The `dialog_screenshot` Chain", Pattern 4 | `4D`, **no** `--headless` |

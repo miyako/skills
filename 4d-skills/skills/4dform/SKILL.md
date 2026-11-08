@@ -7,7 +7,8 @@ description: >
   overlap checks with form_layout_calc.py), an index of the official form
   documentation pages, the authoring protocol to follow, and schema
   validation against the 4D Form schema. Render standalone PNG previews
-  from a .4DForm path with fourdform on macOS, without running 4D/tool4d.
+  from a .4DForm path with fourdform on macOS for quick visual assessment,
+  then use 4D/tool4d captures for a second opinion when needed.
 ---
 
 # 4D Form
@@ -213,7 +214,7 @@ Open only the file for the object(s) the task touches.
 | Official doc page for an object type, property group or event | `references/docs-index.md` |
 | SVG rendering engine: supported elements, filters, `SVG SET ATTRIBUTE` | `references/objects/svg-rendering.md` |
 | Resolving a property name: JSON key, CSS name, getter/setter command | `references/property-reference.md` |
-| Standalone PNG preview with `fourdform`, or what a `FORM SCREENSHOT` or printed capture actually shows | `references/screenshot-rendering.md` |
+| Quick visual assessment with `fourdform`, or a second opinion using `FORM SCREENSHOT` or printing | `references/screenshot-rendering.md` |
 
 If a task spans several objects, open the files for exactly those objects.
 Do not open unrelated files "just in case".
@@ -374,13 +375,17 @@ tools/4dform/boon schemas/4dform/formsSchema.json <file>
 
 Do not duplicate tool installation logic in this skill.
 
-## Standalone PNG Preview
+## Visual Assessment: Quick Preview First
 
-On macOS, prefer `tools/4dform/fourdform` when the task is to preview a
-`.4DForm` file without opening 4D or installing a startup method. Provision
+For a quick visual assessment of layout, spacing, labels, or appearance
+on macOS, start with `tools/4dform/fourdform`. It previews a `.4DForm`
+without opening 4D or installing a startup method. Provision
 it through `skills/4dtools/SKILL.md` if missing. Read
 `references/screenshot-rendering.md` for preview limitations and the
 distinction from actual 4D runtime captures.
+Do not launch 4D/tool4d for every initial assessment. If the user explicitly
+needs runtime behavior or a 4D-produced capture, go directly to the
+appropriate 4D/tool4d workflow below instead.
 
 ```sh
 tools/4dform/fourdform --help
@@ -411,8 +416,33 @@ After a successful exit, check that the requested file exists and is
 recognized as PNG (for example, `file /tmp/Login.png`), then inspect the
 image. An HTML file or an unverified filename is not a PNG result.
 Rendering is a visual preview, not schema validation or evidence that
-form methods executed. For a live 4D screenshot or runtime-dependent
-behavior, use `skills/4dcli/SKILL.md` instead.
+form methods executed. Neither a plausible preview nor a second-opinion
+capture replaces the done-gate.
+
+### Second Opinion with 4D/tool4d
+
+Use a 4D-produced capture when the quick preview is ambiguous, an object
+or property is unsupported, the result seems inconsistent with the form
+source, or the user asks for a second opinion. Also use this route when
+the standalone CLI is unavailable on the current platform. Report any
+preview error or limitation before switching engines; do not silently
+hide a failure or present the fallback as a `fourdform` result.
+
+Choose the capture that answers the actual question, following
+`skills/4dcli/SKILL.md` for version checks, startup-method installation,
+invocation, and output verification:
+
+| Question | Capture |
+|---|---|
+| How does 4D draw the Form Editor's static template? | `tool4d` with `project_form_to_image`, using `FORM SCREENSHOT`; no form methods or CSS stylesheets |
+| How does the form print with stylesheets applied? | `tool4d` with `print_form_to_file`; PDF, not a screen screenshot |
+| How does the form look after `On Load` or runtime bindings? | Full `4D`, without `--headless`, with the `dialog_screenshot` chain (`DIALOG` + `CALL FORM` + `FORM SCREENSHOT`) |
+
+Inspect the second capture and compare the relevant objects, page,
+language, and appearance with the first preview. Explain discrepancies
+in terms of each renderer's scope rather than assuming either image is
+proof of all runtime behavior. If the required 4D engine is unavailable,
+report that the second opinion could not be obtained.
 
 The standalone CLI is macOS-only initially. Do not invent a Windows
 executable, download a macOS binary on Windows/Linux, or silently substitute
