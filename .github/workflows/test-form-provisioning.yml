@@ -1,0 +1,36 @@
+name: Test form provisioning
+
+on:
+  pull_request:
+    paths:
+      - "4d-skills/**"
+      - "README.md"
+      - ".github/scripts/validate_skills.py"
+      - ".github/scripts/test_provision_fourdform.py"
+      - ".github/workflows/test-form-provisioning.yml"
+  push:
+    branches: [main]
+    paths:
+      - "4d-skills/**"
+      - "README.md"
+      - ".github/scripts/validate_skills.py"
+      - ".github/scripts/test_provision_fourdform.py"
+      - ".github/workflows/test-form-provisioning.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Test provisioning without downloads or executing release binaries
+        run: python3 .github/scripts/test_provision_fourdform.py
+      - name: Validate skills
+        run: |
+          python3 -m pip install --quiet pyyaml
+          python3 .github/scripts/validate_skills.py

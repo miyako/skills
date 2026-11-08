@@ -17,7 +17,7 @@ owning skill; the others link to it.
 |---|---|
 | [`4dproject`](4d-skills/skills/4dproject/SKILL.md) | The project as a whole: `.4DProject`, version detection, token suffixes, folder layout, `menus.json`, the canonical `.gitignore`, component release tags and Dependency manager version rules |
 | [`4dcatalog`](4d-skills/skills/4dcatalog/SKILL.md) | `.4DCatalog` database schema: structure, DTD validation, diagrams |
-| [`4dform`](4d-skills/skills/4dform/SKILL.md) | `.4DForm` JSON: objects, list box defaults, layout geometry and overlap checks, form documentation index, schema validation |
+| [`4dform`](4d-skills/skills/4dform/SKILL.md) | `.4DForm` JSON: objects, list box defaults, layout geometry and overlap checks, form documentation index, schema validation, standalone PNG previews with `fourdform` (macOS) |
 | [`4dsettings`](4d-skills/skills/4dsettings/SKILL.md) | `.4DSettings` (placeholder) |
 | [`4dlsp`](4d-skills/skills/4dlsp/SKILL.md) | `.4dm` validation, syntax check and code intelligence with `tool4d-lsp-stdio` |
 | [`4dlang`](4d-skills/skills/4dlang/SKILL.md) | Classic command and OOP class member lookup; documentation and forum search |
