@@ -181,7 +181,8 @@ the exact pinned asset, verifies checksums before extracting only the
 regular executable, checks both architectures, `--version` and the
 required `--help` options, then atomically installs it into
 `tools/4dform/fourdform`. It appends only `/tools/4dform/` to the consumer
-`.gitignore` if needed. It does not alter PATH or install inside `.agents`.
+`.gitignore` if needed, after existing rules so a later negation cannot
+accidentally expose the binary to Git. It does not alter PATH or install inside `.agents`.
 A compatible existing executable is reused without downloading; an
 incompatible one is retained and reported. Use `--replace` to explicitly
 reprovision, with the old binary retained if verification fails.

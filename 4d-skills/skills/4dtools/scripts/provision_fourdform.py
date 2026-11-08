@@ -166,7 +166,8 @@ def ensure_ignore(root):
     if ignore.is_symlink():
         raise ProvisionError("Refusing to modify a symlinked .gitignore")
     text = ignore.read_text() if ignore.exists() else ""
-    if "/tools/4dform/" not in text.splitlines():
+    patterns = [line for line in text.splitlines() if line and not line.startswith("#")]
+    if not patterns or patterns[-1] != "/tools/4dform/":
         with ignore.open("a") as output:
             if text and not text.endswith("\n"):
                 output.write("\n")

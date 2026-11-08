@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import sys
 import struct
+import subprocess
 import tarfile
 import tempfile
 import unittest
@@ -163,6 +164,20 @@ class ProvisionTests(unittest.TestCase):
         self.provision()
         self.fetch.assert_not_called()
         self.assertEqual((self.root / ".gitignore").read_text(), "/tools/4dform/\n")
+
+    def test_later_negated_ignore_rule_is_overridden_without_rewriting_user_rules(self):
+        subprocess.run(["git", "init", "--quiet", str(self.root)], check=True, capture_output=True)
+        text = "/tools/4dform/\n!/tools/4dform/\n# user comment\n"
+        (self.root / ".gitignore").write_text(text)
+        self.provision()
+        self.assertEqual((self.root / ".gitignore").read_text(), text + "/tools/4dform/\n")
+        result = subprocess.run(
+            ["git", "-C", str(self.root), "check-ignore", "--quiet", "--no-index",
+             "tools/4dform/fourdform"], capture_output=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.provision()
+        self.assertEqual((self.root / ".gitignore").read_text(), text + "/tools/4dform/\n")
 
     def test_incompatible_existing_binary_is_retained_without_replace(self):
         self.destination.parent.mkdir(parents=True)
