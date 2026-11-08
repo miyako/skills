@@ -6,7 +6,8 @@ description: >
   display defaults), layout geometry (rendered vs declared size, alignment,
   overlap checks with form_layout_calc.py), an index of the official form
   documentation pages, the authoring protocol to follow, and schema
-  validation against the 4D Form schema.
+  validation against the 4D Form schema. Render standalone PNG previews
+  from a .4DForm path with fourdform on macOS, without running 4D/tool4d.
 ---
 
 # 4D Form
@@ -212,7 +213,7 @@ Open only the file for the object(s) the task touches.
 | Official doc page for an object type, property group or event | `references/docs-index.md` |
 | SVG rendering engine: supported elements, filters, `SVG SET ATTRIBUTE` | `references/objects/svg-rendering.md` |
 | Resolving a property name: JSON key, CSS name, getter/setter command | `references/property-reference.md` |
-| What a `FORM SCREENSHOT` or printed capture actually shows | `references/screenshot-rendering.md` |
+| Standalone PNG preview with `fourdform`, or what a `FORM SCREENSHOT` or printed capture actually shows | `references/screenshot-rendering.md` |
 
 If a task spans several objects, open the files for exactly those objects.
 Do not open unrelated files "just in case".
@@ -350,7 +351,9 @@ Do not "fix" validation failures by weakening or modifying the schema.
 
 ## Tool Dependencies
 
-This skill requires `boon` for JSON Schema validation.
+This skill requires `boon` for JSON Schema validation, and `fourdform`
+only when a standalone PNG preview is requested. Do not provision the
+renderer for validation-only tasks.
 
 Prefer `tools/4dform/boon` over any system-installed boon. Before validating,
 check whether it has been provisioned:
@@ -370,6 +373,51 @@ tools/4dform/boon schemas/4dform/formsSchema.json <file>
 ```
 
 Do not duplicate tool installation logic in this skill.
+
+## Standalone PNG Preview
+
+On macOS, prefer `tools/4dform/fourdform` when the task is to preview a
+`.4DForm` file without opening 4D or installing a startup method. Provision
+it through `skills/4dtools/SKILL.md` if missing. Read
+`references/screenshot-rendering.md` for preview limitations and the
+distinction from actual 4D runtime captures.
+
+```sh
+tools/4dform/fourdform --help
+tools/4dform/fourdform --version
+tools/4dform/fourdform Project/Sources/Forms/Login/form.4DForm \
+  --output /tmp/Login.png \
+  --theme classic-light \
+  --page 1 \
+  --scale 2 \
+  --max-dimension 4096 \
+  --language en
+```
+
+The positional input is a `.4DForm` **file path**, not a form name or a
+`.4DProject` path. `--output` names the actual PNG file. Choose one of
+`classic-light`, `classic-dark`, `liquid-glass-light`, or
+`liquid-glass-dark` for `--theme`; use `--page N`, `--scale NUMBER`,
+`--max-dimension NUMBER`, and `--language TAG` as needed. Check the
+installed CLI's `--help` for defaults and numeric limits rather than
+guessing them.
+
+Without an explicit theme, the initial CLI uses `classic-light`, or
+`classic-dark` when the form's `colorScheme` forces dark. Respect a forced
+form color scheme: an explicitly incompatible theme is an error, not a
+request to silently override the form.
+
+After a successful exit, check that the requested file exists and is
+recognized as PNG (for example, `file /tmp/Login.png`), then inspect the
+image. An HTML file or an unverified filename is not a PNG result.
+Rendering is a visual preview, not schema validation or evidence that
+form methods executed. For a live 4D screenshot or runtime-dependent
+behavior, use `skills/4dcli/SKILL.md` instead.
+
+The standalone CLI is macOS-only initially. Do not invent a Windows
+executable, download a macOS binary on Windows/Linux, or silently substitute
+HTML for PNG. See `skills/4dtools/SKILL.md` for the explicit platform
+availability and upstream handover documentation.
 
 ## Output
 
