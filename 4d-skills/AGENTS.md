@@ -72,7 +72,7 @@ The `4dtools` skill currently provisions tools such as:
   classic-language commands)
 - `4d-language-oop` (natural-language lookup service for the 4D object
   (OOP) language class reference)
-- `fourdform` (standalone `.4DForm` to PNG preview renderer, macOS universal)
+- `fourdform` (standalone `.4DForm` to PNG preview renderer, macOS arm64/x64)
 
 Individual skills specify which tools they require.
 

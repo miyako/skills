@@ -9,7 +9,9 @@ on:
       - ".github/scripts/validate_skills.py"
       - ".github/scripts/test_provision_fourdform.py"
       - ".github/scripts/smoke_fourdform_release.py"
+      - ".github/workflows/release.yml"
       - ".github/workflows/test-form-provisioning.yml"
+      - ".gitmodules"
   push:
     branches: [main]
     paths:
@@ -18,7 +20,9 @@ on:
       - ".github/scripts/validate_skills.py"
       - ".github/scripts/test_provision_fourdform.py"
       - ".github/scripts/smoke_fourdform_release.py"
+      - ".github/workflows/release.yml"
       - ".github/workflows/test-form-provisioning.yml"
+      - ".gitmodules"
 
 permissions:
   contents: read
@@ -46,7 +50,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.9"
-      - name: Provision public pinned release and verify actual PNG output
+      - name: Provision latest skills release and verify actual PNG output
         run: |
           python3 .github/scripts/smoke_fourdform_release.py \
             --consumer-root "$RUNNER_TEMP/fourdform-consumer"
