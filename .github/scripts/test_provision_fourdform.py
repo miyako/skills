@@ -7,10 +7,12 @@ import io
 import json
 from pathlib import Path
 import sys
+import struct
 import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
+import zlib
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / (
@@ -20,6 +22,11 @@ sys.dont_write_bytecode = True
 SPEC = importlib.util.spec_from_file_location("provision_fourdform", SCRIPT)
 installer = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(installer)
+SMOKE_SPEC = importlib.util.spec_from_file_location(
+    "smoke_fourdform_release", Path(__file__).with_name("smoke_fourdform_release.py")
+)
+smoke = importlib.util.module_from_spec(SMOKE_SPEC)
+SMOKE_SPEC.loader.exec_module(smoke)
 
 
 def package(members=None):
@@ -318,6 +325,62 @@ class ProvisionTests(unittest.TestCase):
             self.provision()
         self.assertEqual(other.read_text(), "retained")
         self.assertFalse(self.destination.exists())
+
+
+class PngVerificationTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.output = Path(self.temporary.name) / "output.png"
+        self.header = self.chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
+        self.pixels = self.chunk(b"IDAT", zlib.compress(b"\x00\xff\x00\x00\xff"))
+        self.ending = self.chunk(b"IEND", b"")
+        self.signature = b"\x89PNG\r\n\x1a\n"
+
+    def chunk(self, kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+
+    def test_accepts_actual_png_with_valid_crc_and_decompressed_pixels(self):
+        self.output.write_bytes(self.signature + self.header + self.pixels + self.ending)
+        dimensions, pixels = smoke.png_info(self.output)
+        self.assertEqual(dimensions, (1, 1))
+        self.assertEqual(pixels, hashlib.sha256(b"\x00\xff\x00\x00\xff").hexdigest())
+
+    def test_rejects_html_even_with_png_filename(self):
+        self.output.write_bytes(b"<html>not an image</html>")
+        with self.assertRaisesRegex(smoke.SmokeError, "not PNG"):
+            smoke.png_info(self.output)
+
+    def test_rejects_truncated_corrupt_or_incomplete_png(self):
+        valid = self.signature + self.header + self.pixels + self.ending
+        for data in (
+            valid[:-1], valid[:8] + b"\x00", self.signature + self.header + self.ending,
+            self.signature + self.header + self.pixels,
+            valid[:-4] + b"\x00\x00\x00\x00", valid + b"trailing",
+        ):
+            with self.subTest(data=data):
+                self.output.write_bytes(data)
+                with self.assertRaises(smoke.SmokeError):
+                    smoke.png_info(self.output)
+
+    def test_rejects_invalid_compressed_pixels_and_zero_dimensions(self):
+        empty = self.chunk(b"IHDR", struct.pack(">IIBBBBB", 0, 1, 8, 6, 0, 0, 0))
+        self.output.write_bytes(self.signature + empty + self.pixels + self.ending)
+        with self.assertRaisesRegex(smoke.SmokeError, "empty PNG dimensions"):
+            smoke.png_info(self.output)
+        truncated = self.chunk(b"IDAT", zlib.compress(b"\x00\xff\x00\x00\xff")[:-2])
+        self.output.write_bytes(self.signature + self.header + truncated + self.ending)
+        with self.assertRaisesRegex(smoke.SmokeError, "invalid PNG pixels"):
+            smoke.png_info(self.output)
+
+    def test_rejects_wrong_raster_shape_and_invalid_scanline_filter(self):
+        for raster, error in ((b"not a 1x1 raster", "raster dimensions"),
+                              (b"\x05\xff\x00\x00\xff", "scanline filter")):
+            with self.subTest(raster=raster):
+                invalid = self.chunk(b"IDAT", zlib.compress(raster))
+                self.output.write_bytes(self.signature + self.header + invalid + self.ending)
+                with self.assertRaisesRegex(smoke.SmokeError, error):
+                    smoke.png_info(self.output)
 
 
 if __name__ == "__main__":

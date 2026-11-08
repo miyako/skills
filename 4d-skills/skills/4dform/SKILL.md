@@ -402,6 +402,11 @@ The positional input is a `.4DForm` **file path**, not a form name or a
 installed CLI's `--help` for defaults and numeric limits rather than
 guessing them.
 
+Without an explicit theme, the initial CLI uses `classic-light`, or
+`classic-dark` when the form's `colorScheme` forces dark. Respect a forced
+form color scheme: an explicitly incompatible theme is an error, not a
+request to silently override the form.
+
 After a successful exit, check that the requested file exists and is
 recognized as PNG (for example, `file /tmp/Login.png`), then inspect the
 image. An HTML file or an unverified filename is not a PNG result.
