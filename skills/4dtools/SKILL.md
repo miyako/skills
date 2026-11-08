@@ -13,7 +13,7 @@ description: >
 This skill provisions the external command-line tools used by the 4D
 development skills.
 
-Most tools are distributed as GitHub Release assets from:
+Tools are distributed as GitHub Release assets from:
 
 `https://github.com/miyako/skills/releases/latest`
 
@@ -25,12 +25,13 @@ Currently the release provides platform-specific builds of:
 * `4d-language-classic` (natural-language lookup service for 4D classic-language commands)
 * `4d-language-oop` (natural-language lookup service for the 4D object (OOP) language class reference)
 * `4d-catalog-diagram` (renders a 4D catalog as an interactive HTML diagram, SVG, or PNG)
+* `fourdform` (standalone `.4DForm` PNG previews; macOS 12+ only)
 
-`fourdform` is a separate, upstream-only release from the public
-[`miyako/4d-form`](https://github.com/miyako/4d-form) repository. It produces
-standalone PNG previews of `.4DForm` files and is **macOS universal only**
-initially. Use its dedicated procedure below, not the generic asset
-pattern or the `miyako/skills` release recipe.
+`fourdform` is built from the pinned `vendor/4d-form` submodule in the
+same release workflow as the other tools. Its executable remains
+`fourdform`; `_fourdform-macos` is the workflow job ID, not a binary name.
+Use its dedicated verified installer below. Windows rendering is still
+under development; no Windows or Linux asset is published for this tool.
 
 These tools are implementation dependencies of the 4D skills. They are not
 themselves 4D skills.
@@ -86,7 +87,7 @@ defect rather than merely relocating a file.
       4d-catalog-diagram       (or 4d-catalog-diagram.exe on Windows)
     4dform/
       boon                     (or boon.exe on Windows)
-      fourdform                (macOS universal only; no Windows executable)
+      fourdform                (macOS arm64 or x64; no Windows executable)
     4dlsp/
       tool4d-lsp-stdio         (or tool4d-lsp-stdio.exe on Windows)
     4dlang/
@@ -146,14 +147,20 @@ $arch = if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture 
 
 Do not assume that the operating system alone identifies the correct asset.
 
-`fourdform` is the exception to the per-architecture patterns: both
-macOS `arm64` and `x86_64` use `fourdform-macos-universal.tar.xz`.
-There is no Windows or Linux asset. The generic recipes below apply only
-to tools distributed by `miyako/skills`.
+`fourdform` follows the same per-architecture patterns:
+`fourdform-macos-arm64.tar.xz` or `fourdform-macos-x64.tar.xz`.
+There is no Windows or Linux asset for it.
 
 ## Download and Install Procedure
 
-### fourdform -- pinned upstream macOS universal release
+### fourdform -- skills release, macOS arm64 and x64
+
+The new archives and `SHA256SUMS` are available only after the updated
+skills build-and-release workflow publishes a release. Updating the
+skillset alone does not create those assets. Until that release exists,
+the installer reports missing assets; it does not silently fall back to
+the older upstream universal release. Older skillset revisions can
+continue using their original upstream installer.
 
 Use Python 3.9+ and Apple's `lipo` (provided by the Command Line Tools).
 Run the bundled script from the skillset, passing the **consumer**
@@ -167,14 +174,19 @@ python3 .agents/skills/4dtools/scripts/provision_fourdform.py \
 If the skillset is mounted elsewhere, resolve its actual path first.
 The script and `release.json` live together under
 `skills/4dtools/scripts/` relative to the skillset root.
+In a checkout of the `miyako/skills` source repository, the script is at
+`4d-skills/skills/4dtools/scripts/provision_fourdform.py`; pass the actual
+4D project repository path as `--repo-root`, not the skills checkout.
+The source repository does not have an `.agents` submodule.
 
-The pin is upstream **v0.1.0**, executable `fourdform 0.1.0`, macOS
-**12.0+**, universal `arm64` + `x86_64`. The release archive is
-`fourdform-macos-universal.tar.xz`, containing the root executable
-`fourdform`. Its SHA-256 is read from that release's `SHA256SUMS`;
-the installer also checks GitHub asset digests when provided and requires
-the upstream `release.json` asset to match the committed manifest pin. No
-checksum is guessed or embedded in these instructions.
+The source pin is **v0.1.0**, executable `fourdform 0.1.0`, macOS
+**12.0+**. The installer selects the matching architecture archive from
+the latest stable `miyako/skills` release. Each archive contains the root
+executable `fourdform`. Its SHA-256 is read from that release's
+`SHA256SUMS`; the installer also checks GitHub asset digests when provided.
+The bundled `release.json` records the expected CLI version and platform
+mapping, not a separate upstream release. No checksum is guessed or
+embedded in these instructions.
 
 The root-only executable embeds the product and shared-library MIT
 notices. Run `tools/4dform/fourdform --license` to display them; no extra
@@ -182,7 +194,7 @@ license-file extraction or source download is required.
 
 The script rejects unsupported platforms before any download, selects
 the exact pinned asset, verifies checksums before extracting only the
-regular executable, checks both architectures, `--version` and the
+regular executable, checks the host architecture, `--version` and the
 required `--help` options, then atomically installs it into
 `tools/4dform/fourdform`. It appends only `/tools/4dform/` to the consumer
 `.gitignore` if needed, after existing rules so a later negation cannot
@@ -190,15 +202,17 @@ accidentally expose the binary to Git. It does not alter PATH or install inside 
 A compatible existing executable is reused without downloading; an
 incompatible one is retained and reported. Use `--replace` to explicitly
 reprovision, with the old binary retained if verification fails.
+A previously installed compatible universal binary can also be reused;
+use `--replace` to migrate it to the skills-built release.
 
-The initial upstream release is **ad-hoc signed, not Developer ID signed
-or notarized**. The installer does not strip quarantine, disable
+The skills release workflow **Developer ID signs and notarizes** the
+macOS executables, like the other macOS tools. The installer does not strip quarantine, disable
 Gatekeeper, re-sign the executable, or silently bypass macOS security.
 If macOS blocks execution, report the error and stop; do not claim that
 installation succeeded or prescribe an automatic bypass.
 
 **Windows is unavailable**, not a downloadable stub. The actual port
-boundary and implementation handover are documented at
+is ongoing; its boundary and implementation handover are documented at
 [Windows handover](https://github.com/miyako/4d-form/blob/main/docs/WINDOWS-HANDOVER.md).
 Linux is also unavailable. Do not select a different platform, compile
 automatically, or substitute an HTML output for the requested PNG.
@@ -314,7 +328,7 @@ Common sets:
   user asks to see or diagram the schema. Validation is far more common than
   visualisation, so do not provision the diagram tool pre-emptively.
 - 4dform needs: `boon` (`tools/4dform/boon`) for validation, and `fourdform`
-  (`tools/4dform/fourdform`, macOS 12+ only) for standalone PNG previews
+  (`tools/4dform/fourdform`, macOS 12+ arm64 or x64 only) for standalone PNG previews
 - 4dlsp needs: `tool4d-lsp-stdio` (`tools/4dlsp/tool4d-lsp-stdio`,
   macOS and Windows only -- no Linux build)
 - 4dlang needs: `4d-language-classic` (`tools/4dlang/4d-language-classic`,
@@ -387,9 +401,9 @@ report the tool as installed.
 
 ## Security
 
-Only download assets from the specified GitHub repository and release:
-`miyako/skills` for the generic recipes, or pinned `miyako/4d-form` for
-`fourdform`.
+Only download tool assets from the selected `miyako/skills` release,
+including `fourdform`. Its upstream source repository is not an
+alternative download source for this procedure.
 
 Do not execute arbitrary files downloaded from other URLs.
 
