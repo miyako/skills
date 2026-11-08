@@ -2,15 +2,36 @@
 object: "form"
 json_type: null
 keywords: ["FORM SCREENSHOT", "print form", "static template", "render", "PNG", "PDF", "CSS not applied", "preview", "verification"]
-summary: "How a form renders when captured from the CLI: the two capture commands, what the static template shows per object type, which properties are and are not reflected, and which behaviors cannot be captured at all."
+summary: "Standalone PNG previews with fourdform versus actual 4D runtime captures: the two capture commands, what the static template shows per object type, and which behaviors cannot be captured."
 ---
 
 # Rendering a Form for Verification
 
-A rendered capture is the only way to see a `.4DForm` without opening the
+A rendered preview or capture lets you see a `.4DForm` without opening the
 IDE. It is a useful sanity check, but it is **not** validation -- schema
 validation is the done-gate (see `skills/4dform/SKILL.md`). Use a capture to confirm
 layout and styling, not correctness.
+
+## Standalone PNG Preview -- No 4D Runtime
+
+`fourdform` from the public
+[miyako/4d-form](https://github.com/miyako/4d-form) repository renders a
+`.4DForm` file to an actual PNG on macOS. Use the invocation in
+`skills/4dform/SKILL.md`; installation belongs to `skills/4dtools/SKILL.md`.
+The parser and HTML renderer reuse pinned `4d-ql` libraries, with a
+macOS raster adapter producing the image.
+
+This is a calibrated static preview, not `FORM SCREENSHOT`, not a live
+4D window, and not proof of pixel-identical native controls. Selecting a
+classic or Liquid Glass light/dark theme selects the preview appearance;
+it does not run the form, execute `.4dm` methods, evaluate runtime data
+bindings, or verify every 4D stylesheet property. Report unsupported
+features and rendering errors rather than presenting an approximation as
+runtime evidence.
+
+Use actual 4D runtime captures below when their behavior is needed. The
+static-template observations in the following sections describe
+`FORM SCREENSHOT`, not a universal promise about `fourdform`.
 
 For the tool4d binary, its version requirements, and the runtime patterns
 that drive these captures, see the `4dcli` skill

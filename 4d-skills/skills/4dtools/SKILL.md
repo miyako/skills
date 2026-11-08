@@ -13,7 +13,7 @@ description: >
 This skill provisions the external command-line tools used by the 4D
 development skills.
 
-The tools are distributed as GitHub Release assets from:
+Most tools are distributed as GitHub Release assets from:
 
 `https://github.com/miyako/skills/releases/latest`
 
@@ -25,6 +25,12 @@ Currently the release provides platform-specific builds of:
 * `4d-language-classic` (natural-language lookup service for 4D classic-language commands)
 * `4d-language-oop` (natural-language lookup service for the 4D object (OOP) language class reference)
 * `4d-catalog-diagram` (renders a 4D catalog as an interactive HTML diagram, SVG, or PNG)
+
+`fourdform` is a separate, upstream-only release from the public
+[`miyako/4d-form`](https://github.com/miyako/4d-form) repository. It produces
+standalone PNG previews of `.4DForm` files and is **macOS universal only**
+initially. Use its dedicated procedure below, not the generic asset
+pattern or the `miyako/skills` release recipe.
 
 These tools are implementation dependencies of the 4D skills. They are not
 themselves 4D skills.
@@ -55,6 +61,7 @@ is genuinely needed by more than one skill, install it directly under
 | `4d-language-classic` | `tools/4dlang/` | `4dlang` only |
 | `4d-language-oop` | `tools/4dlang/` | `4dlang` only |
 | `4d-catalog-diagram` | `tools/4dcatalog/` | `4dcatalog` only |
+| `fourdform` | `tools/4dform/` | `4dform` only; macOS 12+ |
 
 `4d-language-classic` and `4d-language-oop` are natural-language lookup
 tools for the two 4D language subsets and are consumed together by the
@@ -79,6 +86,7 @@ defect rather than merely relocating a file.
       4d-catalog-diagram       (or 4d-catalog-diagram.exe on Windows)
     4dform/
       boon                     (or boon.exe on Windows)
+      fourdform                (macOS universal only; no Windows executable)
     4dlsp/
       tool4d-lsp-stdio         (or tool4d-lsp-stdio.exe on Windows)
     4dlang/
@@ -138,7 +146,66 @@ $arch = if ([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture 
 
 Do not assume that the operating system alone identifies the correct asset.
 
+`fourdform` is the exception to the per-architecture patterns: both
+macOS `arm64` and `x86_64` use `fourdform-macos-universal.tar.xz`.
+There is no Windows or Linux asset. The generic recipes below apply only
+to tools distributed by `miyako/skills`.
+
 ## Download and Install Procedure
+
+### fourdform -- pinned upstream macOS universal release
+
+Use Python 3.9+ and Apple's `lipo` (provided by the Command Line Tools).
+Run the bundled script from the skillset, passing the **consumer**
+repository root, not the `.agents` directory:
+
+```sh
+python3 .agents/skills/4dtools/scripts/provision_fourdform.py \
+  --repo-root "$PWD"
+```
+
+If the skillset is mounted elsewhere, resolve its actual path first.
+The script and `release.json` live together under
+`skills/4dtools/scripts/` relative to the skillset root.
+
+The pin is upstream **v0.1.0**, executable `fourdform 0.1.0`, macOS
+**12.0+**, universal `arm64` + `x86_64`. The release archive is
+`fourdform-macos-universal.tar.xz`, containing the root executable
+`fourdform`. Its SHA-256 is read from that release's `SHA256SUMS`;
+the installer also checks GitHub asset digests when provided and requires
+the upstream `release.json` asset to match the committed manifest pin. No
+checksum is guessed or embedded in these instructions.
+
+The root-only executable embeds the product and shared-library MIT
+notices. Run `tools/4dform/fourdform --license` to display them; no extra
+license-file extraction or source download is required.
+
+The script rejects unsupported platforms before any download, selects
+the exact pinned asset, verifies checksums before extracting only the
+regular executable, checks both architectures, `--version` and the
+required `--help` options, then atomically installs it into
+`tools/4dform/fourdform`. It appends only `/tools/4dform/` to the consumer
+`.gitignore` if needed, after existing rules so a later negation cannot
+accidentally expose the binary to Git. It does not alter PATH or install inside `.agents`.
+A compatible existing executable is reused without downloading; an
+incompatible one is retained and reported. Use `--replace` to explicitly
+reprovision, with the old binary retained if verification fails.
+
+The initial upstream release is **ad-hoc signed, not Developer ID signed
+or notarized**. The installer does not strip quarantine, disable
+Gatekeeper, re-sign the executable, or silently bypass macOS security.
+If macOS blocks execution, report the error and stop; do not claim that
+installation succeeded or prescribe an automatic bypass.
+
+**Windows is unavailable**, not a downloadable stub. The actual port
+boundary and implementation handover are documented at
+[Windows handover](https://github.com/miyako/4d-form/blob/main/docs/WINDOWS-HANDOVER.md).
+Linux is also unavailable. Do not select a different platform, compile
+automatically, or substitute an HTML output for the requested PNG.
+
+After installation, follow `skills/4dform/SKILL.md` to render a `.4DForm`
+path and verify that the output really is PNG. No 4D/tool4d runtime or
+startup method is needed.
 
 ### macOS and Linux
 
@@ -246,7 +313,8 @@ Common sets:
   `4d-catalog-diagram` (`tools/4dcatalog/4d-catalog-diagram`) only when the
   user asks to see or diagram the schema. Validation is far more common than
   visualisation, so do not provision the diagram tool pre-emptively.
-- 4dform needs: `boon` (`tools/4dform/boon`)
+- 4dform needs: `boon` (`tools/4dform/boon`) for validation, and `fourdform`
+  (`tools/4dform/fourdform`, macOS 12+ only) for standalone PNG previews
 - 4dlsp needs: `tool4d-lsp-stdio` (`tools/4dlsp/tool4d-lsp-stdio`,
   macOS and Windows only -- no Linux build)
 - 4dlang needs: `4d-language-classic` (`tools/4dlang/4d-language-classic`,
@@ -261,12 +329,15 @@ After installation, verify each tool can run:
 tools/4dcatalog/xmllint --version
 tools/4dcatalog/4d-catalog-diagram --version
 tools/4dform/boon --help
+# macOS only
+tools/4dform/fourdform --version
+tools/4dform/fourdform --help
 tools/4dlsp/tool4d-lsp-stdio --version
 tools/4dlang/4d-language-classic --help
 tools/4dlang/4d-language-oop --help
 ```
 
-On Windows, append `.exe`:
+On Windows, append `.exe` for available tools; `fourdform` has no Windows build:
 
 ```powershell
 & tools\4dcatalog\xmllint.exe --version
@@ -316,7 +387,9 @@ report the tool as installed.
 
 ## Security
 
-Only download assets from the specified GitHub repository and release.
+Only download assets from the specified GitHub repository and release:
+`miyako/skills` for the generic recipes, or pinned `miyako/4d-form` for
+`fourdform`.
 
 Do not execute arbitrary files downloaded from other URLs.
 
@@ -335,6 +408,7 @@ The dependency relationships are:
 ```
 4dcatalog --> xmllint             --> 4dtools provisions tools/4dcatalog/xmllint
 4dform    --> boon                --> 4dtools provisions tools/4dform/boon
+4dform    --> fourdform           --> 4dtools provisions tools/4dform/fourdform (macOS only)
 4dlsp     --> tool4d-lsp-stdio    --> 4dtools provisions tools/4dlsp/tool4d-lsp-stdio
 4dlang    --> 4d-language-classic --> 4dtools provisions tools/4dlang/4d-language-classic
 4dlang    --> 4d-language-oop     --> 4dtools provisions tools/4dlang/4d-language-oop
