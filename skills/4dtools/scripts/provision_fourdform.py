@@ -9,10 +9,13 @@ from pathlib import Path
 import platform
 import re
 import shutil
+import stat
+import struct
 import subprocess
 import sys
 import tarfile
 import tempfile
+import zipfile
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -35,9 +38,6 @@ def load_manifest(path):
         "version": source["version"],
         "platforms": source["platforms"],
         "checksum_asset": source["checksumFile"],
-        "windows_handover": (
-            "https://github.com/miyako/4d-form/blob/main/docs/WINDOWS-HANDOVER.md"
-        ),
     }
 
 
@@ -52,27 +52,32 @@ def fetch(url, destination):
 
 def check_platform(manifest):
     system, machine = platform.system(), platform.machine()
-    if system != "Darwin":
-        detail = f"Windows handover: {manifest['windows_handover']}" if system == "Windows" else (
-            "No Linux release is available."
-        )
+    if system not in ("Darwin", "Windows"):
         raise ProvisionError(
-            f"fourdform is unavailable on {system}/{machine}; macOS only. {detail}"
+            f"fourdform is unavailable on {system}/{machine}; macOS and Windows only."
         )
-    if machine not in ("arm64", "x86_64"):
-        raise ProvisionError(f"Unsupported macOS architecture: {machine}")
-    macos = manifest["platforms"]["macos-arm64" if machine == "arm64" else "macos-x64"]
-    current = tuple(int(part) for part in platform.mac_ver()[0].split("."))
-    minimum = tuple(int(part) for part in macos["minimumOS"].split("."))
+    architecture = {"arm64": "arm64", "aarch64": "arm64",
+                    "amd64": "x86_64", "x86_64": "x86_64"}.get(machine.lower())
+    label = "macOS" if system == "Darwin" else "Windows"
+    if architecture is None:
+        raise ProvisionError(f"Unsupported {label} architecture: {machine}")
+    key = ("macos" if system == "Darwin" else "windows") + (
+        "-arm64" if architecture == "arm64" else "-x64"
+    )
+    selected = manifest["platforms"][key]
+    version = platform.mac_ver()[0] if system == "Darwin" else platform.win32_ver()[1]
+    current = tuple(int(part) for part in version.split("."))
+    minimum = tuple(int(part) for part in selected["minimumOS"].split("."))
     if current < minimum:
-        raise ProvisionError(f"fourdform requires macOS {macos['minimumOS']} or newer")
-    return dict(manifest, asset=macos["archive"], binary=macos["binary"],
-                architecture=macos["architecture"])
+        raise ProvisionError(f"fourdform requires {label} {selected['minimumOS']} or newer")
+    return dict(manifest, asset=selected["archive"], binary=selected["binary"],
+                architecture=selected["architecture"], system=system)
 
 
 def run(arguments):
     result = subprocess.run(
-        [str(arg) for arg in arguments], capture_output=True, text=True, timeout=30
+        [str(arg) for arg in arguments], capture_output=True, text=True,
+        encoding="utf-8", timeout=30
     )
     if result.returncode != 0:
         raise ProvisionError(
@@ -83,11 +88,14 @@ def run(arguments):
 
 
 def verify_binary(binary, manifest):
-    architectures = set(run(["lipo", "-archs", binary]).split())
-    if manifest["architecture"] not in architectures:
-        raise ProvisionError(
-            f"Release binary does not support macOS {manifest['architecture']}"
-        )
+    if manifest["system"] == "Windows":
+        verify_pe(binary, manifest["architecture"])
+    else:
+        architectures = set(run(["lipo", "-archs", binary]).split())
+        if manifest["architecture"] not in architectures:
+            raise ProvisionError(
+                f"Release binary does not support macOS {manifest['architecture']}"
+            )
     version = run([binary, "--version"])
     if version != f"fourdform {manifest['version']}":
         raise ProvisionError(f"Unexpected fourdform version: {version!r}")
@@ -95,6 +103,19 @@ def verify_binary(binary, manifest):
     for flag in ("--output", "--theme", "--page", "--scale", "--max-dimension", "--language"):
         if flag not in help_text:
             raise ProvisionError(f"Installed fourdform --help is missing {flag}")
+
+
+def verify_pe(binary, architecture):
+    with binary.open("rb") as image:
+        header = image.read(64)
+        if len(header) != 64 or header[:2] != b"MZ":
+            raise ProvisionError(f"Invalid Windows PE image: {binary.name}")
+        image.seek(struct.unpack_from("<I", header, 60)[0])
+        signature = image.read(6)
+    expected = {"x86_64": 0x8664, "arm64": 0xAA64}[architecture]
+    if (len(signature) != 6 or signature[:4] != b"PE\0\0"
+            or struct.unpack_from("<H", signature, 4)[0] != expected):
+        raise ProvisionError(f"Release image {binary.name} does not support Windows {architecture}")
 
 
 def select_asset(release, manifest):
@@ -152,6 +173,30 @@ def archive_checksum(checksums, name):
 
 
 def extract_binary(archive, binary, manifest):
+    if manifest["system"] == "Windows":
+        with zipfile.ZipFile(archive) as package:
+            members = package.infolist()
+            names = [member.filename for member in members]
+            if (names.count(manifest["binary"]) != 1
+                    or names.count("WebView2-SDK-LICENSE.txt") != 1
+                    or len({name.casefold() for name in names}) != len(names)):
+                raise ProvisionError("Windows archive must contain one binary and WebView2 notice")
+            for member in members:
+                name = member.filename
+                mode = member.external_attr >> 16
+                if (not re.fullmatch(r"[A-Za-z0-9_.-]+", name)
+                        or name in (".", "..") or member.is_dir()
+                        or stat.S_IFMT(mode) not in (0, stat.S_IFREG)
+                        or not (name in (manifest["binary"], "WebView2-SDK-LICENSE.txt")
+                                or name.lower().endswith(".dll"))):
+                    raise ProvisionError(f"Unexpected Windows archive member: {name}")
+            for member in members:
+                target = binary.parent / member.filename
+                with package.open(member) as source, target.open("wb") as output:
+                    shutil.copyfileobj(source, output)
+                if target.suffix.lower() == ".dll":
+                    verify_pe(target, manifest["architecture"])
+        return
     with tarfile.open(archive, "r:xz") as package:
         matches = [member for member in package.getmembers() if member.name == manifest["binary"]]
         if len(matches) != 1 or not matches[0].isfile():
@@ -168,21 +213,22 @@ def ensure_ignore(root):
     ignore = root / ".gitignore"
     if ignore.is_symlink():
         raise ProvisionError("Refusing to modify a symlinked .gitignore")
-    text = ignore.read_text() if ignore.exists() else ""
+    text = ignore.read_text(encoding="utf-8") if ignore.exists() else ""
     patterns = [line for line in text.splitlines() if line and not line.startswith("#")]
     if not patterns or patterns[-1] != "/tools/4dform/":
-        with ignore.open("a") as output:
+        with ignore.open("a", encoding="utf-8") as output:
             if text and not text.endswith("\n"):
                 output.write("\n")
             output.write("/tools/4dform/\n")
 
 
-def provision(root, manifest, replace=False):
+def provision(root, manifest, replace=False, fetcher=None):
     manifest = check_platform(manifest)
+    download = fetch if fetcher is None else fetcher
     root = root.resolve(strict=True)
     if not root.is_dir():
         raise ProvisionError(f"Consumer repository root is not a directory: {root}")
-    destination = root / DESTINATION
+    destination = root / DESTINATION.parent / manifest["binary"]
     for path in (root / "tools", destination.parent, destination):
         if path.is_symlink():
             raise ProvisionError(f"Refusing a symlinked installation path: {path}")
@@ -199,7 +245,7 @@ def provision(root, manifest, replace=False):
     with tempfile.TemporaryDirectory(prefix="fourdform-download-") as temporary:
         temporary = Path(temporary)
         metadata = temporary / "release.json"
-        fetch(
+        download(
             f"https://api.github.com/repos/{manifest['repository']}/releases/latest",
             metadata
         )
@@ -207,23 +253,47 @@ def provision(root, manifest, replace=False):
         asset = select_asset(release, manifest)
         checksum_asset = release_asset(release, manifest, manifest["checksum_asset"])
         checksums = temporary / manifest["checksum_asset"]
-        fetch(checksum_asset["browser_download_url"], checksums)
+        download(checksum_asset["browser_download_url"], checksums)
         verify_digest(checksums, checksum_asset)
         expected = archive_checksum(checksums, manifest["asset"])
         archive = temporary / manifest["asset"]
-        fetch(asset["browser_download_url"], archive)
+        download(asset["browser_download_url"], archive)
         verify_digest(archive, asset)
         if sha256(archive) != expected:
             raise ProvisionError("Release archive SHA-256 mismatch; nothing installed")
-        binary = temporary / "fourdform"
+        payload = temporary / "payload"
+        payload.mkdir()
+        binary = payload / manifest["binary"]
         extract_binary(archive, binary, manifest)
         verify_binary(binary, manifest)
+        for source in payload.iterdir():
+            target = destination.parent / source.name
+            if target.is_symlink() or (target.exists() and not target.is_file()):
+                raise ProvisionError(f"Refusing an unsafe installation path: {target}")
         ensure_ignore(root)
         destination.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix=".fourdform-", dir=destination.parent) as stage:
-            staged = Path(stage) / "fourdform"
-            shutil.copy2(binary, staged)
-            os.replace(staged, destination)
+            stage = Path(stage)
+            backups = stage / "backups"
+            backups.mkdir()
+            installed = []
+            try:
+                for source in sorted(payload.iterdir(), key=lambda path: path == binary):
+                    staged = stage / source.name
+                    target = destination.parent / source.name
+                    shutil.copy2(source, staged)
+                    if target.exists():
+                        shutil.copy2(target, backups / source.name)
+                    os.replace(staged, target)
+                    installed.append(target)
+            except OSError:
+                for target in reversed(installed):
+                    backup = backups / target.name
+                    if backup.exists():
+                        os.replace(backup, target)
+                    else:
+                        target.unlink()
+                raise
     return destination
 
 
@@ -236,7 +306,7 @@ def main():
         manifest = load_manifest(MANIFEST)
         destination = provision(arguments.repo_root, manifest, arguments.replace)
     except (ProvisionError, OSError, ValueError, KeyError, TypeError, URLError,
-            tarfile.TarError, subprocess.TimeoutExpired) as error:
+            tarfile.TarError, zipfile.BadZipFile, subprocess.TimeoutExpired) as error:
         print(f"fourdform provisioning failed: {error}", file=sys.stderr)
         return 1
     print(f"Installed fourdform {manifest['version']}: {destination}")

@@ -7,7 +7,7 @@ description: >
   overlap checks with form_layout_calc.py), an index of the official form
   documentation pages, the authoring protocol to follow, and schema
   validation against the 4D Form schema. Render standalone PNG previews
-  from a .4DForm path with fourdform on macOS for quick visual assessment,
+  from a .4DForm path with fourdform on macOS or Windows for quick visual assessment,
   then use 4D/tool4d captures for a second opinion when needed.
 ---
 
@@ -378,7 +378,8 @@ Do not duplicate tool installation logic in this skill.
 ## Visual Assessment: Quick Preview First
 
 For a quick visual assessment of layout, spacing, labels, or appearance
-on macOS, start with `tools/4dform/fourdform`. It previews a `.4DForm`
+on macOS or Windows, start with `tools/4dform/fourdform` or
+`tools\4dform\fourdform.exe`, respectively. It previews a `.4DForm`
 without opening 4D or installing a startup method. Provision
 it through `skills/4dtools/SKILL.md` if missing. Read
 `references/screenshot-rendering.md` for preview limitations and the
@@ -391,7 +392,7 @@ appropriate 4D/tool4d workflow below instead.
 tools/4dform/fourdform --help
 tools/4dform/fourdform --version
 tools/4dform/fourdform Project/Sources/Forms/Login/form.4DForm \
-  --output /tmp/Login.png \
+  --output Login.png \
   --theme classic-light \
   --page 1 \
   --scale 2 \
@@ -399,25 +400,50 @@ tools/4dform/fourdform Project/Sources/Forms/Login/form.4DForm \
   --language en
 ```
 
+On Windows (PowerShell), with the packaged companion DLLs and WebView2
+license notice beside the executable and the Evergreen Microsoft Edge
+WebView2 Runtime installed:
+
+```powershell
+& tools\4dform\fourdform.exe --help
+& tools\4dform\fourdform.exe --version
+& tools\4dform\fourdform.exe Project/Sources/Forms/Login/form.4DForm `
+  --output Login.png `
+  --theme fluent-light `
+  --page 1 `
+  --scale 2 `
+  --max-dimension 4096 `
+  --language en
+```
+
 The positional input is a `.4DForm` **file path**, not a form name or a
-`.4DProject` path. `--output` names the actual PNG file. Choose one of
-`classic-light`, `classic-dark`, `liquid-glass-light`, or
-`liquid-glass-dark` for `--theme`; use `--page N`, `--scale NUMBER`,
+`.4DProject` path. `--output` names the actual PNG file.
+
+| Host | Accepted `--theme` values | Default without `--theme` |
+|---|---|---|
+| macOS | `classic-light`, `classic-dark`, `liquid-glass-light`, `liquid-glass-dark` | `classic-dark` if the form's `colorScheme` forces dark, otherwise `classic-light` |
+| Windows | `classic`, `fluent-light`, `fluent-dark` | `fluent-dark` if the form forces dark; otherwise `fluent-light` if `fluentUI` is set, otherwise `classic` |
+
+Cross-platform themes are rejected with exit code **2**. There are no
+theme aliases or Windows previews on macOS: do not map `classic` to
+`classic-light`, or try Fluent themes on a Mac.
+Use `--page N`, `--scale NUMBER`,
 `--max-dimension NUMBER`, and `--language TAG` as needed. Check the
 installed CLI's `--help` for defaults and numeric limits rather than
 guessing them.
 
-Without an explicit theme, the initial CLI uses `classic-light`, or
-`classic-dark` when the form's `colorScheme` forces dark. Respect a forced
-form color scheme: an explicitly incompatible theme is an error, not a
-request to silently override the form.
+Respect a forced form color scheme: an explicitly incompatible theme is
+an error, not a request to silently override the form.
 
 After a successful exit, check that the requested file exists and is
-recognized as PNG (for example, `file /tmp/Login.png`), then inspect the
-image. An HTML file or an unverified filename is not a PNG result.
-Rendering is a visual preview, not schema validation or evidence that
-form methods executed. Neither a plausible preview nor a second-opinion
-capture replaces the done-gate.
+recognized as PNG (for example, `file Login.png` on macOS, or a PNG-aware
+image reader on Windows), then inspect the image. An HTML file or an
+unverified filename is not a PNG result.
+Rendering produces a static reference preview, not a native screenshot,
+schema validation, or evidence that form methods executed in real 4D.
+Windows tab controls and group boxes are approximate, and popups display
+the object name rather than runtime values. Neither a plausible preview
+nor a second-opinion capture replaces the done-gate.
 
 ### Second Opinion with 4D/tool4d
 
@@ -444,10 +470,10 @@ in terms of each renderer's scope rather than assuming either image is
 proof of all runtime behavior. If the required 4D engine is unavailable,
 report that the second opinion could not be obtained.
 
-The standalone CLI is macOS-only initially. Do not invent a Windows
-executable, download a macOS binary on Windows/Linux, or silently substitute
-HTML for PNG. See `skills/4dtools/SKILL.md` for the explicit platform
-availability and upstream handover documentation.
+The standalone CLI supports macOS 12+ and Windows 10+, arm64/x64; Linux
+is unavailable. Do not download a different platform's binary or
+silently substitute HTML for PNG. See `skills/4dtools/SKILL.md` for
+platform prerequisites, release availability, and verified installation.
 
 ## Output
 

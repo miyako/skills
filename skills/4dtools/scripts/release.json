@@ -17,6 +17,20 @@
       "binary": "fourdform",
       "minimumOS": "12.0",
       "architecture": "x86_64"
+    },
+    "windows-x64": {
+      "archive": "fourdform-windows-x64.zip",
+      "binary": "fourdform.exe",
+      "minimumOS": "10.0",
+      "architecture": "x86_64",
+      "runtimeRequirements": ["Microsoft Edge WebView2 Runtime (Evergreen)"]
+    },
+    "windows-arm64": {
+      "archive": "fourdform-windows-arm64.zip",
+      "binary": "fourdform.exe",
+      "minimumOS": "10.0",
+      "architecture": "arm64",
+      "runtimeRequirements": ["Microsoft Edge WebView2 Runtime (Evergreen)"]
     }
   }
 }
