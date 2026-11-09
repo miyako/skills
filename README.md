@@ -97,6 +97,26 @@ workflow and published as assets of
 The `dist` branch carries skills and installers, not the binaries.
 Updating the skillset does not build or replace installed tools.
 
+All macOS release targets use `.github/scripts/notarize.py`: submit once,
+then poll the same submission ID for up to 20 minutes. Failed status
+requests are retried every 15 seconds (each request is capped at two
+minutes); only `Accepted` allows packaging to continue. Rejected/invalid
+submissions fail immediately with Apple's diagnostic log. Submission
+requests have a separate five-minute limit and are not retried automatically
+because a failed upload request can have an unknown outcome.
+
+The submission ID is printed before polling. To resume an existing submission
+without uploading again, set `APPLE_ID`, `APPLE_PASSWORD`, and `TEAM_ID`
+securely in the environment, then run:
+
+```sh
+python3 .github/scripts/notarize.py --submission-id <submission-uuid>
+```
+
+Resuming only checks notarization; it does not resume a GitHub Actions job.
+Rerunning an old workflow uses that run's original code and submits again,
+so it does not validate this retry helper.
+
 `fourdform` follows this model: the pinned `vendor/4d-form` source uses
 the merged Windows-support revision from
 [`miyako/4d-form#2`](https://github.com/miyako/4d-form/pull/2), while the

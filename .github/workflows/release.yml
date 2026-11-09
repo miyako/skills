@@ -233,11 +233,7 @@ jobs:
             vendor/jq/jq \
             "$ZIP_FILE"
 
-          xcrun notarytool submit "$ZIP_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait
+          python3 .github/scripts/notarize.py --archive "$ZIP_FILE"
 
       - name: Archive
         run: |
@@ -620,11 +616,7 @@ jobs:
             build/libxml2/xmllint \
             "$ZIP_FILE"
 
-          xcrun notarytool submit "$ZIP_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait
+          python3 .github/scripts/notarize.py --archive "$ZIP_FILE"
 
       - name: Notarize xsltproc
         env:
@@ -641,11 +633,7 @@ jobs:
             build/libxslt/xsltproc \
             "$ZIP_FILE"
 
-          xcrun notarytool submit "$ZIP_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait
+          python3 .github/scripts/notarize.py --archive "$ZIP_FILE"
 
       - name: Archive xmllint
         run: |
@@ -970,11 +958,7 @@ jobs:
             "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/boon" \
             "$ZIP_FILE"
 
-          xcrun notarytool submit "$ZIP_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait
+          python3 .github/scripts/notarize.py --archive "$ZIP_FILE"
 
       - name: Archive
         run: |
@@ -1283,11 +1267,7 @@ jobs:
             "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-language-classic" \
             "$ZIP_FILE"
 
-          xcrun notarytool submit "$ZIP_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait
+          python3 .github/scripts/notarize.py --archive "$ZIP_FILE"
 
       - name: Archive
         run: |
@@ -1571,11 +1551,7 @@ jobs:
             "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-language-oop" \
             "$ZIP_FILE"
 
-          xcrun notarytool submit "$ZIP_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait
+          python3 .github/scripts/notarize.py --archive "$ZIP_FILE"
 
       - name: Archive
         run: |
@@ -1786,11 +1762,7 @@ jobs:
             "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/tool4d-lsp-stdio" \
             "$ZIP_FILE"
 
-          xcrun notarytool submit "$ZIP_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait
+          python3 .github/scripts/notarize.py --archive "$ZIP_FILE"
 
       - name: Archive
         run: |
@@ -2173,11 +2145,7 @@ jobs:
             "${{ env.TARGET_DIR }}/${{ matrix.target }}/release/4d-catalog-diagram" \
             "$ZIP_FILE"
 
-          xcrun notarytool submit "$ZIP_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait
+          python3 .github/scripts/notarize.py --archive "$ZIP_FILE"
 
       - name: Archive
         run: |
@@ -2417,24 +2385,7 @@ jobs:
             staging/fourdform \
             "$ZIP_FILE"
 
-          xcrun notarytool submit "$ZIP_FILE" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_PASSWORD" \
-            --team-id "$TEAM_ID" \
-            --wait \
-            --output-format json > "$SIGNING_DIR/notarization.json"
-
-          python3 - "$SIGNING_DIR/notarization.json" <<'PY'
-          import json
-          import sys
-
-          with open(sys.argv[1]) as response:
-              result = json.load(response)
-          status = result.get("status")
-          print(f"Notarization status: {status}")
-          if status != "Accepted":
-              raise SystemExit("Notarization was not accepted")
-          PY
+          python3 .github/scripts/notarize.py --archive "$ZIP_FILE"
 
       - name: Archive
         run: |
