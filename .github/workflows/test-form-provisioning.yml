@@ -12,6 +12,7 @@ on:
       - ".github/workflows/release.yml"
       - ".github/workflows/test-form-provisioning.yml"
       - ".gitmodules"
+      - "vendor/4d-form"
   push:
     branches: [main]
     paths:
@@ -23,34 +24,82 @@ on:
       - ".github/workflows/release.yml"
       - ".github/workflows/test-form-provisioning.yml"
       - ".gitmodules"
+      - "vendor/4d-form"
 
 permissions:
   contents: read
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            python: "3.9"
+          - runner: windows-latest
+            python: "3.9"
+          - runner: windows-11-arm
+            python: "3.13"
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: ${{ matrix.python }}
       - name: Test provisioning without downloads or executing release binaries
-        run: python3 .github/scripts/test_provision_fourdform.py
+        run: python .github/scripts/test_provision_fourdform.py
       - name: Validate skills
         run: |
-          python3 -m pip install --quiet pyyaml
-          python3 .github/scripts/validate_skills.py
+          python -m pip install --quiet pyyaml
+          python .github/scripts/validate_skills.py
+
+  windows-preview:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            build_arch: amd64
+          - runner: windows-11-arm
+            build_arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize pinned renderer
+        run: git submodule update --init vendor/4d-form
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: compnerd/gha-setup-swift@v0.5.1
+        with:
+          swift-version: swift-6.4.2-release
+          swift-build: 6.4.2-RELEASE
+          build_arch: ${{ matrix.build_arch }}
+      - name: Build and test Windows package
+        working-directory: vendor/4d-form
+        shell: pwsh
+        run: scripts/build-windows.ps1
+      - name: Install packaged assets and verify consumer PNG output
+        shell: pwsh
+        run: |
+          python .github/scripts/smoke_fourdform_release.py `
+            --consumer-root "$env:RUNNER_TEMP/fourdform-consumer" `
+            --archive-directory "$env:GITHUB_WORKSPACE/vendor/4d-form/dist"
+          if ($LASTEXITCODE) { throw "Consumer installation/rendering failed" }
 
   live-release:
     if: github.event_name == 'workflow_dispatch'
-    runs-on: macos-15
+    strategy:
+      matrix:
+        runner: [macos-15, macos-15-intel, windows-latest, windows-11-arm]
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: "3.13"
       - name: Provision latest skills release and verify actual PNG output
+        shell: bash
         run: |
-          python3 .github/scripts/smoke_fourdform_release.py \
+          python .github/scripts/smoke_fourdform_release.py \
             --consumer-root "$RUNNER_TEMP/fourdform-consumer"

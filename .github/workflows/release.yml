@@ -2462,6 +2462,64 @@ jobs:
           retention-days: 5
 
   # ---------------------------------------------------------------------------
+  # fourdform - Windows (unsigned; bundled Swift/MSVC runtimes)
+  # ---------------------------------------------------------------------------
+  _fourdform-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            build_arch: amd64
+            runner: windows-latest
+          - arch: arm64
+            build_arch: arm64
+            runner: windows-11-arm
+
+    runs-on: ${{ matrix.runner }}
+
+    env:
+      ARTIFACT: fourdform-windows-${{ matrix.arch }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Swift toolchain
+        uses: compnerd/gha-setup-swift@v0.5.1
+        with:
+          swift-version: swift-6.4.2-release
+          swift-build: 6.4.2-RELEASE
+          build_arch: ${{ matrix.build_arch }}
+
+      - name: Build and smoke test packaged fourdform
+        working-directory: vendor/4d-form
+        shell: pwsh
+        run: scripts/build-windows.ps1
+
+      - name: Verify consumer PNG rendering with bundled runtimes
+        shell: pwsh
+        run: |
+          python .github/scripts/smoke_fourdform_release.py `
+            --consumer-root "$env:RUNNER_TEMP/fourdform-smoke" `
+            --binary "$env:GITHUB_WORKSPACE/vendor/4d-form/dist/${{ env.ARTIFACT }}/fourdform.exe"
+          if ($LASTEXITCODE) { throw "Consumer smoke test failed" }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT }}
+          path: vendor/4d-form/dist/${{ env.ARTIFACT }}.zip
+          if-no-files-found: error
+          retention-days: 5
+
+  # ---------------------------------------------------------------------------
   release:
     needs:
       - jq-linux
@@ -2486,6 +2544,7 @@ jobs:
       - catalog-diagram-macos
       - catalog-diagram-windows
       - _fourdform-macos
+      - _fourdform-windows
 
     runs-on: ubuntu-latest
 
@@ -2499,12 +2558,15 @@ jobs:
       - name: Generate archive checksums
         working-directory: artifacts
         run: |
-          LC_ALL=C sha256sum -- *.tar.xz > SHA256SUMS
+          LC_ALL=C sha256sum -- *.tar.xz *.zip > SHA256SUMS
           sha256sum --check SHA256SUMS
           python3 - <<'PY'
           from pathlib import Path
 
-          archives = sorted(path.name for path in Path(".").glob("*.tar.xz"))
+          archives = sorted(
+              path.name for pattern in ("*.tar.xz", "*.zip")
+              for path in Path(".").glob(pattern)
+          )
           names = [
               line.split("  ", 1)[1]
               for line in Path("SHA256SUMS").read_text().splitlines()
@@ -2526,4 +2588,5 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/*.tar.xz
+            artifacts/*.zip
             artifacts/SHA256SUMS

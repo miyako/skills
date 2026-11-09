@@ -14,7 +14,7 @@ layout and styling, not correctness.
 
 ## Recommended Assessment Order
 
-For a quick visual assessment on macOS, use `fourdform` first. Inspect
+For a quick visual assessment on macOS or Windows, use `fourdform` first. Inspect
 the PNG for the layout or appearance question at hand without starting
 4D or installing capture methods. A clear static preview need not be
 followed by a 4D capture automatically.
@@ -43,16 +43,32 @@ is unavailable rather than manufacturing an equivalent result.
 `fourdform`, built from
 [miyako/4d-form](https://github.com/miyako/4d-form) and distributed in
 `miyako/skills` releases, renders a `.4DForm` file to an actual PNG on
-macOS arm64 or x64. Use the invocation in
+macOS 12+ or Windows 10+, arm64 or x64. The source pin is the merged
+Windows-support revision from
+[`miyako/4d-form#2`](https://github.com/miyako/4d-form/pull/2); the CLI
+version remains `0.1.0`. Use the invocation in
 `skills/4dform/SKILL.md`; installation belongs to `skills/4dtools/SKILL.md`.
-The parser and HTML renderer reuse pinned `4d-ql` libraries, with a
-macOS raster adapter producing the image.
+The parser and HTML renderer reuse pinned `4d-ql` libraries, with
+platform-specific raster adapters producing the image. Windows requires
+the Evergreen Microsoft Edge WebView2 Runtime and the packaged companion
+Swift/MSVC DLLs beside `fourdform.exe`. Linux is unavailable.
 
-This is a calibrated static preview, not `FORM SCREENSHOT`, not a live
-4D window, and not proof of pixel-identical native controls. Selecting a
-classic or Liquid Glass light/dark theme selects the preview appearance;
-it does not run the form, execute `.4dm` methods, evaluate runtime data
-bindings, or verify every 4D stylesheet property. Report unsupported
+This is a static reference preview, not `FORM SCREENSHOT`, not a real
+4D runtime capture or native screenshot, and not proof of pixel-identical
+native controls. Theme selection chooses the preview appearance:
+
+| Host | Accepted themes | Default |
+|---|---|---|
+| macOS | `classic-light`, `classic-dark`, `liquid-glass-light`, `liquid-glass-dark` | `classic-dark` if the form forces dark, otherwise `classic-light` |
+| Windows | `classic`, `fluent-light`, `fluent-dark` | `fluent-dark` if the form forces dark; otherwise `fluent-light` if `fluentUI` is set, otherwise `classic` |
+
+Cross-platform themes are rejected with exit code **2**, with no aliases
+and no Windows preview on macOS. An explicitly incompatible theme does
+not override a forced form color scheme. Windows tab controls and group
+boxes are approximate; popups display the object name, not runtime values.
+
+The preview does not run the form, execute `.4dm` methods, evaluate runtime
+data bindings, or verify every 4D stylesheet property. Report unsupported
 features and rendering errors rather than presenting an approximation as
 runtime evidence.
 

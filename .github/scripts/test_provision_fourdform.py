@@ -13,6 +13,8 @@ import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
+import warnings
+import zipfile
 import zlib
 
 
@@ -44,6 +46,32 @@ def package(members=None):
             else:
                 member.linkname = "../outside"
                 archive.addfile(member)
+    return output.getvalue()
+
+
+def pe_image(architecture="arm64"):
+    image = bytearray(70)
+    image[:2] = b"MZ"
+    struct.pack_into("<I", image, 60, 64)
+    image[64:68] = b"PE\0\0"
+    struct.pack_into("<H", image, 68, 0xAA64 if architecture == "arm64" else 0x8664)
+    return bytes(image)
+
+
+def windows_package(architecture="arm64", members=None):
+    output = io.BytesIO()
+    if members is None:
+        members = [
+            ("fourdform.exe", pe_image(architecture)),
+            ("swiftCore.dll", pe_image(architecture)),
+            ("vcruntime140.dll", pe_image(architecture)),
+            ("WebView2-SDK-LICENSE.txt", b"BSD-3-Clause fixture notice"),
+        ]
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Duplicate name:", category=UserWarning)
+        with zipfile.ZipFile(output, "w") as archive:
+            for name, data in members:
+                archive.writestr(name, data)
     return output.getvalue()
 
 
@@ -138,15 +166,13 @@ class ProvisionTests(unittest.TestCase):
                 self.assertEqual(self.fetch.call_args[0][0], self.prefix + self.manifest["asset"])
                 self.assertEqual(self.fetch.call_args_list[-3][0][0], self.metadata_url)
 
-    def test_windows_and_linux_fail_before_download_with_no_fake_binary(self):
-        for system in ("Windows", "Linux"):
+    def test_unsupported_systems_fail_before_download_with_no_fake_binary(self):
+        for system in ("Linux", "Other"):
             with self.subTest(system=system):
                 self.system.return_value = system
                 with self.assertRaises(installer.ProvisionError) as raised:
                     self.provision()
                 self.assertIn("unavailable", str(raised.exception))
-                if system == "Windows":
-                    self.assertIn(self.manifest["windows_handover"], str(raised.exception))
                 self.fetch.assert_not_called()
                 self.assert_untouched()
 
@@ -335,7 +361,12 @@ class ProvisionTests(unittest.TestCase):
         outside = self.root / "outside"
         outside.mkdir()
         tools = self.root / "tools"
-        tools.symlink_to(outside, target_is_directory=True)
+        try:
+            tools.symlink_to(outside, target_is_directory=True)
+        except OSError as error:
+            if sys.platform == "win32" and error.winerror == 1314:
+                self.skipTest("Windows symlink privilege unavailable")
+            raise
         with self.assertRaisesRegex(installer.ProvisionError, "symlinked installation"):
             self.provision()
         tools.unlink()
@@ -358,6 +389,152 @@ class ProvisionTests(unittest.TestCase):
         self.assertFalse(self.destination.exists())
 
 
+class WindowsProvisionTests(unittest.TestCase):
+    mock = ProvisionTests.mock
+    command = ProvisionTests.command
+    set_release = ProvisionTests.set_release
+    download = ProvisionTests.download
+    provision = ProvisionTests.provision
+    assert_untouched = ProvisionTests.assert_untouched
+
+    def setUp(self):
+        ProvisionTests.setUp(self)
+        self.system.return_value = "Windows"
+        self.windows_version = self.mock(
+            "platform.win32_ver", return_value=("10", "10.0.22631", "", "")
+        )
+        self.manifest = installer.check_platform(self.manifest)
+        self.destination = self.root / installer.DESTINATION.parent / "fourdform.exe"
+        self.set_release(windows_package())
+
+    def test_windows_architectures_and_aliases_select_and_install_full_package(self):
+        for machine, architecture, suffix in (
+            ("AMD64", "x86_64", "x64"), ("x86_64", "x86_64", "x64"),
+            ("ARM64", "arm64", "arm64"), ("aarch64", "arm64", "arm64"),
+        ):
+            with self.subTest(machine=machine):
+                self.machine.return_value = machine
+                self.manifest = installer.check_platform(self.manifest)
+                self.assertEqual(self.manifest["asset"], f"fourdform-windows-{suffix}.zip")
+                self.set_release(windows_package(architecture))
+                self.assertEqual(self.provision(replace=True), self.destination)
+                self.assertEqual(self.destination.read_bytes(), pe_image(architecture))
+                self.assertEqual(
+                    {path.name for path in self.destination.parent.iterdir()},
+                    {"fourdform.exe", "swiftCore.dll", "vcruntime140.dll", "WebView2-SDK-LICENSE.txt"},
+                )
+                self.assertTrue(all(call.args[0][0] != "lipo" for call in self.run.call_args_list))
+
+    def test_old_windows_and_unknown_architecture_fail_before_download(self):
+        self.windows_version.return_value = ("8", "6.3.9600", "", "")
+        with self.assertRaisesRegex(installer.ProvisionError, "requires Windows 10.0"):
+            self.provision()
+        self.windows_version.return_value = ("10", "10.0.22631", "", "")
+        self.machine.return_value = "x86"
+        with self.assertRaisesRegex(installer.ProvisionError, "Unsupported Windows architecture"):
+            self.provision()
+        self.fetch.assert_not_called()
+        self.assert_untouched()
+
+    def test_reuses_compatible_binary_and_keeps_boon_on_replacement(self):
+        self.provision()
+        boon = self.destination.parent / "boon.exe"
+        boon.write_bytes(b"other tool")
+        self.fetch.reset_mock()
+        self.provision()
+        self.fetch.assert_not_called()
+        self.provision(replace=True)
+        self.assertEqual(boon.read_bytes(), b"other tool")
+        self.assertEqual((self.root / ".gitignore").read_text(), "/tools/4dform/\n")
+
+    def test_unicode_ignore_is_preserved(self):
+        ignore = self.root / ".gitignore"
+        text = "# \u30c4\u30fc\u30eb\nexisting-entry\n"
+        ignore.write_text(text, encoding="utf-8")
+        self.provision()
+        self.assertEqual(ignore.read_text(encoding="utf-8"), text + "/tools/4dform/\n")
+
+    def test_unsafe_incomplete_and_wrong_architecture_packages_are_rejected(self):
+        valid = [
+            ("fourdform.exe", pe_image()),
+            ("WebView2-SDK-LICENSE.txt", b"notice"),
+        ]
+        for members in (
+            valid[:1], valid[1:], valid + [valid[0]],
+            valid + [("FOURDFORM.EXE", pe_image())],
+            valid + [("../leaked.dll", pe_image())],
+            valid + [("subdir/runtime.dll", pe_image())],
+            valid + [("unexpected.exe", pe_image())],
+            valid + [("runtime.dll", pe_image("x86_64"))],
+            [("fourdform.exe", pe_image("x86_64")), valid[1]],
+            [("fourdform.exe", b"not a PE image"), valid[1]],
+        ):
+            with self.subTest(members=members):
+                self.set_release(windows_package(members=members))
+                with self.assertRaises(installer.ProvisionError):
+                    self.provision()
+                self.assert_untouched()
+                self.assertFalse((self.root / "leaked.dll").exists())
+
+    def test_zip_symlinks_are_rejected(self):
+        output = io.BytesIO(windows_package())
+        with zipfile.ZipFile(output, "a") as archive:
+            link = zipfile.ZipInfo("runtime.dll")
+            link.create_system = 3
+            link.external_attr = 0o120777 << 16
+            archive.writestr(link, "../outside")
+        self.set_release(output.getvalue())
+        with self.assertRaisesRegex(installer.ProvisionError, "Unexpected Windows archive member"):
+            self.provision()
+        self.assert_untouched()
+
+    def test_failed_replacement_rolls_back_all_companion_files(self):
+        self.provision()
+        original = {path.name: path.read_bytes() for path in self.destination.parent.iterdir()}
+        self.set_release(windows_package(members=[
+            ("fourdform.exe", pe_image()),
+            ("swiftCore.dll", pe_image() + b"updated"),
+            ("newRuntime.dll", pe_image()),
+            ("WebView2-SDK-LICENSE.txt", b"updated notice"),
+        ]))
+        replace = installer.os.replace
+
+        def fail_binary(source, target):
+            if Path(source).name == "fourdform.exe" and Path(source).parent.name != "backups":
+                raise OSError("fixture installation failure")
+            return replace(source, target)
+
+        with patch.object(installer.os, "replace", side_effect=fail_binary):
+            with self.assertRaisesRegex(OSError, "fixture installation failure"):
+                self.provision(replace=True)
+        self.assertEqual(
+            {path.name: path.read_bytes() for path in self.destination.parent.iterdir()}, original
+        )
+
+    def test_missing_runtime_error_is_explicit_and_does_not_install(self):
+        self.run.side_effect = installer.ProvisionError("Missing Swift runtime DLL")
+        with self.assertRaisesRegex(installer.ProvisionError, "Missing Swift runtime DLL"):
+            self.provision()
+        self.assertFalse(self.destination.exists())
+        self.assertFalse((self.root / ".gitignore").exists())
+
+    def test_local_archive_fetcher_uses_real_checksums_without_network(self):
+        assets = self.root / "assets"
+        assets.mkdir()
+        archive = assets / self.manifest["asset"]
+        archive.write_bytes(windows_package())
+        sums = assets / "SHA256SUMS.arm64"
+        sums.write_bytes(self.downloads[self.prefix + "SHA256SUMS"])
+        fetcher = smoke.archive_fetcher(assets, self.manifest)
+        installer.provision(self.root, self.manifest, fetcher=fetcher)
+        self.fetch.assert_not_called()
+        self.assertTrue(self.destination.is_file())
+        sums.write_text("0" * 64 + "  " + self.manifest["asset"] + "\n")
+        fetcher = smoke.archive_fetcher(assets, self.manifest)
+        with self.assertRaisesRegex(installer.ProvisionError, "archive SHA-256 mismatch"):
+            installer.provision(self.root, self.manifest, replace=True, fetcher=fetcher)
+
+
 class PngVerificationTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -373,23 +550,38 @@ class PngVerificationTests(unittest.TestCase):
         binary.write_bytes(b"fixture binary")
         root = self.output.parent / "consumer"
 
-        def rendered(binary, output, *options):
+        def rendered(binary, output, *options, **kwargs):
             if "--max-dimension" in options:
                 theme = options[options.index("--theme") + 1]
                 return (256, 241), theme
+            if "form" in kwargs:
+                form = json.loads(kwargs["form"].read_text())
+                if "--theme" in options:
+                    theme = options[options.index("--theme") + 1]
+                else:
+                    theme = "fluent-dark" if form.get("colorScheme") == "dark" else (
+                        "fluent-light" if form.get("fluentUI") else "classic"
+                    )
+                return (440, 414), theme
             scale = int(options[options.index("--scale") + 1])
             return (440 * scale, 414 * scale), "pixels"
 
-        failure = subprocess.CompletedProcess([], 1, "", "Missing input")
-        with patch.object(smoke.installer, "provision") as provision, \
-                patch.object(smoke.installer, "verify_binary") as verify, \
-                patch.object(smoke.installer, "check_platform", return_value={}), \
-                patch.object(smoke, "render", side_effect=rendered), \
-                patch.object(smoke.subprocess, "run", return_value=failure):
-            smoke.smoke(root, binary)
-        provision.assert_not_called()
-        verify.assert_called_once_with(binary, {})
-        self.assertFalse((root / ".gitignore").exists())
+        def failure(arguments, **kwargs):
+            return subprocess.CompletedProcess(
+                [], 2 if "--theme" in arguments else 1, "", "Fixture error"
+            )
+        for system in ("Darwin", "Windows"):
+            with self.subTest(system=system), \
+                    patch.object(smoke.installer, "provision") as provision, \
+                    patch.object(smoke.installer, "verify_binary") as verify, \
+                    patch.object(smoke.installer, "check_platform", return_value={}), \
+                    patch.object(smoke.platform, "system", return_value=system), \
+                    patch.object(smoke, "render", side_effect=rendered), \
+                    patch.object(smoke.subprocess, "run", side_effect=failure):
+                smoke.smoke(root / system, binary)
+                provision.assert_not_called()
+                verify.assert_called_once_with(binary, {})
+                self.assertFalse((root / system / ".gitignore").exists())
 
     def chunk(self, kind, data):
         return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
