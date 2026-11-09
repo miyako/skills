@@ -1,0 +1,31 @@
+name: Test notarization
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/scripts/notarize.py"
+      - ".github/scripts/test_notarize.py"
+      - ".github/workflows/release.yml"
+      - ".github/workflows/test-notarization.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/scripts/notarize.py"
+      - ".github/scripts/test_notarize.py"
+      - ".github/workflows/release.yml"
+      - ".github/workflows/test-notarization.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+      - name: Test notarization retries without Apple credentials or network access
+        run: python .github/scripts/test_notarize.py
