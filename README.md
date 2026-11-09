@@ -17,7 +17,7 @@ owning skill; the others link to it.
 |---|---|
 | [`4dproject`](4d-skills/skills/4dproject/SKILL.md) | The project as a whole: `.4DProject`, version detection, token suffixes, folder layout, `menus.json`, the canonical `.gitignore`, component release tags and Dependency manager version rules |
 | [`4dcatalog`](4d-skills/skills/4dcatalog/SKILL.md) | `.4DCatalog` database schema: structure, DTD validation, diagrams |
-| [`4dform`](4d-skills/skills/4dform/SKILL.md) | `.4DForm` JSON: objects, list box defaults, layout geometry and overlap checks, form documentation index, schema validation, quick PNG assessment with `fourdform` (macOS), then 4D/tool4d captures for a second opinion when needed |
+| [`4dform`](4d-skills/skills/4dform/SKILL.md) | `.4DForm` JSON: objects, list box defaults, layout geometry and overlap checks, form documentation index, schema validation, quick PNG assessment with `fourdform` (macOS/Windows), then 4D/tool4d captures for a second opinion when needed |
 | [`4dsettings`](4d-skills/skills/4dsettings/SKILL.md) | `.4DSettings` (placeholder) |
 | [`4dlsp`](4d-skills/skills/4dlsp/SKILL.md) | `.4dm` validation, syntax check and code intelligence with `tool4d-lsp-stdio` |
 | [`4dlang`](4d-skills/skills/4dlang/SKILL.md) | Classic command and OOP class member lookup; documentation and forum search |
@@ -97,17 +97,26 @@ workflow and published as assets of
 The `dist` branch carries skills and installers, not the binaries.
 Updating the skillset does not build or replace installed tools.
 
-`fourdform` follows this model: `_fourdform-macos` builds
-`fourdform-macos-arm64.tar.xz` and `fourdform-macos-x64.tar.xz` from the
-pinned `vendor/4d-form` source. The executable is named `fourdform`,
-without an underscore. The macOS 12+ builds use Developer ID signing and
-notarization; Windows rendering is still under development, and no
-Windows or Linux asset is available.
+`fourdform` follows this model: the pinned `vendor/4d-form` source uses
+the merged Windows-support revision from
+[`miyako/4d-form#2`](https://github.com/miyako/4d-form/pull/2), while the
+CLI version remains `0.1.0`. `_fourdform-macos` builds
+`fourdform-macos-arm64.tar.xz` and `fourdform-macos-x64.tar.xz`; these
+macOS 12+ builds remain Developer ID signed and notarized. Windows
+builds use upstream `scripts/build-windows.ps1` to produce unsigned
+`fourdform-windows-x64.zip` and `fourdform-windows-arm64.zip`.
+Windows 10+ and the Evergreen Microsoft Edge WebView2 Runtime are required.
+Linux is unavailable.
 
 After merging the release integration, dispatch **Build and Release**
 with a release tag before provisioning the new assets. The installer
 uses the latest stable skills release, verifies `SHA256SUMS` and available
-GitHub asset digests, and installs into `tools/4dform/fourdform`.
+GitHub asset digests, checks `--version` and `--help`, and installs the
+staged, verified files into `tools/4dform/` with rollback on write failure.
+The multi-file installation is not concurrently atomic.
+The executable is `fourdform` on macOS or
+`fourdform.exe` on Windows; Windows packages include companion Swift/MSVC
+DLLs and the WebView2 license notice, all installed side by side.
 It does not fall back to the older upstream release.
 
 From a **consumer 4D repository** with the skillset mounted at `.agents`:
@@ -124,10 +133,15 @@ python3 4d-skills/skills/4dtools/scripts/provision_fourdform.py \
   --repo-root /path/to/4d-project
 ```
 
-Compatible existing installations are reused. Use `--replace` to
-explicitly reprovision, including migration from an older universal
-binary. See [`4dtools`](4d-skills/skills/4dtools/SKILL.md) for the complete
-installation and platform checks.
+On Windows, use `python` with the same script and `--repo-root` arguments
+(for example, `--repo-root (Get-Location).Path` in PowerShell).
+Compatible existing installations are reused; incompatible installations
+require `--replace`. Use it also to explicitly reprovision, including
+migration from an older universal binary. See
+[`4dtools`](4d-skills/skills/4dtools/SKILL.md) for the complete installation
+and platform checks, and [`4dform`](4d-skills/skills/4dform/SKILL.md) for
+platform-specific themes. These are static reference previews, not real
+4D runtime captures or native screenshots.
 
 ## Updating language lookup data
 
