@@ -147,7 +147,8 @@ class ProvisionTests(unittest.TestCase):
         (self.root / ".gitignore").write_text("existing-entry")
         self.assertEqual(self.provision(), self.destination)
         self.assertEqual(self.destination.read_bytes(), b"fixture binary")
-        self.assertEqual(self.destination.stat().st_mode & 0o777, 0o755)
+        if sys.platform != "win32":  # Windows has no POSIX execute bits
+            self.assertEqual(self.destination.stat().st_mode & 0o777, 0o755)
         self.assertEqual((self.root / ".gitignore").read_text(), "existing-entry\n/tools/4dform/\n")
         self.assertEqual(script.read_text(), "echo project\n")
         self.assertEqual(self.fetch.call_count, 3)
