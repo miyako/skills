@@ -28,6 +28,7 @@ owning skill; the others link to it.
 
 | Skill | Scope |
 |---|---|
+| [`4dplugin`](4d-skills/skills/4dplugin/SKILL.md) | Native C/C++ plugin string ownership, text-array lifetimes, callbacks and non-release validation |
 | [`4dmethods`](4d-skills/skills/4dmethods/SKILL.md) | Method attributes and which methods to hide from the Run Method dialog |
 | [`4dmodernise`](4d-skills/skills/4dmodernise/SKILL.md) | `C_*` → `var` / `#DECLARE`, deprecated `_o_` commands and their replacements |
 | [`4dcss`](4d-skills/skills/4dcss/SKILL.md) | Form stylesheets, dark mode, Liquid Glass / Fluent UI form themes |
