@@ -100,6 +100,7 @@ one owning skill; other skills link to it instead of restating it.
 
 | Task | Skill | File path |
 |----------|-------|-----------|
+| Native C/C++ plugin string ownership, text-array lifetimes, callbacks and non-release validation | 4dplugin | `skills/4dplugin/SKILL.md` |
 | Method attributes, `invisible`, Run Method dialog | 4dmethods | `skills/4dmethods/SKILL.md` |
 | `C_*` → `var` / `#DECLARE`, deprecated `_o_` commands | 4dmodernise | `skills/4dmodernise/SKILL.md` |
 | Stylesheets, dark mode, Liquid Glass / Fluent UI form themes | 4dcss | `skills/4dcss/SKILL.md` |
