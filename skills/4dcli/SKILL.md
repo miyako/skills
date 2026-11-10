@@ -51,6 +51,7 @@ Engine".
 | Run an automated test suite | "Automated Testing" | `tool4d` |
 | Run 4D code that needs no UI at all | Pattern 1 | `tool4d` |
 | Run a batch task that needs no `DIALOG` but needs the full app | "Choosing the Right Engine" | `4D --headless` (licensed) |
+| Diagnose Primary Key Manager / journal prompts or prepare a disposable native probe | [4dcatalog: Journaling and Disposable Probes](../4dcatalog/SKILL.md#journaling-and-disposable-probes) | none (diagnosis); full `4D` for features absent from tool4d |
 | Install a bundled startup method into a project | "Installing a Bundled Method" | none |
 | Write your own startup method | "Startup-Method Patterns" | task-dependent; see "Choosing the Right Engine" |
 | Pass an argument into a startup method | Pattern 3, "Flags" | task-dependent |
@@ -463,6 +464,9 @@ Do not install tool4d globally and do not modify the user's PATH.
 | `tool4d` | Always headless | Work that needs no UI: string manipulation, file I/O, calculations, `FORM LOAD`-based screenshots |
 | `4D` (no flags) | GUI | Work that needs windows: `Open form window`, `DIALOG`, `FORM SCREENSHOT` after runtime code |
 | `4D --headless` | Headless, licensed | Server-like batch tasks that do not need `DIALOG` |
+
+Use full `4D`, not `tool4d`, for features absent from tool4d, including
+**Label Editor**; use GUI mode when the task needs the editor's windows.
 
 **Key limitation**: in headless mode (`tool4d` or `4D --headless`) every
 call to a dialog box is intercepted and answered automatically. `DIALOG`
