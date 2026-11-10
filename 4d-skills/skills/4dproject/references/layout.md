@@ -32,6 +32,10 @@ Each `.4dm` file maps to one method or class; the file name is the method
 or class name. Methods and classes are auto-discovered by 4D -- no
 registration is needed.
 
+For disposable projects and native probes, follow
+[4dcatalog: Journaling and Disposable Probes](../../4dcatalog/SKILL.md#journaling-and-disposable-probes)
+when defining tables or diagnosing startup prompts.
+
 ## catalog_editor.json
 
 Stores visual/graphical data for the IDE structure editor (table positions,
