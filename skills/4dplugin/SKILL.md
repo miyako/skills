@@ -102,9 +102,26 @@ should read text after allocator churn, replace existing elements,
 resize/clear arrays, repeat conversion and final cleanup, and exercise
 callback independence and abort paths. Include rejected type/index and
 allocation/resize failure paths so cleanup remains correct without a
-transfer. An ownership-tracking host shim should model shallow assignment,
-old-element disposal and rejection, rather than silently copying strings;
-when feasible, demonstrate that the original fails and the fix passes.
+transfer.
+
+### Faithful host-shim contracts
+
+Derive shim behavior and expected results from the bundled SDK implementation,
+comments and engine parameter forwarding, not convenient mock semantics.
+Preserve byte lengths versus UTF-16 code-unit counts, buffer-capacity units
+and whether capacity/returned length includes a terminator. Where conversion
+returns bytes, convert to code units before passing a length to a UTF-16
+string wrapper; do not make the shim return units to match a faulty caller.
+Also preserve ownership transfers (including shallow assignment, old-element
+disposal and rejection) and allocated versus null empty representations.
+
+Assert exact source-derived content and lengths with ASCII, BMP and
+supplementary-character fixtures (including surrogate pairs); check capacity
+and terminator boundaries and empty results. When feasible, run ASan/UBSan
+and show that the original fails because of the actual defect under the
+faithful contract, then that the fix passes the same assertions. A passing
+ownership shim is not evidence that buffer bounds are correct.
+
 Report shim/sanitizer evidence separately from testing in the actual 4D
 host, naming the host version/platform and any unreproduced crash.
 
