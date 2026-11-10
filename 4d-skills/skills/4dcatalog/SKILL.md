@@ -132,8 +132,9 @@ network access.
 </base>
 ```
 
-- `journal_file_enabled="true"`: Enables the log/journal file for data
-  recovery. Requires each table to have a single-field primary key.
+- `journal_file_enabled="true"`: Catalog default for the global **Use log
+  file** option. See [Journaling and Disposable Probes](#journaling-and-disposable-probes)
+  for per-table inclusion, overrides and startup prompts.
 
 ## Element Ordering
 
@@ -272,11 +273,11 @@ Common attributes on `<field>`:
 
 ## Primary Keys
 
-Every table **should** have a single-field primary key for:
-- ORDA access (required -- tables without single-field PK are invisible to
-  ORDA)
-- Journal/log file support (required -- `prevent_journaling="true"` needed
-  without it)
+A single-field primary key is required for ORDA access (tables without one
+are invisible to ORDA) and for a table included in journaling, not for every
+table unconditionally. Prefer explicit primary keys when representative
+database behavior matters; see [Journaling and Disposable Probes](#journaling-and-disposable-probes)
+for disposable fixtures.
 
 **Longint auto-increment PK (recommended):**
 ```xml
@@ -290,6 +291,42 @@ Every table **should** have a single-field primary key for:
 <primary_key field_name="ID" field_uuid="{UUID}"/>
 ```
 
+## Journaling and Disposable Probes
+
+When authoring disposable fixtures, either define a valid single-field
+primary key (as above) or explicitly exclude the table from journaling.
+Exclusion is valid for disposable probes that do not need journaling:
+
+```xml
+<table name="Parcels" uuid="A0010000000000000000000000000000" id="1" prevent_journaling="true">
+  <field name="Caption" uuid="F0010001000000000000000000000000" type="10" limiting_length="255" id="1"/>
+</table>
+```
+
+An every-table-primary-key probe guard is a conservative local fixture
+policy, not a universal 4D schema rule. Do not change an existing
+application's journaling policy just to suppress a prompt.
+
+Per-table inclusion (`prevent_journaling`) is separate from the global
+**Use log file** option. When the global option is enabled, 4D prompts to
+create or select a journal when creating new data or opening data without
+a journal. The default continues to be stored in the catalog
+(`<journal_file journal_file_enabled="true"/>`). Starting in **4D 20 R3**,
+backup settings may override it; precedence is **next to data > next to
+structure > in structure**. That release introduced an override, not the
+end of catalog storage. See the authoritative
+[4D journal-management reference](https://blog.4d.com/enhancing-the-journal-management/).
+
+A **Primary Key Manager** prompt alone does not establish a pre-v14
+structure: a freshly authored modern project (for example,
+`compatibilityVersion: 2100`) can also trigger it when a journaled table
+lacks a primary-key declaration. Inspect project/catalog compatibility,
+table journaling flags, primary-key declarations and startup diagnostics
+before diagnosing migration. Use fresh modern disposable projects and data
+for native probes; never click through migration or repair prompts on user
+files. For features absent from tool4d, including Label Editor, follow
+[4dcli's full-4D engine selection](../4dcli/SKILL.md#choosing-the-right-engine).
+
 ## Tables
 
 ```xml
@@ -300,8 +337,9 @@ Every table **should** have a single-field primary key for:
 ```
 
 - `id`: Sequential table number starting from 1
-- `prevent_journaling="true"`: Add this if the table has no single-field
-  primary key
+- `prevent_journaling="true"`: Excludes the table from journaling; see
+  [Journaling and Disposable Probes](#journaling-and-disposable-probes)
+  before changing an application's policy.
 - `hide_in_REST="true"`: Hide from REST API
 
 ## Indexes
