@@ -32,9 +32,11 @@ permissions:
 jobs:
   validate:
     strategy:
+      fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-latest
+          # Python 3.9 is the documented minimum; ubuntu-latest (26.04) no longer provides it.
+          - runner: ubuntu-24.04
             python: "3.9"
           - runner: windows-latest
             python: "3.9"
