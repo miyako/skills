@@ -76,7 +76,7 @@ against the intended runtime, not merely the corpus's R5 compiler.
 | Task involves | Open |
 |---|---|
 | Looking up a command or class member | this file |
-| Operator precedence, text comparison, literals, Object guards for instance checks, inheritance boundaries, `Formula` / `This`, `.call()`, `4D.HTTPRequest`, `4D.SystemWorker`, mis-guessed command signatures | `references/pitfalls.md` |
+| Operator precedence, text comparison, literals, Object guards for instance checks, inheritance boundaries, `Formula` / `This`, `.call()`, `4D.HTTPRequest`, `4D.SystemWorker`, workers and `Signal.wait()` timeouts, mis-guessed command signatures | `references/pitfalls.md` |
 
 ## Why one skill, not two
 

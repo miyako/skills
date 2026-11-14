@@ -93,3 +93,11 @@ commit, metadata is synchronized, and the final ZIP follows the
 [GitHub component packaging requirements](https://developer.4d.com/docs/Project/components#configuring-a-github-repository).
 Follow the destination's build/test/publication gates. Do not create, push,
 delete or move tags, or publish releases, without authorization.
+
+Confirm that every change the release is meant to contain is on the branch
+being tagged. A pull request shown as merged may have merged into a branch
+other than the default one: a pull request opened on top of another
+pull request's branch keeps that branch as its base unless it is retargeted,
+and merging the first does not move the second. Check the content, not the
+status, for example `git branch -r --contains <commit>` or
+`git grep <symbol> origin/<default-branch>`.
