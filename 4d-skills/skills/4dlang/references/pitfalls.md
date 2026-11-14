@@ -32,6 +32,12 @@ https://developer.4d.com/docs/Concepts/string
   silently: observed as the expression evaluating to Null once the source
   exceeds roughly 32 KB in compiled mode. Keep data in a file under
   `Resources/` and load it: `JSON Parse(File("/RESOURCES/data.json").getText())`.
+* Numeric object properties are always **Real**: `Value type($o.count)`
+  is `Is real` even for `New object("count"; 42)` or an integer parsed
+  from JSON. A guard such as `Value type($o.count)=Is longint` is never
+  true and silently skips its branch. Accept `Is real` (add `Is longint`
+  only for values that are not object properties) and check integrality
+  separately if it matters.
 
 ## Instance checks and inheritance boundaries
 
@@ -97,6 +103,11 @@ Reference: https://developer.4d.com/docs/API/HTTPRequestClass
   log progress there. `onError` is a system/runtime error.
 * If the process cannot start, `4D.SystemWorker.new()` throws and returns
   `Null` -- no callback fires. Handle that path separately.
+* An error from `postMessage()` (for example POSIX 32, broken pipe) means
+  the process has already exited and closed its stdin. It is a symptom,
+  not the cause: keep the stderr collected in `onDataError` and report
+  it with the exit code from `onTerminate`. Those callbacks can run after
+  the failed write, so do not let the write error replace the diagnostic.
 * A started process is not a ready service. For a server, poll its own
   documented readiness endpoint with a deadline; an open port or the first
   `onData` proves only that something launched.
@@ -105,6 +116,24 @@ Reference: https://developer.4d.com/docs/API/HTTPRequestClass
   tested with paths containing spaces and quotes.
 
 Reference: https://developer.4d.com/docs/API/SystemWorkerClass
+
+## Workers and `Signal.wait()`
+
+* A worker runs its `CALL WORKER` messages one at a time, in order. A
+  message waits behind every earlier one, including a slow callback or a
+  first-use initialisation queued on the same worker.
+* `$signal.wait(n)` in the caller counts from the call to `wait()`, not
+  from the moment the worker starts the message. The timeout therefore covers the
+  queue as well as the work, and can expire before the work begins.
+* Keep user callbacks and one-time setup off a worker whose messages are
+  timed, or run the setup once under its own, longer deadline before the
+  timed calls start.
+* A cooperative worker only advances when other cooperative processes
+  yield; the debugger, a modal dialog or a long loop without
+  `DELAY PROCESS` holds it while the caller's timeout keeps running.
+
+References: https://developer.4d.com/docs/API/SignalClass,
+https://developer.4d.com/docs/Develop/processes
 
 ## Command Signatures Often Guessed Wrong
 
