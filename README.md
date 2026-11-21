@@ -15,13 +15,13 @@ owning skill; the others link to it.
 
 | Skill | Scope |
 |---|---|
-| [`4dproject`](skills/4dproject/SKILL.md) | The project as a whole: `.4DProject`, version detection, token suffixes, folder layout, `menus.json`, the canonical `.gitignore`, component release tags and Dependency manager version rules |
+| [`4dproject`](skills/4dproject/SKILL.md) | The project as a whole: `.4DProject`, version detection, token suffixes, folder layout, `menus.json`, the canonical `.gitignore`, component release tags and Dependency manager version rules, hosted CI release-pipeline failure triage |
 | [`4dcatalog`](skills/4dcatalog/SKILL.md) | `.4DCatalog` database schema: structure, DTD validation, diagrams |
 | [`4dform`](skills/4dform/SKILL.md) | `.4DForm` JSON: objects, list box defaults, layout geometry and overlap checks, form documentation index, schema validation, quick PNG assessment with `fourdform` (macOS/Windows), then 4D/tool4d captures for a second opinion when needed |
 | [`4dsettings`](skills/4dsettings/SKILL.md) | `.4DSettings` (placeholder) |
 | [`4dlsp`](skills/4dlsp/SKILL.md) | `.4dm` validation, syntax check and code intelligence with `tool4d-lsp-stdio` |
 | [`4dlang`](skills/4dlang/SKILL.md) | Classic command and OOP class member lookup; documentation and forum search |
-| [`4dcli`](skills/4dcli/SKILL.md) | Running tool4d / 4D from the command line: tests, compile, form rendering |
+| [`4dcli`](skills/4dcli/SKILL.md) | Running tool4d / 4D from the command line: tests, compile, form rendering; obtaining tool4d and digest-pinning exact builds |
 | [`4dtools`](skills/4dtools/SKILL.md) | Provisioning the helper binaries the other skills use |
 
 ### 4D development topics
