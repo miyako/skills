@@ -359,6 +359,43 @@ Expect tens of megabytes -- verified archives are 23-27 MB. An
 `87`-byte or `text/html` response means the path resolved to a directory
 stub, and a real missing file returns `404`.
 
+#### Pinning an exact build (reproducible, digest-pinned downloads)
+
+Everything above uses `/latest/`, which is **mutable**: 4D replaces the
+content under the same URL, so any SHA-256 recorded against a
+`/latest/` URL is valid only until the next server-side update. A
+download that must be reproducible -- release pipelines, component
+asset locks, audit trails -- pins a concrete **build number** instead.
+The build number replaces the `latest` path segment:
+
+```
+https://resources-download.4d.com/release/{branch}/{version}/{build}/mac/tool4d_arm64.tar.xz
+```
+
+- The `{branch}`/`{version}` pairing rules and the two release trains
+  are exactly as above; `{build}` is the numeric build of that
+  version (e.g. `101905` for LTS `20.7`).
+- Worked example, verified in production (November 2026):
+  `https://resources-download.4d.com/release/20.x/20.7/101905/mac/tool4d_arm64.tar.xz`
+  -- publicly available, no authentication, same redirect/CDN behavior
+  as `/latest/`.
+- LTS (`20.x`) concrete-build availability is verified; R-train
+  (`{N} Rx`) concrete-build filenames have not been independently
+  verified as published at time of writing. Apply the R-train 404 rule
+  above (a 404 for a beta version is terminal, not an outage) and
+  verify with a `Content-Length` check before relying on a new pair.
+- Record the digest as an exact lowercase 64-hex SHA-256 of the archive,
+  and carry URL + digest together in one place (a `tool.sha256`-style
+  pin or a documented override pair). Precedence that has proven
+  workable: CLI flags > environment pair (e.g.
+  `TOOL4D_URL`/`TOOL4D_SHA256`, always supplied together) > the project
+  pin file. The override pair exists for one purpose only -- surviving a
+  bad committed pin without a code change -- and must never silently
+  fill in for a missing pin. For the hosted-CI failure signatures
+  around these downloads (files that must exist in CI, evidence that
+  travels between jobs), see
+  [`4dproject`'s hosted-CI reference](../4dproject/references/hosted-ci-failures.md).
+
 ### Step 3: Install and make it discoverable
 
 Extract to `tools/4dcli/` in the working repo, alongside the tool

@@ -89,11 +89,11 @@ one owning skill; other skills link to it instead of restating it.
 |----------|-------|-----------|
 | `.4DCatalog` (database schema) | 4dcatalog | `skills/4dcatalog/SKILL.md` |
 | `.4DForm` (form design + validation, list box defaults, layout geometry, doc index, standalone PNG preview with `fourdform`) | 4dform | `skills/4dform/SKILL.md` |
-| `.4DProject`, project layout, version detection, token suffixes, `.gitignore`, `menus.json`, component release tags / Dependency manager version rules | 4dproject | `skills/4dproject/SKILL.md` |
+| `.4DProject`, project layout, version detection, token suffixes, `.gitignore`, `menus.json`, component release tags / Dependency manager version rules, hosted CI release-pipeline failure triage | 4dproject | `skills/4dproject/SKILL.md` |
 | `.4DSettings` (settings) | 4dsettings | `skills/4dsettings/SKILL.md` |
 | `.4dm` validation / syntax check / LSP / MCP | 4dlsp | `skills/4dlsp/SKILL.md` |
 | 4D command / OOP class member lookup, doc and forum search | 4dlang | `skills/4dlang/SKILL.md` |
-| Running tool4d / 4D from the command line (tests, compile, render) | 4dcli | `skills/4dcli/SKILL.md` |
+| Running tool4d / 4D from the command line (tests, compile, render); obtaining tool4d and digest-pinning exact builds | 4dcli | `skills/4dcli/SKILL.md` |
 | Tool provisioning | 4dtools | `skills/4dtools/SKILL.md` |
 
 ### 4D development topics
