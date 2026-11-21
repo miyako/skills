@@ -99,6 +99,55 @@ script expects (e.g. `path: 4d/dist`), or verification fails with
 failure class. Multi-entry uploads keep their real structure
 relative to the shared prefix; know which shape each upload produces.
 
+## Components hosted inside a larger worktree bind evidence to the wrong commit
+
+The release pipeline commits to a revision contract: every native manifest and
+acceptance evidence must bind the exact dispatch SHA.
+`build_provenance.commit()` originally treated any root that was not exactly
+the Git toplevel as "not a repository" and returned `None`. A component living
+in a subdirectory of a larger worktree (monorepo) therefore recorded
+`commit: null` in its `build-manifest.json`, and publication compared that
+null against the resolved dispatch SHA:
+
+```
+release asset verification/publication failed: publication checkout must match
+the resolved release SHA
+```
+
+The failure is in the commit probe, not the workflow files: no YAML edit fixes
+it. Verify the evidence first -- a manifest with `"commit": null` while the
+checkout is really the dispatch revision is this signature.
+
+The fix resolves the enclosing toplevel (`git rev-parse --show-toplevel`) and
+accepts any root inside it (`pathlib.Path.is_relative_to`), so the enclosing
+repository's HEAD becomes the release revision -- exactly the SHA the
+workflows bind. Apply the same walk-up wherever remote identity is derived
+(`initialize.github_repository()`), or `initialize`/`doctor`/`bump` reject the
+same monorepo checkout. Verified live (2026-11-21) in a component derived from
+`4d-component-template`.
+
+Two test-suite consequences follow when the walk-up lands:
+
+- disposable delivery fixtures must keep their scratch **outside any Git
+  worktree**, or unpatched `record()` writes the real enclosing HEAD into
+  `build-manifest.json` while tests patch `commit` to `None`, producing
+  stale/mixed-source verification failures in the local suite;
+- system temp may itself live under a symlink (macOS `/var`), and compiled
+  outputs must not traverse symlinks, so resolve the scratch path
+  (`Path.resolve()`) after creating it.
+
+## Re-running a failed dispatch reuses the original head SHA
+
+GitHub's **Re-run** of a `workflow_dispatch` run keeps the original dispatch
+inputs, including the immutable `headSha` captured when the run was first
+created. After you fix a failure and push to `main`, re-running the old failed
+run still checks out the *old* commit and fails identically at the same step.
+To validate a fix, create a **fresh** dispatch from the new `main` HEAD and
+confirm the new run's `headSha` matches the fix commit -- inspect
+`gh run view <run-id> --json headSha` (or the run title's commit) instead of
+assuming a re-run picked up the push. Calling a re-run "failed again" without
+checking the SHA keeps chasing the already-fixed bug.
+
 ## Triage order for a failed release run
 
 1. Run labeled by file path, zero jobs → workflow-file problem (job id
@@ -111,3 +160,11 @@ relative to the shared prefix; know which shape each upload produces.
    gitignored cache directory not created in CI.
 5. Actual script error inside a job → read the job log and the
    acceptance `build/*.json` diagnostics artifact before changing code.
+6. Publication rejects "publication checkout must match the resolved
+   release SHA" with a manifest recording `commit: null` → component
+   hosted inside a larger worktree; the commit probe must resolve the
+   enclosing toplevel (monorepo section above).
+7. A "fixed" step fails identically right after pushing the fix → the run
+   is a GitHub **re-run** with the original `headSha`; create a fresh
+   dispatch at the new main HEAD and confirm its commit (re-run section
+   above).
