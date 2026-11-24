@@ -74,8 +74,8 @@ jobs:
           python-version: "3.13"
       - uses: compnerd/gha-setup-swift@v0.5.1
         with:
-          swift-version: swift-6.4.2-release
-          swift-build: 6.4.2-RELEASE
+          swift-version: swift-6.4.3-release
+          swift-build: 6.4.3-RELEASE
           build_arch: ${{ matrix.build_arch }}
       - name: Build and test Windows package
         working-directory: vendor/4d-form
