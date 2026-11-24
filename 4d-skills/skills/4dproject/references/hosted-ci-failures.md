@@ -148,6 +148,97 @@ confirm the new run's `headSha` matches the fix commit -- inspect
 assuming a re-run picked up the push. Calling a re-run "failed again" without
 checking the SHA keeps chasing the already-fixed bug.
 
+## The workflow cannot open the pull request it prepared
+
+`pull-requests: write` in the workflow is necessary and **not** sufficient.
+With the repository permission off, the branch push succeeds and only the
+last step fails:
+
+```
+pull request create failed: GraphQL: GitHub Actions is not permitted to create
+or approve pull requests (createPullRequest)
+```
+
+The switch is **Settings → Actions → General → Workflow permissions → Allow
+GitHub Actions to create and approve pull requests**, or, once:
+
+```sh
+curl -sf -X PUT -H "Authorization: token $TOKEN" \
+  "https://api.github.com/repos/OWNER/REPO/actions/permissions/workflow" \
+  -d '{"default_workflow_permissions":"read","can_approve_pull_request_reviews":true}'
+```
+
+`PUT` answers `204` and the flag is not visible in a `GET` on the same
+endpoint seconds later; read it back before retrying so a write that did not
+land is not mistaken for a broken token. The toggle also grants workflows
+PR approval rights, so it is a repository-settings decision for the owner,
+not something a workflow can arrange for itself -- when it stays off, keep
+the branch push (it is the deliverable) and treat the open PR as skipped.
+
+## `--force-with-lease` rejects the branch the job itself owns
+
+```
+! [rejected]        ci/update-builtins -> ci/update-builtins (stale info)
+```
+
+Two causes produce this identical line, and the second survives the obvious
+fix. A job that recreates its branch each run (`git checkout -B ci/update`)
+has no local ref for the lease to compare against -- correct, and the lease is
+still the right command, because it refuses only when it cannot verify.
+
+The clone `actions/checkout` makes is single-ref:
+`+refs/heads/main:refs/remotes/origin/main`. Every other branch therefore has
+no upstream "stored as a remote-tracking branch", so fetching the branch is
+not enough either:
+
+```sh
+git fetch origin "$BRANCH"                       # writes FETCH_HEAD only
+git rev-parse --abbrev-ref '@{u}'
+# fatal: upstream branch 'refs/heads/ci/update' not stored as a
+# remote-tracking branch
+git push --force-with-lease origin "$BRANCH"      # still (stale info)
+```
+
+Fetching into `refs/remotes/origin/$BRANCH` by explicit refspec does not help
+-- verified live (2026-11-25) in a single-ref clone: the ref existed and the
+push was still refused, because the lease resolves through the *refspec*, not
+through the ref's presence. Either widen the refspec once, after which the
+plain form works:
+
+```sh
+git config --add remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+git fetch --quiet origin
+git push --force-with-lease origin "$BRANCH"
+```
+
+or state the expected value yourself, which needs no local ref at all and
+covers the first run (an empty expectation means the branch must not exist):
+
+```sh
+expected=$(git ls-remote origin "refs/heads/$BRANCH" | cut -f1)
+git push --force-with-lease="refs/heads/$BRANCH:${expected}" origin "$BRANCH"
+```
+
+`--force` unblocks any of these but discards the protection; the entire point
+of the lease is to fail when something else moved the branch meanwhile.
+
+## The Windows hosted runner is bash, but not a Unix
+
+`runs-on: windows-latest` with the default `bash` shell is Git-bash on a
+Windows filesystem, where a step copied from `ubuntu-latest` breaks on
+ordinary utilities rather than on anything 4D-specific:
+
+| Missing | Symptom | Use |
+|---|---|---|
+| GNU `timeout` | `timeout: failed to run command`: the `timeout.exe` found instead is the console `sleep`, which errors under input redirection | a deadline loop with the bash builtin: `while kill -0 "$pid"; do (( SECONDS >= deadline )) && kill -9 "$pid"; sleep 5; done` |
+| `python3` | `python3: command not found` | `python`; make local scripts work under both |
+| UTF-8 streams | `UnicodeEncodeError: 'charmap' codec can't encode character '\xb0'` on any `°`/CJK/Vietnamese output | `PYTHONUTF8: '1'` and `PYTHONIOENCODING: utf-8` in the job `env` |
+| an `xz`-capable `tar` | GNU `tar` in Git-bash fails to unpack `.tar.xz` | `/c/Windows/System32/tar.exe` (bsdtar), with GNU `tar` as fallback |
+| POSIX paths | see `4dcli`, "Path Arguments": `--project` needs native separators, `File()` inside 4D needs POSIX ones | `cygpath -w` and `cygpath -m` per consumer |
+
+Verified live (2026-11-25) on `windows-latest` running tool4d 21 R4; the
+first three cost one CI cycle each because they fail before 4D starts.
+
 ## Triage order for a failed release run
 
 1. Run labeled by file path, zero jobs → workflow-file problem (job id
@@ -168,3 +259,12 @@ checking the SHA keeps chasing the already-fixed bug.
    is a GitHub **re-run** with the original `headSha`; create a fresh
    dispatch at the new main HEAD and confirm its commit (re-run section
    above).
+8. Branch pushed, PR creation rejected with `GitHub Actions is not permitted
+   to create or approve pull requests` → repository workflow permission, not
+   token scope (section above).
+9. `! [rejected] ... (stale info)` from `--force-with-lease` → the clone's
+   fetch refspec covers only the default branch, so the lease has nothing to
+   compare; widen the refspec or pass the expected sha (section above).
+10. A utility that exists on `ubuntu-latest` missing or misbehaving on
+    `windows-latest` → Git-bash environment gaps, not 4D (Windows runner
+    section above).
