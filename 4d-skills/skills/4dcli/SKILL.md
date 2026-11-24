@@ -55,6 +55,8 @@ Engine".
 | Install a bundled startup method into a project | "Installing a Bundled Method" | none |
 | Write your own startup method | "Startup-Method Patterns" | task-dependent; see "Choosing the Right Engine" |
 | Pass an argument into a startup method | Pattern 3, "Flags" | task-dependent |
+| Pass a path into a startup method, or resolve a structure-not-found error | "Path Arguments" | task-dependent |
+| A headless run exits non-zero with no output, or stops part-way | "When a Startup Method Dies With No Output" | the engine you already chose |
 | Decide where a run may write its output | "Writing Output Files" | none |
 | Decide which version a feature needs | "Version Requirements" | none |
 | Obtain or install tool4d | "Obtaining tool4d" | none |
@@ -359,6 +361,14 @@ Expect tens of megabytes -- verified archives are 23-27 MB. An
 `87`-byte or `text/html` response means the path resolved to a directory
 stub, and a real missing file returns `404`.
 
+A `404` is evidence about **one cell** of the matrix, so recheck the row
+before concluding that a platform is unpublished. A transposed suffix or a
+mistyped path segment is indistinguishable from a real absence from inside
+a script, and a one-off "mac arm64 does not exist" for 21 R4 became a
+24,736,236-byte archive on recheck (2026-11-25). Re-probe the same URL
+once, and probe a neighbouring cell, before moving a whole pipeline to a
+different platform on that evidence.
+
 #### Pinning an exact build (reproducible, digest-pinned downloads)
 
 Everything above uses `/latest/`, which is **mutable**: 4D replaces the
@@ -494,6 +504,53 @@ Do not install tool4d globally and do not modify the user's PATH.
 | `--headless` | Full `4D` only: run without a GUI. Requires a license |
 | `--skip-onstartup` | Do not run the `On Startup` database method (which typically opens windows) before `--startup-method` |
 
+## Path Arguments
+
+One invocation carries three different path spellings, and 4D converts none
+of them for you. On Windows, with tool4d 21 R4 (verified live 2026-11-25):
+
+| Consumer | Needs | Wrong form gives |
+|---|---|---|
+| `--project` | native separators: `D:\a\repo\tools\X.4DProject` | `tool4d.HDLS (Structure "D:/a/repo/tools/X.4DProject" doesn't exist.)`, the path echoed back unconverted |
+| path text opened by `File()` / `Folder()` in the method | POSIX separators: `D:/a/_temp/out.json` | a valid `4D.File` whose `.exists` is `False`, with no error raised |
+| the shell, for comparison | either, via `cygpath` | `test -f` on the same string passes while `File()` fails |
+
+So convert per consumer, not once for the command line: `cygpath -w` for
+`--project`, `cygpath -m` for anything the method opens. macOS hides the
+difference, because it normalises the project argument (`/tmp/x` arrives as
+`Macintosh HD:private:tmp:x`), so a forward-slash `--project` path passes
+every local test and fails only on Windows.
+
+### Do not ask 4D where its own files are
+
+`Application file` is empty under `tool4d`, so the natural
+`Folder(Application file; fk platform path)` raises
+
+```
+tool4d.FiFo [3] A valid posix path was expected.
+```
+
+before the method can log anything -- the run dies with no output and no
+clue. The caller already knows where it unpacked the build, so pass those
+paths in `--user-param` and read them back:
+
+```sh
+--user-param="{\"dump\":\"D:/a/_temp/builtins.json\",\"xlf\":\"D:/a/_temp/t4d/tool4d/Resources/en.lproj/4D_ConstantsEN.xlf\"}"
+```
+
+```4d
+If (Get database parameter(User param value; $text)=0)
+	$config:=JSON Parse($text)
+	$dumpPath:=$config.dump
+	$xlfPath:=$config.xlf
+End if
+```
+
+Project resources are still reachable as virtual paths (`/RESOURCES/...`);
+the tool's own bundle is not, so anything inside the unpacked tool4d build
+must be passed in. Validate each one with `File(...).exists` and log the
+path on failure -- "no such file" without the path costs a whole CI cycle.
+
 ## Choosing the Right Engine
 
 | Engine | Mode | Use for |
@@ -523,6 +580,59 @@ workflows, use `4D` **without** `--headless`.
 * **PASS**: stdout contains `PASS`, exit code 0.
 * **FAIL**: `ASSERT` triggers a dialog, headless mode auto-aborts, exit
   code is non-zero and no `PASS` is printed.
+
+### When a Startup Method Dies With No Output
+
+A method that stops early leaves nothing behind: exit code `1` and an empty
+stdout, which is indistinguishable from a crashing binary. Work in this
+order -- each step costs one run and narrows the cause.
+
+1. **Handle the error first.** `ON ERR CALL` as the method's first
+   statement makes 4D name the failure instead of vanishing:
+
+   ```4d
+   ON ERR CALL("dump_on_err"; ek local)
+   ```
+
+   ```4d
+   // dump_on_err.4dm -- $1=2 is the runtime error, $1=3 the window
+   If ($1=2)
+   	LOG EVENT(Into system standard outputs; \
+   		"failed in "+Error method+" ("+String(Error code)+"): "+Error description)
+   End if
+   ```
+
+   `ek local` keeps the handler inside the method; restore it with
+   `Method called on error(ek local)` if the method is long.
+
+2. **Install the handler before anything can fail**, because the locations
+   that fail silently are the ones a handler installed late never reaches:
+   reading `--user-param`, resolving `Application file`, opening the first
+   `File()`.
+
+3. **Number the steps** when the handler still is not enough. Traces are
+   the only line information a headless run has:
+
+   ```4d
+   LOG EVENT(Into system standard outputs; "dump t04 xlf="+$xlfPath)
+   ```
+
+   The highest number printed is the last statement that completed. Use
+   `LOG EVENT(Into system standard outputs; ...)`, not `TRACE`, which needs
+   a debugger; see "Tips".
+
+4. **Do not use `QUIT 4D` as the early-out of a failure branch.** 4D queues
+   it for the end of the current method rather than aborting, so a guard
+   that reports a problem and quits then falls into the code it was
+   guarding, and the cascade of later errors buries the first one. Verified
+   live: after a "no such file" message, `QUIT 4D(1)` was followed by the
+   `File("")` call it was meant to skip. Structure the method so the failure
+   branch is an `Else` / `Case of` arm that simply ends, and let `QUIT 4D`
+   fall through once at the bottom.
+
+With a handler installed, execution also **continues past** the statement
+that raised, so read the log as interleaved rather than sequential: the
+first error is the real one, and the ones after it are its consequences.
 
 ## Definition of Done
 
