@@ -137,6 +137,33 @@ End if
 * The object method only runs if the object in `form.4DForm` has
   `"method": "ObjectMethods/<name>.4dm"` and `"events": ["onClick"]`.
 
+## A second window, and why `CALL WORKER` breaks it
+
+The start method's `CALL WORKER(1; Current method name; {})` is for taking
+ownership of the **first** window, so a menu item or a second startup
+re-enters the same code instead of opening a duplicate. It is not a general
+"run this on the application process" mechanism, and reusing it to open a
+second window fails visibly:
+
+* the first window is inside `DIALOG(…; *)` in worker 1, which stays busy
+  in its own modal loop;
+* a menu item clicked while that dialog is displayed runs **in that same
+  process**, not in a new one;
+* a menu method that then calls `CALL WORKER(1; Current method name; …)`
+  queues its message behind the dialog that is waiting for it, so the second
+  window never appears -- a deadlock with no error.
+
+Opening the second window directly, in the process that handled the click,
+works: it is a nested `DIALOG` and the outer dialog resumes when it is
+closed. Use a parameter, not `Storage`, to hand data to it.
+
+```4d
+Demo_OpenLab(New object("filter"; "failures"))
+```
+
+Reserve `CALL WORKER` for what it was designed for: one owner process per
+window, chosen **before** any dialog is displayed.
+
 ## Leaving Instead of Quitting
 
 When the application cannot continue (missing license, unsupported
