@@ -66,6 +66,12 @@ When both are set, 4D never executes the action; it uses it to enable or
 disable the item and to place it per platform. When the item is disabled,
 the method cannot run.
 
+> **Do not invent `action` values.** A method-only item exports from 4D as
+> `{"title": "...", "method": "..."}` with no `action` key at all. Strings such
+> as `"action": "action-none"` are not standard actions, and an unrecognized
+> action can make 4D drop the item or disable the menu. If you need only custom
+> code, omit `action` entirely.
+
 Menu titles should use `:xliff:` references; reuse 4D's built-in `Common*`
 IDs for standard items (see the `4dlocalise` skill).
 
