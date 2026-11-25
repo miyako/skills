@@ -552,6 +552,21 @@ the tool's own bundle is not, so anything inside the unpacked tool4d build
 must be passed in. Validate each one with `File(...).exists` and log the
 path on failure -- "no such file" without the path costs a whole CI cycle.
 
+The same message has a second, easier-to-hit trigger: feeding an **HFS**
+`.platformPath` to a `File` / `Folder` constructed with `fk posix path`.
+
+```
+A valid posix path was expected.
+```
+
+It is raised at runtime, inside the method, so its text points at the
+constructor and not at the caller that chose the spelling. A headless run
+then simply produces no report. Keep one convention per boundary: convert
+HFS to POSIX with `Convert path system to POSIX(...)` (or read
+`File(...; fk posix path).platformPath`) before handing a path to a worker,
+a callback or a `--user-param` payload. See
+`skills/4dlang/references/pitfalls.md`, "Paths".
+
 ## Choosing the Right Engine
 
 | Engine | Mode | Use for |
