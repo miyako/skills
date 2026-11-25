@@ -7,10 +7,12 @@ description: >
   so query both and compare rather than picking one language up front.
   Also covers language pitfalls that compile but misbehave: left-to-right
   operator evaluation, case-insensitive text comparison and the @ wildcard,
-  number formatting (`String` with a format pattern or a locale decimal
-  separator), `4D.File` / `4D.Folder` behaviour, block-local `var`, object
-  literal keys, Formula and This capture, .call() arguments, 4D.HTTPRequest
-  body types and callbacks, commonly mis-guessed signatures.
+  object literal keys, Value type / Is number guards and Null, HFS versus
+  POSIX path conventions, number formatting (`String` with a format pattern or
+  a locale decimal separator), `4D.File` / `4D.Folder` behaviour, block-local
+  `var`, Formula and This capture, .call() arguments, 4D.HTTPRequest body
+  types and callbacks, stretched timers in background windows, commonly
+  mis-guessed signatures.
 ---
 
 # 4D Language Lookup
@@ -78,7 +80,7 @@ against the intended runtime, not merely the corpus's R5 compiler.
 | Task involves | Open |
 |---|---|
 | Looking up a command or class member | this file |
-| Operator precedence, text comparison, literals, Object guards for instance checks, inheritance boundaries, `Formula` / `This`, `.call()`, `4D.HTTPRequest`, `4D.SystemWorker`, workers and `Signal.wait()` timeouts, mis-guessed command signatures, number formatting (`String` with a format or locale), `4D.File` / `4D.Folder` behaviour, `var` placement | `references/pitfalls.md` |
+| Operator precedence, text comparison, literals, Object guards for instance checks, inheritance boundaries, `Value type` / `Is number` guards, Null and process-scoped `var`, path conventions (HFS vs POSIX), `Formula` / `This`, `.call()`, `4D.HTTPRequest`, `4D.SystemWorker`, workers and `Signal.wait()` timeouts, stretched timers, mis-guessed command signatures, number formatting (`String` with a format or locale), `4D.File` / `4D.Folder` behaviour, `var` placement | `references/pitfalls.md` |
 
 ## Why one skill, not two
 

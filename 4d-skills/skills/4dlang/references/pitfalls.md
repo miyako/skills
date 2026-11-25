@@ -86,6 +86,27 @@ and to reading properties inside a preemptive process.
   `.fullName` whenever the name must round-trip into a path, and
   `.extension` when only the suffix is wanted.
 
+## Value Types, Null and Guards
+
+* `Is number` is **not** a `Value type` constant. `Value type($x)#Is number`
+  compiles, runs and is **always true** (the undefined constant evaluates to
+  0 and no type equals 0), so the guard never skips anything. The numeric
+  constants are `Is real`, `Is integer` and `Is longint`; test all three when
+  the value may come from an object property or from `JSON Parse`.
+* `Value type` returns an Integer, not a type name. `"type="+Value type($x)`
+  raises a runtime type error instead of concatenating; wrap it:
+  `"type="+String(Value type($x))`.
+* `Error description` does not exist. An error handler that reads it fails to
+  compile and takes the whole run down (no report, no log). The real
+  properties are `Error code`, `Error method`, `Error line`, `Error formula`
+  and `Last errors`.
+* A process-scoped `var X : Type` declared inside a method persists between
+  `CALL WORKER` messages **and starts as Null** in a fresh process, not as 0
+  or empty. `If ($counter<$limit)` is then never true, and the loop silently
+  runs zero times: seed it (`If (Not(IsNumeric($counter))) $counter:=0`).
+* Comparing anything with Null is False, including `$x>=0` and `$x#0`.
+  Null is only caught by an explicit `#Null` / `Value type($x)=Is Null` test.
+
 ## Instance checks and inheritance boundaries
 
 * `OB Instance of(object; class)` requires an **Object** as its first
@@ -103,6 +124,31 @@ and to reading properties inside a preemptive process.
 
 References: https://developer.4d.com/docs/commands/ob-instance-of,
 https://developer.4d.com/docs/Concepts/classes#class-extends-classname
+
+## Paths
+
+Three path conventions meet in one call chain and 4D converts none of them:
+
+| Value | Convention | Construct with |
+|---|---|---|
+| `Get 4D folder(Database folder)` | HFS, **volume-qualified** (`Macintosh HD:Users:...:`) | `Folder(...; fk platform path)`, then colon-join children |
+| `.platformPath` of a 4D object | HFS on macOS | `File(x; fk platform path)` |
+| path produced by Python, a shell or a CLI | POSIX (`/Users/...`) | `File(x; fk posix path)` |
+
+* `Folder(<HFS path>; fk platform path).posixPath` returns **empty**: a Folder
+  configured from an HFS path has no POSIX form. Convert explicitly with
+  `Convert path system to POSIX($folder.platformPath)`.
+* Passing a `.platformPath` (HFS) into `File(x; fk posix path)` raises
+  `A valid posix path was expected` at runtime, which in a headless run looks
+  like a dead method with no output. Give each consumer the convention it
+  names, and convert at the boundary rather than once for the whole call
+  chain.
+* A worker, callback or `--user-param` payload does not inherit your
+  convention: decide one spelling for the boundary and convert on the sending
+  side (see `skills/4dcli/SKILL.md`, "Path Arguments").
+* `4D.SystemWorker.new` takes a POSIX `commandLine` on macOS, so build it from
+  `File(...; fk posix path).platformPath`, never by concatenating an HFS
+  folder path with a name.
 
 ## Paths, file names and pictures
 
@@ -201,6 +247,25 @@ Reference: https://developer.4d.com/docs/API/SystemWorkerClass
 
 References: https://developer.4d.com/docs/API/SignalClass,
 https://developer.4d.com/docs/Develop/processes
+
+## Timers, Ticks and Background Windows
+
+* macOS App Nap stretches timers in an unattended application: a
+  `SET TIMER(1000)` window was measured updating roughly every 16 s, and
+  `DELAY PROCESS` ticks stretch the same way. Never derive correctness from a
+  tick count; make each tick idempotent and let the work re-check state.
+* `CALL FORM($window; Formula(...))` from a **different** process into a
+  window that nobody is clicking is unreliable: the formula frequently does
+  not execute and there is no error to observe. Publish state to a document
+  (or a shared object reached through the worker) and let the window pull it
+  on its own timer, applying only entries newer than a cursor it owns.
+* `DELAY PROCESS(Current process; n)` does not deliver SystemWorker callbacks
+  while it runs, so a wait loop cannot keep a session alive by sleeping: pump
+  the form (`CALL FORM($window; Formula(Pump))`) or read published state.
+* A GUI application writes nothing to stdout. `LOG EVENT(Into system standard
+  outputs; ...)` is a tool4d-only diagnostic; in an application the harness
+  can only observe files the code writes itself, so design the run to publish
+  a machine-readable report.
 
 ## Number Formatting, File API and Commands That Look Like Procedures
 
