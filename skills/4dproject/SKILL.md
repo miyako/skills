@@ -7,8 +7,9 @@ description: >
   folder layout and boilerplate files (folders.json, menus.json, roles.json,
   catalog_editor.json), menus.json standard actions, and the canonical
   .gitignore for 4D projects, component release version/tag conventions
-  for the Dependency manager, and triage of hosted-CI (GitHub Actions)
-  release-pipeline failures in 4D component repositories.
+  for the Dependency manager, installing and staging a component in a host
+  project, and triage of hosted-CI (GitHub Actions) release-pipeline
+  failures in 4D component repositories.
 ---
 
 # 4D Project
@@ -25,6 +26,9 @@ This skill owns project-level knowledge that every other 4D skill relies on:
 * `menus.json` standard actions vs method wrappers -- `references/menus.md`
 * component release versions, prefix-free Git tags and the Dependency manager's
   **Follow 4D version** rule -- `references/component-releases.md`
+* declaring, installing and staging a component dependency in a host project
+  (Dependency manager, `Components/`, headless `tool4d`) --
+  `references/dependencies.md`
 * consuming a component from a host project: `dependencies.json` descriptor,
   `Components/` load priority, the tool4d package-manager warning and the
   LSP's expected unknown-component-class diagnostics --
@@ -53,6 +57,7 @@ This skill owns project-level knowledge that every other 4D skill relies on:
 | Creating a project, the folder tree, `folders.json`, `roles.json`, `catalog_editor.json`, default `menus.json` | `references/layout.md` |
 | Adding/changing menu items, replacing `m_Quit`-style wrappers with `"action"` | `references/menus.md` |
 | Component release/version/tag, Dependency manager compatibility, GitHub preview/prerelease, declaring a component in a host project (`dependencies.json`, `Components/` priority) | `references/component-releases.md` |
+| Declaring a dependency, local `Components/` staging, compiled vs source component, headless `tool4d` without a Dependency manager | `references/dependencies.md` |
 | GitHub Actions release run fails with no jobs, "configuration ... not supported", evidence/artifact path mismatches, PR creation refused, force-push rejected, Windows-runner utility missing | `references/hosted-ci-failures.md` |
 | Version, tokens, `.gitignore` | this file |
 
