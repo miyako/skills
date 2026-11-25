@@ -268,6 +268,22 @@ Although text objects have no events, several commands can modify them at runtim
 
 These commands target text objects by name (using `*` and the object name string).
 
+**A title is not a value.** `OBJECT SET TITLE` reaches the object classes listed
+above -- inputs are not among them -- so it does **not** change the displayed
+value of an input. "Label-like text that code updates" therefore has two valid
+designs, and picking the wrong one fails quietly:
+
+| Design | Object | Runtime write |
+|---|---|---|
+| Text known at design time, or changed occasionally by name | Text | `OBJECT SET TITLE(*; "name"; $value)` |
+| Text produced by business code on every refresh | Input, `enterable: false`, bound `"dataSource": "Form.name"` | `Form.name:=$value` |
+
+A Text object cannot be assigned a value at all, because it has no data source;
+an input's value only changes when its `dataSource` expression does. If a label
+appears to ignore the code that sets it, check the object type first: on a Text
+object the title changes, on an input the value does not, and no runtime error
+is raised either way.
+
 **Multi-line titles**: use `\\` in the title string as a line separator
 (in code editor: `"Line 1\\\\Line 2"`).
 
@@ -285,8 +301,14 @@ OBJECT SET TITLE(*; "myLabel"; "Updated: "+String(Current date))
 | Label showing structure names (with aliases) | **Text** with `<?[2]>` / `<?[2]3>` syntax |
 | Label with expression-based dynamic content (e.g. `Form.firstName+" "+Form.lastName`) | **Input** with `enterable: false` — easier than text for arbitrary expressions |
 | Label that updates from a data source | **Input** with `enterable: false` |
+| Label whose text code assigns on every refresh | **Input** with `enterable: false` bound to `Form.x` — `OBJECT SET TITLE` cannot set an input's value |
+| Long text that needs its own scroll bars | **Input** with `multiline: "yes"` + `scrollbarVertical: "automatic"` — a Text object has no scrollbars |
 | Label that responds to clicks | **Button** (flat style) or **Input** with method |
 | Label with styled text (bold/italic ranges) | **Input** with `styledText: true` |
+
+To make a non-enterable input read like a label rather than a field, combine
+`enterable: false` with `borderStyle: "none"` (and `hideFocusRing: true` when it
+is also `focusable`); see `input.md`.
 
 ## CLI Verification Notes
 

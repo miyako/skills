@@ -55,6 +55,12 @@ When a focusable input receives focus, the OS draws a focus rectangle around it.
 
 See the "Inputs" form for examples: both `Input` and `Input1` use `enterable: false` + `hideFocusRing: true` + `borderStyle: "none"` for clean, read-only date displays that still allow text selection and copying.
 
+That same recipe is the right shape for **text that runtime code updates**: bind
+the input to an assignable property (`"dataSource": "Form.noteText"`) and assign
+`Form.noteText:=$value`. `OBJECT SET TITLE` is not a substitute -- it does not
+serve inputs at all, so it changes nothing here (see `text.md`, "Text vs. Input
+for Labels").
+
 ### Selection Always Visible
 
 ```json
