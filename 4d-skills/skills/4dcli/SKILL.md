@@ -49,6 +49,7 @@ Engine".
 | Screenshot a form as it looks *after* `On Load` | "The `dialog_screenshot` Chain", Pattern 4 | `4D`, **no** `--headless` |
 | Dump the `Form` object as JSON at runtime | "Contracts" -> `run_project_form` | `4D`, **no** `--headless` |
 | Run an automated test suite | "Automated Testing" | `tool4d` |
+| Compile a project that declares a component dependency | "Compiling with a Component Dependency" | `tool4d` (with limits), `4D` IDE |
 | Run 4D code that needs no UI at all | Pattern 1 | `tool4d` |
 | Run a batch task that needs no `DIALOG` but needs the full app | "Choosing the Right Engine" | `4D --headless` (licensed) |
 | Diagnose Primary Key Manager / journal prompts or prepare a disposable native probe | [4dcatalog: Journaling and Disposable Probes](../4dcatalog/SKILL.md#journaling-and-disposable-probes) | none (diagnosis); full `4D` for features absent from tool4d |
@@ -633,6 +634,40 @@ order -- each step costs one run and narrows the cause.
 With a handler installed, execution also **continues past** the statement
 that raised, so read the log as interleaved rather than sequential: the
 first error is the real one, and the ones after it are its consequences.
+
+## Compiling with a Component Dependency
+
+A host project that calls `cs.<ComponentName>.<Class>` needs the component
+installed. For the declaration file and `Components/` staging, see
+[4dproject: dependencies](../4dproject/references/dependencies.md).
+
+`tool4d` does not run the Dependency manager, but it does load a component
+staged in `Components/`, so an **interpreted** run works after staging.
+Do not promise the same for compilation. `Compile project` under `tool4d`
+reported, against a real dependency (DateTime 0.1.3) on 21.2 LTS builds
+21.100691/21.100694 and 21 R5 21R5.100176:
+
+```
+error: The class cs.DateTime is unknown.
+warning: The function or property convert does not exist on type cs.DateTime.DateTime. (550.2)
+```
+
+`Compile project` returns a status object; a zero tool exit without a fresh
+`success:true` in that file is not compilation success. If the component's
+generated `Resources/en.lproj/syntaxEN.json` lists only `new()` for the
+class, the compiler never learns the other signatures. The class-store
+error is the same missing metadata, not a bug in the host method.
+
+When that happens:
+
+1. State that compiled-mode evidence is `not_run`; keep the interpreted
+   runtime acceptance that actually exercised the component.
+2. Compile in the 4D IDE with the dependency installed through the
+   Dependencies panel, and say that path is unverified rather than
+   inferring success from the interpreted run.
+3. Do not shadow `cs` with variants or delete type declarations to make
+   the diagnostics disappear; the host code is correct for the runtime and
+   for an IDE compile.
 
 ## Definition of Done
 
