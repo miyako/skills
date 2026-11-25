@@ -16,9 +16,46 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 | Negation | Use `Not($x)`. `!` delimits date literals (`!2026-01-21!`); `not` / `!` as negation exist only inside ORDA query strings. |
 | Text `=` is not exact | `"a"="A"` is True (case ignored), and `@` in the right operand is a wildcard (`"abcd"="ab@"` is True). The same holds in `Case of` branches such as `:($x="abc")` and for `#`. |
 | Exact text comparison | Compare `Character code` of each character; test a literal `@` with `Character code(At sign)`. |
+| No implicit number-to-text conversion | `"count: "+$count` fails (*These operators cannot be used together*, or a compile error on the analyzer): wrap every number, `"count: "+String($count)`. The same applies to `Real`, `Integer` and object/collection `.length` values. |
+| `~=` is not a regex or "matches" operator | Use `Match regex("^/"; $path)`; `$path~=^/` raises *These operators cannot be used together* [50]. 4D has no bare regex comparison operator. |
 
 Reference: https://developer.4d.com/docs/Concepts/operators,
 https://developer.4d.com/docs/Concepts/string
+
+## Paths, File and Folder
+
+A 4D **system path** (what `Get 4D folder(Database folder)` returns, with `:`
+separators) is not accepted by `File()` / `Folder()`:
+`File($systemPath)` raises `[3] A valid posix path was expected`.
+
+* Pass `fk platform path`: `File($systemPath; fk platform path)`,
+  `Folder($systemPath; fk platform path)`; or
+* convert first: `File(Convert path system to POSIX($systemPath))`.
+
+`File("/tmp/x.png")` (a POSIX path) works as-is. `Folder("/RESOURCES/...")`
+is a 4D relative path and also works. The failure is easy to miss because
+`File()` with a POSIX path succeeds and the system path only shows up on the
+machine-specific branch -- prefer `fk platform path` whenever the string
+came from `Get 4D folder` or `Select folder`.
+
+Reading a text file back on macOS also writes reliably through a POSIX path;
+the "silent write failure" noted for `tool4d` applies to arbitrary locations,
+so prefer the database folder for evidence.
+
+## Shared objects: `Storage`
+
+Assigning a property on the shared `Storage` object without entering `Use`
+raises `-10719 Shared Object needs a "Use" before altering a property` at
+runtime (the analyzer does not catch it). Wrap every first write:
+
+```4d
+Use (Storage)
+	Storage.captureWindow:=0
+End use
+```
+
+The same `Use` rule applies to shared objects returned by `New shared object`
+and to reading properties inside a preemptive process.
 
 ## Objects and Literals
 
