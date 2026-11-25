@@ -80,6 +80,23 @@ Observed locally with the DateTime 0.1.3 release: `Components/` staging
 works for **interpreted** runs and for `tool4d --startup-method=<method>
 --user-param=<json>`, and the component's CLI executes normally.
 
+`Components/` is not the only place `tool4d` will find it. `tool4d` also has a
+dependency cache, parallel to the IDE's under the same `Caches` root; priming it
+from a project the IDE has already resolved avoids fetching anything and keeps
+the project folder clean:
+
+```sh
+cp -R ~/Library/Caches/4D/Dependencies/.github/<owner>/<repo>/<tag> \
+      ~/Library/Caches/tool4d/Dependencies/.github/<owner>/<repo>/<tag>
+cp    ~/Library/Caches/4D/Dependencies/.github/<owner>/<repo>/<tag>.json \
+      ~/Library/Caches/tool4d/Dependencies/.github/<owner>/<repo>/<tag>.json
+```
+
+Copy the `<tag>.json` with the folder; alone it leaves the tag unresolved. The
+`PackageManager ... cannot be found` pair still prints either way. See
+[`component-releases.md`](component-releases.md#where-tool4d-looks-for-a-downloaded-dependency)
+for the observed before/after.
+
 ## Compile-time limit: the class store is not resolved under tool4d
 
 `Compile project` in a `tool4d` session does **not** see a dependency
