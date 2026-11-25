@@ -261,6 +261,20 @@ adding fake class declarations or by avoiding the namespace -- both make the
 code wrong for the real runtime. Confirm with one real host or `tool4d` run of
 the construction instead.
 
+Each member read on such a class comes with its own follow-on diagnostic, for
+example:
+
+```
+warning: The function or property version does not exist on type cs.Overlay.Overlay. (550.2)
+warning: Undeclared property 'done' used. (550.26)
+```
+
+Those are consequences of the unknown type, not separate defects, and
+loosening the declaration to `Object` is not a fix: it trades one honest
+diagnostic for a silently unchecked call that keeps the same runtime
+behaviour. Grep the `cs.<namespace>` lines out of the gate, keep the real
+types, and let the compiler/runtime resolution be the evidence.
+
 ## Install-components command
 
 `install-components` wraps the custom `dependency/installComponents`
