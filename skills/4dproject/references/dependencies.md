@@ -131,6 +131,38 @@ Practical consequences for a **host** project (not a component project):
 * This is about hosts of a dependency. Compiling a component's own
   matrix project has no such class-store dependency.
 
+### Bracket access keeps a host compile-clean
+
+The reply above says to keep host code typed as `cs.<ComponentName>.<Class>`.
+That is the right long-term API, but it also means a host that declares such a
+property cannot be checked cleanly under `tool4d`: `4dlsp validate` reports the
+class-store error and `Compile project` fails on the same code (see above), so a
+clean-diagnostics gate can never pass. A bracket lookup produces the same
+instance and adds no diagnostic:
+
+```4d
+// unresolved by the analyzer/compiler -> clean under tool4d and 4dlsp
+$queue:=cs["SpoolerMonitor"]["Queue"].new(This.target)
+```
+
+Observed on 21.2 LTS build 21.100694 with `spooler-monitor` 0.1.1 staged in
+`Components/`: the literal form reported `The class cs.SpoolerMonitor is
+unknown` and `The class cs.SpoolerMonitor.Queue is unknown` (also as a typed
+`property tool : cs.SpoolerMonitor.Queue`), while the bracket form produced an
+instance and the whole project validated with no errors or warnings. The
+component's own `Project/Sources/settings.4DSettings` declares the namespace as
+`<general component_classStore_name="SpoolerMonitor"/>`; that attribute and the
+class file name give the two tokens, and both must match including case.
+
+Trade-offs, so this is a deliberate choice and not a style preference:
+
+* No signature checking: a misspelt method name fails at runtime.
+* Wrap the constructor in a local `ON ERR CALL` and turn a missing component
+  into an explicit `component_unavailable` result; do not let it look like an
+  empty queue list.
+* Do not shadow `cs` with a Variant, and do not delete the typed property from
+  a component-internal test project where the compiler can resolve it.
+
 ## Minimum host wiring checklist
 
 * `Project/Sources/dependencies.json` pins the tag.
