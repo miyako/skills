@@ -38,6 +38,16 @@ https://developer.4d.com/docs/Concepts/string
   true and silently skips its branch. Accept `Is real` (add `Is longint`
   only for values that are not object properties) and check integrality
   separately if it matters.
+* **Collections are 0-based**, while arrays are 1-based. `$c[0]` is the
+  first element, `$c.length` is the count, so the array idiom
+  `For ($i; 1; $c.length)` skips element 0 and then raises
+  `Index in collection is out of range (-10713)` on the final pass.
+  Iterate `For ($i; 0; $c.length-1)` or use `For each ($item; $c)`.
+* `4D.File.name` is the **display name without the extension**: `cube.stl`
+  reads as `cube`. Building a path back from a collected `.name` produces
+  `.../cube` and a "file not found" from whatever consumes it. Use
+  `.fullName` whenever the name must round-trip into a path, and
+  `.extension` when only the suffix is wanted.
 
 ## Instance checks and inheritance boundaries
 

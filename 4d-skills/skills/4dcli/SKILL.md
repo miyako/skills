@@ -552,6 +552,29 @@ the tool's own bundle is not, so anything inside the unpacked tool4d build
 must be passed in. Validate each one with `File(...).exists` and log the
 path on failure -- "no such file" without the path costs a whole CI cycle.
 
+### The temporary folder is Null under `--dataless`
+
+`Folder(fk temporary folder)` returns **Null** in a `tool4d --dataless`
+run. The failure is quiet: `Folder(fk temporary folder).folder("x")` yields
+Null and the run only dies later, on the first `.file(...)` or write, with a
+message about the consumer rather than the cause. `Get 4D folder(Temporary
+folder; *)` does not help -- it returns an HFS path
+(`Macintosh HD:private:...`) that `Folder()` rejects with `A valid posix path
+was expected.`
+
+Write artefacts under the database folder instead:
+
+```4d
+var $out : 4D.Folder
+$out:=Folder(fk database folder).folder("output")
+var $made : Boolean
+$made:=$out.create()   // create() returns a Boolean, not the folder
+```
+
+`Folder(fk database folder)` resolves to `/PACKAGE/` and is writable in
+`tool4d` and in the IDE alike, which also makes the output easy to find
+afterwards and trivial to gitignore (`/output/`).
+
 ## Choosing the Right Engine
 
 | Engine | Mode | Use for |
