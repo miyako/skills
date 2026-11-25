@@ -105,6 +105,17 @@ that drive these captures, see the `4dcli` skill
 `FORM SCREENSHOT` does **not** apply CSS stylesheets. To verify anything
 driven by a stylesheet, use the print-to-PDF output instead.
 
+`FORM SCREENSHOT` returns a picture with a real alpha channel when the
+window renders in **dark appearance**: the form background comes back
+only ~9 % opaque, so opening the raw PNG over white looks washed out and
+the header can read as mid-grey. Composite over the colour you want to
+present (`#1E1E1E` reproduces what the dark window actually looks like)
+before committing a capture to a README. There is no per-form switch:
+`FORM theme` is a getter, so the capture inherits the machine's colour
+scheme. Set `FORM SCREENSHOT` expectations, or compare two runs, on the
+same appearance setting -- and say which appearance a published image
+came from.
+
 `project_form_to_image` and `print_form_to_file` are project-specific
 helper methods, not built-in 4D commands. A project that does not define
 them cannot be captured this way until they are installed -- the `4dcli`

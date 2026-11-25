@@ -889,6 +889,28 @@ See the Form Class section of
 errors, so the capture still works -- but they will show up in `4dlsp`
 output and should not be mistaken for a defect in the form.
 
+**Caveat -- a form-data object replaces the class instance.** The generic
+template passes `$form` (a plain object) as `DIALOG`'s form data. On a
+form that declares a `formClass`, that object *is* `Form`: 4D never
+instantiates the class, so `On Load` fails the moment it calls a class
+method with **`A function was expected` (error 317)**, and the capture
+shows the window dimmed behind the error alert -- which reads as "the
+form is greyed out", not as a broken driver. Build the class instance and
+pass that instead:
+
+```4d
+var $lab : cs.TimeLab
+$lab:=cs.TimeLab.new()
+$lab.__page:=2
+$lab.__screenshotPath:=$path
+DIALOG("Lab"; $lab; *)
+```
+
+The two `__` properties still have to be declared in the class (see
+above). Keep both drivers when a project has plain-data forms *and* class
+forms: passing `Null` is not a fix, because it discards the page and
+output path that the chain reads back from `Form`.
+
 **Caveat -- binary.** `dialog_screenshot` requires `4D` **without**
 `--headless`, and does not work under `tool4d` at all. Headless mode
 auto-answers dialog boxes, so `DIALOG` is dismissed before the chained
