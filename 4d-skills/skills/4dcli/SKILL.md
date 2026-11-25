@@ -552,6 +552,32 @@ the tool's own bundle is not, so anything inside the unpacked tool4d build
 must be passed in. Validate each one with `File(...).exists` and log the
 path on failure -- "no such file" without the path costs a whole CI cycle.
 
+### Paths 4D returns are HFS paths on macOS
+
+`Get 4D folder(...)` returns a **system (HFS) path** such as
+`Macintosh HD:private:tmp:x:Resources:`, even when the caller builds every
+`File`/`Folder` object elsewhere from POSIX paths. Passing that value to
+`Folder(...; fk platform path)` fails:
+
+```
+tool4d.FiFo [3] A valid posix path was expected.
+```
+
+The constructor then yields Null, and every later `.folder()`, `.exists` or
+`.create()` access turns into `4DRT [-10716] Object or Collection Expected`
+or `[55] A Boolean argument was expected`. The first error is the real one;
+the cascade is noise. Convert explicitly:
+
+```4d
+$resources:=Convert path system to POSIX(Get 4D folder(Current resources folder))
+This.samplesFolder:=Folder($resources+"Samples"; fk posix path)
+```
+
+On Windows the returned value is already a platform path, so branch on
+`Is Windows` instead of converting unconditionally. This is separate from
+the POSIX paths a shell passes in: 4D's own folder values come back in the
+other spelling.
+
 ### The temporary folder is Null under `--dataless`
 
 `Folder(fk temporary folder)` returns **Null** in a `tool4d --dataless`
@@ -705,7 +731,15 @@ installed. For the declaration file and `Components/` staging, see
 
 `tool4d` does not run the Dependency manager, but it does load a component
 staged in `Components/`, so an **interpreted** run works after staging.
-Do not promise the same for compilation.
+Two constraints follow that the declaration alone does not imply: tool4d
+cannot resolve a `github`+`tag` entry (`PackageManager Dependency '<name>'
+cannot be found`), and it executes `On Startup` before `--startup-method`.
+The working recipe for a host project is therefore: stage the component
+into `Components/`, copy the project to a scratch folder, replace
+`Project/Sources/dependencies.json` there with
+`{"version":2100,"dependencies":{}}`, and pass `--skip-onstartup`. Keep the
+real github+tag declaration in the repository and never commit the staged
+component or the empty scratch declaration.
 
 Staged executables must keep their Unix modes. A component unpacked by a
 library that drops them (`zipfile.extractall` does; `unzip` and git do not)
@@ -713,7 +747,9 @@ still resolves its classes, then the first process call fails with
 `launch_failed: 4D could not create the system worker` and
 `POSX [13] Permission denied`. Re-apply the archive's
 `external_attr >> 16` modes when staging from Python and check
-`ls -l Resources/bin/<platform>/` before blaming the component. `Compile project` under `tool4d`
+`ls -l Resources/bin/<platform>/` before blaming the component.
+
+Do not promise the same for compilation. `Compile project` under `tool4d`
 reported, against a real dependency (DateTime 0.1.3) on 21.2 LTS builds
 21.100691/21.100694 and 21 R5 21R5.100176:
 
