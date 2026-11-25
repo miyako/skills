@@ -37,10 +37,7 @@ https://developer.4d.com/docs/Concepts/string
   from JSON. A guard such as `Value type($o.count)=Is longint` is never
   true and silently skips its branch. Accept `Is real` (add `Is longint`
   only for values that are not object properties) and check integrality
-  separately if it matters. `4D.SystemWorker.exitCode` behaves the same way,
-  and so does any exit code copied into an object property: a guard of
-  `Is longint` hides every exit status, including the nonzero ones that
-  distinguish "the CLI rejected the request" from "the process never started".
+  separately if it matters.
 
 ## Instance checks and inheritance boundaries
 
@@ -59,6 +56,26 @@ https://developer.4d.com/docs/Concepts/string
 
 References: https://developer.4d.com/docs/commands/ob-instance-of,
 https://developer.4d.com/docs/Concepts/classes#class-extends-classname
+
+## Paths, file names and pictures
+
+* `File("chart.tif")` / `File("sub/x.png")` and `Folder("sub")` raise
+  `FiFo [3] A valid posix path was expected.` -- a bare or relative name is
+  not a path. Resolve it first
+  (`Folder(fk database folder).folder("Out").file($name).path`) or pass the
+  path kind explicitly. Nested inside another member call's argument list the
+  same failure was reported as `-10729 Unknown member method` naming an
+  **empty** method, which reads as a missing class function; split the chain
+  into locals before concluding the function does not exist.
+* `File.extension` includes the leading dot (`.tif`), so `"."+$ext` yields
+  `name-2..tif`.
+* A typed `Picture` property that was never assigned is not an empty picture:
+  `Picture size($object.picture)` raises `[59] 4D was expecting a picture.`
+  Assign a real picture when the object is constructed (a 4x4 transparent
+  PNG read with `READ PICTURE FILE` is enough); do not leave it unassigned
+  and do not assign `Null`.
+* `Picture size` returns **bytes**, not dimensions; use `PICTURE PROPERTIES`
+  when the width/height matter.
 
 ## Formula, `This` and `.call()`
 
@@ -137,6 +154,18 @@ Reference: https://developer.4d.com/docs/API/SystemWorkerClass
 
 References: https://developer.4d.com/docs/API/SignalClass,
 https://developer.4d.com/docs/Develop/processes
+
+## Number Formatting, File API and Commands That Look Like Procedures
+
+| Pitfall | Rule |
+|---|---|
+| `String(value; "0.#####")` | Not a safe general formatter: values with two or more integer digits come back as `<<<<<<<` (`41.313` -> `<<<<<<<`, `5618.49` -> `<<<<`, while `0.4` stays `0.4`). `String(value; "##.#####")` works. For machine-readable text (JSON, SVG attributes) use plain `String(value)` or format by hand. |
+| `String(value)` and the locale | Single-argument `String` uses the host decimal separator, so a comma-decimal system emits `41,313` — fatal in a JSON number or an SVG coordinate. Normalise the separator before writing structured text. |
+| `String(value; format; separator)` | Not an overload: the third argument is not a decimal-separator argument, and this call fails compilation with `At least one parameter type does not match the prototype(s) of the function "String"` plus `Invalid constant type : Alphanumeric`. |
+| `Min(a; b)` / `Max(a; b)` | Array commands. With two scalars, compilation fails as `Impossible to cast Real to Array<Variant>.` / `Invalid constant type : Real` — the diagnostics never mention `Min`. Compare with `math` operators or a user helper. |
+| `4D.Folder.delete()` | Refuses a non-empty folder: `[651] Folder  not empty`. Use `DELETE FOLDER($folder.path; Delete with contents)` for scratch directories. The failure is catchable by `Try`, but `Last errors` is empty in that `Catch`. |
+| `Open document(path)` as a statement | It is a function: `This function has been called as a procedure.` Assign or discard the result (`$opened:=String(Open document($path))`). |
+| `var` placement | A `var` inside an `If` or `For each` block compiles and is block-scoped; the "declarations must be at the top" rule forbids a redeclaration, not a block-local declaration. Keep declarations at the top by convention, and do not diagnose block-local `var` as a syntax error. |
 
 ## Command Signatures Often Guessed Wrong
 

@@ -563,17 +563,6 @@ path on failure -- "no such file" without the path costs a whole CI cycle.
 Use full `4D`, not `tool4d`, for features absent from tool4d, including
 **Label Editor**; use GUI mode when the task needs the editor's windows.
 
-A host project that needs a **runtime** capture (values applied by `On Load`
-and a worker, then `FORM SCREENSHOT`) therefore uses the `4D` binary. `tool4d`
-build 21.2.100694 rejects window creation outright and exits 1:
-
-```
-tool4d.HDLS (Open form window)[{"type":"projectMethod","name":"...","line":16,...}] ()
-```
-
-`HDLS` marks a command it will not run headless. `FORM SCREENSHOT` on a form
-name alone still works there, because it draws the static template.
-
 **Key limitation**: in headless mode (`tool4d` or `4D --headless`) every
 call to a dialog box is intercepted and answered automatically. `DIALOG`
 is therefore dismissed immediately -- the form loads but closes before
@@ -693,7 +682,15 @@ installed. For the declaration file and `Components/` staging, see
 
 `tool4d` does not run the Dependency manager, but it does load a component
 staged in `Components/`, so an **interpreted** run works after staging.
-Do not promise the same for compilation. `Compile project` under `tool4d`
+Do not promise the same for compilation.
+
+Staged executables must keep their Unix modes. A component unpacked by a
+library that drops them (`zipfile.extractall` does; `unzip` and git do not)
+still resolves its classes, then the first process call fails with
+`launch_failed: 4D could not create the system worker` and
+`POSX [13] Permission denied`. Re-apply the archive's
+`external_attr >> 16` modes when staging from Python and check
+`ls -l Resources/bin/<platform>/` before blaming the component. `Compile project` under `tool4d`
 reported, against a real dependency (DateTime 0.1.3) on 21.2 LTS builds
 21.100691/21.100694 and 21 R5 21R5.100176:
 
@@ -968,6 +965,16 @@ auto-answers dialog boxes, so `DIALOG` is dismissed before the chained
 `CALL FORM` can run, and the process may then hang. The same applies to
 `run_project_form`.
 
+**Headless class-form smoke test.** A form that declares a `formClass` can
+be loaded without a window: `FORM LOAD("Lab")` under `tool4d` instantiates
+the class instance, so `Form.<property>` reads are live right after it
+(observed reading a constructor-computed version Text and the rows of a
+collection property). That is a cheap check that the class constructor and
+its state survive before any GUI attempt; `FORM UNLOAD` releases the form.
+It does not paint widgets, so a `dataSource` typo still only surfaces when
+the widget is actually drawn -- cross-check the form JSON against the class
+properties separately.
+
 ### Installing a Bundled Method
 
 Copy the asset to the project's methods directory, keeping the filename:
@@ -1196,6 +1203,25 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   run mixed them and the later component call aborted with no catchable
   error (no `ON ERR CALL` hit, exit code 0); isolating the component checks
   in their own `--startup-method` succeeded repeatedly.
+* Where `FORM LOAD` stops: an unknown form name raises
+  `[81] The form was not found`, which is what makes a load a real assertion
+  rather than a no-op. The object-level commands do not work headlessly at
+  all -- `FORM GET OBJECTS($pointers; <name>; "")` and
+  `FORM Convert to dynamic(<name>)` fail with `[59]` argument errors
+  (`4D was expecting a variable or a parameter ...` /
+  `4D was expecting a text expression`), not because a window is missing.
+  Treat per-object runtime checks as `not_run` without a GUI.
+* A `Catch` block is not a logging facility: `Last errors` can be empty
+  there (`[-10713] Index in collection is out of range`), and some failures
+  (`DOM Parse XML variable(<object property>)`, `[59]`) are caught by `Try`
+  yet never reach `ON ERR CALL`. Write a fixed sentinel from `Catch` and
+  assert on it; do not build a bridge from `Last errors[1]`.
+* A clean `Compile project` does not prove a method can run. Stale or removed
+  constants such as `Folder(Home folder)` compile without a single error and
+  abort at execution with `tool4d.FiFo [2] The constant value is invalid`,
+  which names neither the constant nor the line. When a
+  `--startup-method` run dies that way, bisect the constants
+  (`fk home folder`, `fk system folder`, ...) before suspecting paths.
 
 ## Tool Dependencies
 
