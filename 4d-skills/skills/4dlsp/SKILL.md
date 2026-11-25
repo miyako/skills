@@ -244,6 +244,23 @@ extension sends to the LSP server.
 > description above as the LSP option's intent, not a confirmed
 > guarantee.
 
+### Expected unknowns for source components
+
+`validate` and `check-syntax` only know the metadata of **compiled** components.
+A component vendored in `Components/` as source (no `Libraries/lib4d-*.dylib`),
+or one loaded from a local uninstalled folder, still resolves at runtime, but
+the analyzer reports every use of one of its classes:
+
+```
+Sources/Classes/MyScene.4dm:21:19: error: The class cs.SomeComponent.SomeClass is unknown.
+```
+
+Treat this as an analyzer limitation, not a code error: the constructors are
+resolved when the host actually loads the component. Do not silence it by
+adding fake class declarations or by avoiding the namespace -- both make the
+code wrong for the real runtime. Confirm with one real host or `tool4d` run of
+the construction instead.
+
 ## Install-components command
 
 `install-components` wraps the custom `dependency/installComponents`
