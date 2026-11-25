@@ -552,6 +552,21 @@ the tool's own bundle is not, so anything inside the unpacked tool4d build
 must be passed in. Validate each one with `File(...).exists` and log the
 path on failure -- "no such file" without the path costs a whole CI cycle.
 
+The same message has a second, easier-to-hit trigger: feeding an **HFS**
+`.platformPath` to a `File` / `Folder` constructed with `fk posix path`.
+
+```
+A valid posix path was expected.
+```
+
+It is raised at runtime, inside the method, so its text points at the
+constructor and not at the caller that chose the spelling. A headless run
+then simply produces no report. Keep one convention per boundary: convert
+HFS to POSIX with `Convert path system to POSIX(...)` (or read
+`File(...; fk posix path).platformPath`) before handing a path to a worker,
+a callback or a `--user-param` payload. See
+`skills/4dlang/references/pitfalls.md`, "Paths".
+
 ### Paths 4D returns are HFS paths on macOS
 
 `Get 4D folder(...)` returns a **system (HFS) path** such as
@@ -654,6 +669,20 @@ Consequences for a test harness:
 * Run the same method against a deliberately failing assertion once, and
   confirm the harness reports failure. With an exit-code gate it will not.
 
+### Waiting on another process
+
+A harness that waits for a device, a session or a worker should wait on
+**state**, not on a schedule: timers and `DELAY PROCESS` stretch in an
+unattended application (measured: a 1 s form timer firing every ~16 s), so a
+tick budget is either too short or paid in full. Re-read a published status
+file or a form dump each round and stop as soon as the condition holds.
+
+Kill the helper processes a previous run left behind before starting a new
+one. A stale helper can keep a resource (a PTY, a port, a lock file) that the
+kernel then hands to the new run, producing a green-looking run that silently
+talks to nobody. Match on the interpreter plus the specific script, never on
+"any process mentioning the name", and never kill an ancestor of yourself.
+
 ### When a Startup Method Dies With No Output
 
 A method that stops early leaves nothing behind: exit code `1` and an empty
@@ -671,12 +700,14 @@ order -- each step costs one run and narrows the cause.
    // dump_on_err.4dm -- $1=2 is the runtime error, $1=3 the window
    If ($1=2)
    	LOG EVENT(Into system standard outputs; \
-   		"failed in "+Error method+" ("+String(Error code)+"): "+Error description)
+   		"failed in "+Error method+" ("+String(Error code)+"): "+Error formula)
    End if
    ```
 
    `ek local` keeps the handler inside the method; restore it with
-   `Method called on error(ek local)` if the method is long.
+   `Method called on error(ek local)` if the method is long. There is no
+   `Error description` variable: `Error formula` is the source text of the
+   failing call, which is what the message above shows.
 
 2. **Install the handler before anything can fail**, because the locations
    that fail silently are the ones a handler installed late never reaches:
