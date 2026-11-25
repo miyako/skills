@@ -685,6 +685,23 @@ When that happens:
    the diagnostics disappear; the host code is correct for the runtime and
    for an IDE compile.
 
+### The compiler also finds defects interpretation forgives
+
+Even when the class-store error blocks the build, the run is worth doing:
+`Compile project` type-checks code the interpreter happily executes. Two
+that came out of a project that ran clean under `tool4d`:
+
+| Interpreted code | Compiler verdict | Fix |
+|---|---|---|
+| `$file.parent.create()` as a statement | `This function has been called as a procedure.` | `create()` returns a Boolean; assign it (`$made:=$file.parent.create()`), do not declare it as `4D.Folder` or the next error is `Impossible to cast Boolean to 4D.Folder` |
+| `ON ERR CALL("handler"; ek local)` whose method reads `$1`, `$2`, `$3` | `The parameter $1 has not been explicitly declared.` | give the handler a prototype: `#DECLARE($mode : Variant; $code : Variant; $text : Variant)`. `var $1; $2; $3 : Variant` is rejected ("should be declared in the prototype") |
+
+Fix these rather than dismissing every diagnostic as the dependency's
+fault. After the fixes the same project reported exactly one error (the
+class store) and three warnings (`convert`, `convertBatch`, `version`),
+which is a useful baseline: anything beyond that list is the host's own
+code.
+
 ## Definition of Done
 
 A CLI task is complete when all three hold. Each is a shell check, not a
