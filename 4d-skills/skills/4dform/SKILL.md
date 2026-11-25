@@ -266,6 +266,15 @@ method produces no error at all -- it is simply never called, so the form
 appears to load correctly and does nothing. Enumerate the files under
 `ObjectMethods/` and find each one in the form JSON.
 
+**A fourth check is cheap and worth adding when 4D is available:** have a
+`tool4d` startup method call `FORM LOAD(<form name>; *)` inside `Try`. It
+loads the definition with no window, and an unknown name raises
+`[81] The form was not found`, so a green run proves that the compiler and
+4D accepted this form -- something schema validation cannot show. Do not
+reach for `FORM GET OBJECTS` or `FORM Convert to dynamic` here: both fail
+with `[59]` argument errors headlessly (see `skills/4dcli/SKILL.md`), so
+per-object runtime introspection still needs a GUI run.
+
 The two validators are not interchangeable. Schema validation gates the
 artifact; `.4dm` validation gates the code. Both must pass and neither is
 sufficient alone. `jq empty` is not schema validation and does not count
