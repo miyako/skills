@@ -659,7 +659,15 @@ installed. For the declaration file and `Components/` staging, see
 
 `tool4d` does not run the Dependency manager, but it does load a component
 staged in `Components/`, so an **interpreted** run works after staging.
-Do not promise the same for compilation. `Compile project` under `tool4d`
+Do not promise the same for compilation.
+
+Staged executables must keep their Unix modes. A component unpacked by a
+library that drops them (`zipfile.extractall` does; `unzip` and git do not)
+still resolves its classes, then the first process call fails with
+`launch_failed: 4D could not create the system worker` and
+`POSX [13] Permission denied`. Re-apply the archive's
+`external_attr >> 16` modes when staging from Python and check
+`ls -l Resources/bin/<platform>/` before blaming the component. `Compile project` under `tool4d`
 reported, against a real dependency (DateTime 0.1.3) on 21.2 LTS builds
 21.100691/21.100694 and 21 R5 21R5.100176:
 
@@ -933,6 +941,16 @@ output path that the chain reads back from `Form`.
 auto-answers dialog boxes, so `DIALOG` is dismissed before the chained
 `CALL FORM` can run, and the process may then hang. The same applies to
 `run_project_form`.
+
+**Headless class-form smoke test.** A form that declares a `formClass` can
+be loaded without a window: `FORM LOAD("Lab")` under `tool4d` instantiates
+the class instance, so `Form.<property>` reads are live right after it
+(observed reading a constructor-computed version Text and the rows of a
+collection property). That is a cheap check that the class constructor and
+its state survive before any GUI attempt; `FORM UNLOAD` releases the form.
+It does not paint widgets, so a `dataSource` typo still only surfaces when
+the widget is actually drawn -- cross-check the form JSON against the class
+properties separately.
 
 ### Installing a Bundled Method
 
