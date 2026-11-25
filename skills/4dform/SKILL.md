@@ -176,6 +176,24 @@ Each of these is a real failure if omitted:
 * `"method": "ObjectMethods/<Object>.4dm"` is what binds an object method,
   and `"events"` is what lets it receive anything.
 
+The form method is not an ordinary project method: **it receives no
+parameters.** Data reaches it as `Form`, which `DIALOG` sets from its second
+argument (`DIALOG("Form"; $data; *)`). A `#DECLARE($params : Object)` at the
+top of a form method therefore compiles, and `$params` is always `Null`, so a
+`$params.seed`-style handoff does nothing and reports nothing. Read the key
+off `Form` instead:
+
+```4d
+: (FORM Event.code=On Load)
+	If (Value type(Form.seed)=Is object)
+		$scene.seed(Form; Form.seed)
+	End if
+```
+
+This differs from the start method, which is a real project method that
+`CALL WORKER`/`New process` calls with a parameter -- see the `4dstartup`
+skill.
+
 ## Route Table
 
 Open only the file for the object(s) the task touches.
