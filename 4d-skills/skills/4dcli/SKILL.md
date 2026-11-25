@@ -1254,12 +1254,14 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   in their own `--startup-method` succeeded repeatedly.
 * Where `FORM LOAD` stops: an unknown form name raises
   `[81] The form was not found`, which is what makes a load a real assertion
-  rather than a no-op. The object-level commands do not work headlessly at
-  all -- `FORM GET OBJECTS($pointers; <name>; "")` and
+  rather than a no-op. The name-taking object-level calls do not work
+  headlessly -- `FORM GET OBJECTS($pointers; <name>; "")` and
   `FORM Convert to dynamic(<name>)` fail with `[59]` argument errors
   (`4D was expecting a variable or a parameter ...` /
   `4D was expecting a text expression`), not because a window is missing.
-  Treat per-object runtime checks as `not_run` without a GUI.
+  The current-form call after `FORM LOAD`, `FORM GET OBJECTS($names; $types)`,
+  was observed to list the objects (see `skills/4dform/SKILL.md`, "Headless
+  Layout Check"). Treat per-object property checks as `not_run` without a GUI.
 * A `Catch` block is not a logging facility: `Last errors` can be empty
   there (`[-10713] Index in collection is out of range`), and some failures
   (`DOM Parse XML variable(<object property>)`, `[59]`) are caught by `Try`

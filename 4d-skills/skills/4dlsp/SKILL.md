@@ -393,13 +393,11 @@ tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMet
   it with the MCP `hover` tool (see below) rather than relying on
   `validate` alone. `hover` returning "No hover information available"
   for a command-shaped token is a strong signal it is not recognized.
-- **Component classes are expected to be unresolvable.** `check-syntax` on a
-  project with a component in `Components/` reports
-  `The class cs.Ns.Class is unknown` (and the `cs.Ns` prefix) for every
-  component reference. The language server does not analyse components; those
-  diagnostics are not a host-code defect, and adding placeholder classes to
-  silence them pollutes the project. Triage them out of the gate (`grep -v
-  'cs\.'`) and prove the component really loads by calling it at runtime.
+- **Component classes can be unresolvable.** `check-syntax` may report
+  `The class cs.Ns.Class is unknown` for component references; see "Expected
+  unknowns for source components" for when and why. They are not a host-code
+  defect: triage them out of the gate (`grep -v 'cs\.'`) and prove the
+  component really loads by calling it at runtime.
 - A clean `check-syntax` also hides genuine prototype traps until runtime:
   `Round` requires its places argument (`Round(x; 0)`), 4D classes have no
   static members (`cs.Name.method()` is invalid -- use

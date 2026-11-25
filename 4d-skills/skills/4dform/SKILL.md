@@ -270,10 +270,13 @@ appears to load correctly and does nothing. Enumerate the files under
 `tool4d` startup method call `FORM LOAD(<form name>; *)` inside `Try`. It
 loads the definition with no window, and an unknown name raises
 `[81] The form was not found`, so a green run proves that the compiler and
-4D accepted this form -- something schema validation cannot show. Do not
-reach for `FORM GET OBJECTS` or `FORM Convert to dynamic` here: both fail
-with `[59]` argument errors headlessly (see `skills/4dcli/SKILL.md`), so
-per-object runtime introspection still needs a GUI run.
+4D accepted this form -- something schema validation cannot show. Listing the
+loaded objects is covered in "Headless Layout Check" below: only the
+current-form call `FORM GET OBJECTS($names; $types)` was observed to work
+headlessly. The name-taking variant (`FORM GET OBJECTS($pointers; <name>; "")`)
+and `FORM Convert to dynamic` fail with `[59]` argument errors (see
+`skills/4dcli/SKILL.md`), so per-object property introspection still needs a
+GUI run.
 
 The two validators are not interchangeable. Schema validation gates the
 artifact; `.4dm` validation gates the code. Both must pass and neither is
