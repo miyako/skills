@@ -144,3 +144,12 @@ https://developer.4d.com/docs/Develop/processes
 | `OBJECT SET COORDINATES(*; name; left; top {; right; bottom})` | Absolute coordinates, not width / height (`skills/4dform/references/layout.md`) |
 | `OBJECT SET CSS CLASS` | Does not exist: use `OBJECT SET RGB COLORS`, `OBJECT SET FONT STYLE`, ... (`skills/4dcss/SKILL.md`) |
 | `BLOB TO PICTURE(blob; picture {; codec})` | Codec is optional |
+| `Time string(time; format)` | One argument only. A format argument is not rejected until run time: `Time string($t; ISO time)` aborts with `[58] A ")" was expected.` |
+| `String(date; ISO date)` | `2026-11-26T00:00:00`, **not** `2026-11-26` -- the string carries a zero time as well |
+| `String(time; ISO time)` | `0000-00-00T05:44:44` -- a zero date as well |
+| `String(date; ISO date; time)` | `2026-11-26T05:44:44`: the three-argument form is the one that yields an ISO timestamp |
+
+The `ISO` format constants produce full date+time strings, so a value destined
+for an API that wants `YYYY-MM-DD` or `HH:MM:SS` needs a slice
+(`Substring(String($d; ISO date); 1; 10)`) or the three-argument combined form.
+Measured on 21 R5 (100176).
