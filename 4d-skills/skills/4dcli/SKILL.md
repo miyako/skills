@@ -1203,6 +1203,25 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   run mixed them and the later component call aborted with no catchable
   error (no `ON ERR CALL` hit, exit code 0); isolating the component checks
   in their own `--startup-method` succeeded repeatedly.
+* Where `FORM LOAD` stops: an unknown form name raises
+  `[81] The form was not found`, which is what makes a load a real assertion
+  rather than a no-op. The object-level commands do not work headlessly at
+  all -- `FORM GET OBJECTS($pointers; <name>; "")` and
+  `FORM Convert to dynamic(<name>)` fail with `[59]` argument errors
+  (`4D was expecting a variable or a parameter ...` /
+  `4D was expecting a text expression`), not because a window is missing.
+  Treat per-object runtime checks as `not_run` without a GUI.
+* A `Catch` block is not a logging facility: `Last errors` can be empty
+  there (`[-10713] Index in collection is out of range`), and some failures
+  (`DOM Parse XML variable(<object property>)`, `[59]`) are caught by `Try`
+  yet never reach `ON ERR CALL`. Write a fixed sentinel from `Catch` and
+  assert on it; do not build a bridge from `Last errors[1]`.
+* A clean `Compile project` does not prove a method can run. Stale or removed
+  constants such as `Folder(Home folder)` compile without a single error and
+  abort at execution with `tool4d.FiFo [2] The constant value is invalid`,
+  which names neither the constant nor the line. When a
+  `--startup-method` run dies that way, bisect the constants
+  (`fk home folder`, `fk system folder`, ...) before suspecting paths.
 
 ## Tool Dependencies
 

@@ -155,6 +155,18 @@ Reference: https://developer.4d.com/docs/API/SystemWorkerClass
 References: https://developer.4d.com/docs/API/SignalClass,
 https://developer.4d.com/docs/Develop/processes
 
+## Number Formatting, File API and Commands That Look Like Procedures
+
+| Pitfall | Rule |
+|---|---|
+| `String(value; "0.#####")` | Not a safe general formatter: values with two or more integer digits come back as `<<<<<<<` (`41.313` -> `<<<<<<<`, `5618.49` -> `<<<<`, while `0.4` stays `0.4`). `String(value; "##.#####")` works. For machine-readable text (JSON, SVG attributes) use plain `String(value)` or format by hand. |
+| `String(value)` and the locale | Single-argument `String` uses the host decimal separator, so a comma-decimal system emits `41,313` — fatal in a JSON number or an SVG coordinate. Normalise the separator before writing structured text. |
+| `String(value; format; separator)` | Not an overload: the third argument is not a decimal-separator argument, and this call fails compilation with `At least one parameter type does not match the prototype(s) of the function "String"` plus `Invalid constant type : Alphanumeric`. |
+| `Min(a; b)` / `Max(a; b)` | Array commands. With two scalars, compilation fails as `Impossible to cast Real to Array<Variant>.` / `Invalid constant type : Real` — the diagnostics never mention `Min`. Compare with `math` operators or a user helper. |
+| `4D.Folder.delete()` | Refuses a non-empty folder: `[651] Folder  not empty`. Use `DELETE FOLDER($folder.path; Delete with contents)` for scratch directories. The failure is catchable by `Try`, but `Last errors` is empty in that `Catch`. |
+| `Open document(path)` as a statement | It is a function: `This function has been called as a procedure.` Assign or discard the result (`$opened:=String(Open document($path))`). |
+| `var` placement | A `var` inside an `If` or `For each` block compiles and is block-scoped; the "declarations must be at the top" rule forbids a redeclaration, not a block-local declaration. Keep declarations at the top by convention, and do not diagnose block-local `var` as a syntax error. |
+
 ## Command Signatures Often Guessed Wrong
 
 | Command | Correct use |
