@@ -48,6 +48,23 @@ problem. When hand-writing the declaration, compare it against one the IDE
 itself wrote. Not observed here: whether the manager also accepts `"tag"` as
 an alias; the runs behind this note never resolved through the manager.
 
+| Entry form | Meaning |
+|---|---|
+| `"NAME": {}` | References a component; the path comes from the project's `Components/` folder or an `environment4d.json` entry |
+| `"NAME": {"github": "owner/repo"}` | Fetched from GitHub |
+| `"NAME": {"gitlab": "owner/repo"}` | Fetched from gitlab.com; add `"host"` for a self-hosted instance |
+| `{"github": "...", "version": "1.2.3"}` | Pins a version; ranges (`1.*`, `>=1.2`, `~1.2`, `^1.2`, `latest`) are also accepted |
+
+Load priority, highest first: the project's `Components/` folder, then
+`dependencies.json` (with any `environment4d.json` path override), then 4D's
+internal components (4D SVG, 4D NetKit, ...). A local `Components/` copy
+therefore wins over the declaration, which is the useful escape hatch for
+offline work and for CI where a download may be blocked.
+
+The file must exist **before the first headless open**, even with no
+components (`{"version":2100,"dependencies":{}}`); see `layout.md`,
+"dependencies.json".
+
 Only the full 4D application (IDE) acts on this file. `tool4d` does not —
 see "Headless tool4d" below.
 
@@ -89,7 +106,11 @@ PackageManager No component to fetch dependencies ()
 PackageManager Dependency 'DateTime' cannot be found ()
 ```
 
-and then the dependency is simply absent: `cs.DateTime` is `Null` at
+(the pair prints on every run, even when `Components/<Name>.4dbase` is
+present and the component works: it is a package-manager diagnostic, not
+proof that the load failed -- call something from the component, for example
+`cs.Ns.Class.new().version()`, for real evidence). With the component not
+staged, the dependency is simply absent: `cs.DateTime` is `Null` at
 runtime and calls fail with an “Object or Collection Expected” error.
 Installing and staging the component yourself is required:
 
@@ -131,10 +152,20 @@ loaded and the component's `version()` returned `0.1.2`. `tool4d` has no
 Dependency manager, so the lock answers a question nobody asked; read the
 component's own `version()` instead.
 
-`Components/` is not the only place `tool4d` will find it. `tool4d` also has a
-dependency cache, parallel to the IDE's under the same `Caches` root; priming it
-from a project the IDE has already resolved avoids fetching anything and keeps
-the project folder clean:
+`Components/` is not the only place `tool4d` will find it. `tool4d` never
+downloads anything itself, but it has a dependency cache, parallel to the IDE's
+and separate from it:
+
+| Tool | Cache root (macOS) |
+| --- | --- |
+| 4D IDE | `~/Library/Caches/4D/Dependencies/.github/` |
+| `tool4d` | `~/Library/Caches/tool4d/Dependencies/.github/` |
+
+Both use `<owner>/<repo>/<tag>/` for the unpacked component plus a sibling
+`<tag>.json` recording the tag identity (`github`, `tag`, `archiveURL`,
+`archiveSize`). Opening the project once in the IDE leaves a copy that can be
+primed into `tool4d`'s cache, which avoids fetching anything and keeps the
+project folder clean:
 
 ```sh
 cp -R ~/Library/Caches/4D/Dependencies/.github/<owner>/<repo>/<tag> \
@@ -143,10 +174,17 @@ cp    ~/Library/Caches/4D/Dependencies/.github/<owner>/<repo>/<tag>.json \
       ~/Library/Caches/tool4d/Dependencies/.github/<owner>/<repo>/<tag>.json
 ```
 
-Copy the `<tag>.json` with the folder; alone it leaves the tag unresolved. The
-`PackageManager ... cannot be found` pair still prints either way. See
-[`component-releases.md`](component-releases.md#where-tool4d-looks-for-a-downloaded-dependency)
-for the observed before/after.
+Copy the `<tag>.json` with the folder; alone it leaves the tag unresolved.
+Observed on 4D 21.2 LTS (build 21.100694) and 21 R5 on macOS with
+DraftEmail 0.1.4: before priming, the component's classes were unknown to a
+`--startup-method` run; after priming, the same project ran
+`cs.DraftEmail.Composer.version()` successfully with no `Components/` folder.
+`install-components` (see `4dlsp`) reloads what such a cache supplies; it does
+not populate one.
+
+Never commit a populated `Components/` folder that the dependency declaration
+reproduces; ignore it and let the Dependency manager or a local install supply
+it.
 
 ## Compile-time limit: the class store is not resolved under tool4d
 
