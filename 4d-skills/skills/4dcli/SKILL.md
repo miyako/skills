@@ -597,6 +597,20 @@ workflows, use `4D` **without** `--headless`.
 * **FAIL**: `ASSERT` triggers a dialog, headless mode auto-aborts, exit
   code is non-zero and no `PASS` is printed.
 
+### Waiting on another process
+
+A harness that waits for a device, a session or a worker should wait on
+**state**, not on a schedule: timers and `DELAY PROCESS` stretch in an
+unattended application (measured: a 1 s form timer firing every ~16 s), so a
+tick budget is either too short or paid in full. Re-read a published status
+file or a form dump each round and stop as soon as the condition holds.
+
+Kill the helper processes a previous run left behind before starting a new
+one. A stale helper can keep a resource (a PTY, a port, a lock file) that the
+kernel then hands to the new run, producing a green-looking run that silently
+talks to nobody. Match on the interpreter plus the specific script, never on
+"any process mentioning the name", and never kill an ancestor of yourself.
+
 ### When a Startup Method Dies With No Output
 
 A method that stops early leaves nothing behind: exit code `1` and an empty
@@ -614,12 +628,14 @@ order -- each step costs one run and narrows the cause.
    // dump_on_err.4dm -- $1=2 is the runtime error, $1=3 the window
    If ($1=2)
    	LOG EVENT(Into system standard outputs; \
-   		"failed in "+Error method+" ("+String(Error code)+"): "+Error description)
+   		"failed in "+Error method+" ("+String(Error code)+"): "+Error formula)
    End if
    ```
 
    `ek local` keeps the handler inside the method; restore it with
-   `Method called on error(ek local)` if the method is long.
+   `Method called on error(ek local)` if the method is long. There is no
+   `Error description` variable: `Error formula` is the source text of the
+   failing call, which is what the message above shows.
 
 2. **Install the handler before anything can fail**, because the locations
    that fail silently are the ones a handler installed late never reaches:
