@@ -101,3 +101,55 @@ pull request's branch keeps that branch as its base unless it is retargeted,
 and merging the first does not move the second. Check the content, not the
 status, for example `git branch -r --contains <commit>` or
 `git grep <symbol> origin/<default-branch>`.
+
+## Consuming a component from a project
+
+`Project/Sources/dependencies.json` is how a host project declares components.
+It must exist **before the first headless open**: without it, 4D may show a
+modal "import components" dialog that blocks `--startup-method` runs
+indefinitely. A project with no components still needs the file:
+`{"version":2100,"dependencies":{}}`.
+
+```json
+{
+	"version": 2100,
+	"dependencies": {
+		"Overlay": {
+			"github": "miyako/Overlay",
+			"version": "0.1.1"
+		},
+		"LocalThing": {}
+	}
+}
+```
+
+| Entry form | Meaning |
+|---|---|
+| `"NAME": {}` | References a component; the path comes from the project's `Components/` folder or an `environment4d.json` entry |
+| `"NAME": {"github": "owner/repo"}` | Fetched from GitHub |
+| `"NAME": {"gitlab": "owner/repo"}` | Fetched from gitlab.com; add `"host"` for a self-hosted instance |
+| `{"github": "...", "version": "1.2.3"}` | Pins a version; ranges (`1.*`, `>=1.2`, `~1.2`, `^1.2`, `latest`) are also accepted |
+
+Load priority, highest first: the project's `Components/` folder, then
+`dependencies.json` (with any `environment4d.json` path override), then 4D's
+internal components (4D SVG, 4D NetKit, ...). A local `Components/` copy
+therefore wins over the declaration, which is the useful escape hatch for
+offline work and for CI where a download may be blocked.
+
+Two consequences worth knowing before interpreting logs:
+
+* Under `tool4d`, a declared dependency prints
+  `PackageManager No component to fetch dependencies` and
+  `PackageManager Dependency 'NAME' cannot be found` on every run, even when
+  `Components/NAME.4dbase` is present and the component's classes, methods and
+  helpers work. That pair of lines is a package-manager diagnostic, not proof
+  that the component failed to load -- call something from the component
+  (`cs.Ns.Class.new().version()`) and log the result to get real evidence.
+* The language server does not analyse `Components/`, so `check-syntax` reports
+  `The class cs.Ns.Class is unknown` for every component class reference. Those
+  diagnostics are expected and are not a reason to add placeholder classes to
+  the host project. The interpreter/compiler resolve the component normally.
+
+Never commit a populated `Components/` folder that the dependency declaration
+reproduces; ignore it and let the Dependency manager or a local install supply
+it.
