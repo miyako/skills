@@ -57,6 +57,26 @@ https://developer.4d.com/docs/Concepts/string
 References: https://developer.4d.com/docs/commands/ob-instance-of,
 https://developer.4d.com/docs/Concepts/classes#class-extends-classname
 
+## Paths, file names and pictures
+
+* `File("chart.tif")` / `File("sub/x.png")` and `Folder("sub")` raise
+  `FiFo [3] A valid posix path was expected.` -- a bare or relative name is
+  not a path. Resolve it first
+  (`Folder(fk database folder).folder("Out").file($name).path`) or pass the
+  path kind explicitly. Nested inside another member call's argument list the
+  same failure was reported as `-10729 Unknown member method` naming an
+  **empty** method, which reads as a missing class function; split the chain
+  into locals before concluding the function does not exist.
+* `File.extension` includes the leading dot (`.tif`), so `"."+$ext` yields
+  `name-2..tif`.
+* A typed `Picture` property that was never assigned is not an empty picture:
+  `Picture size($object.picture)` raises `[59] 4D was expecting a picture.`
+  Assign a real picture when the object is constructed (a 4x4 transparent
+  PNG read with `READ PICTURE FILE` is enough); do not leave it unassigned
+  and do not assign `Null`.
+* `Picture size` returns **bytes**, not dimensions; use `PICTURE PROPERTIES`
+  when the width/height matter.
+
 ## Formula, `This` and `.call()`
 
 * `Formula(...)` copies the **values** of local variables when the formula
