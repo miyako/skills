@@ -14,17 +14,39 @@ project that wants to call a component's classes.
   "dependencies": {
     "DateTime": {
       "github": "miyako/DateTime",
-      "tag": "0.1.3"
+      "version": "0.1.3"
     }
   }
 }
 ```
 
 The key (`DateTime`) is the component name; 4D's Dependency manager
-resolves `github` + `tag` to that repository's release asset
-(`<repository>.zip`) and installs the unpacked `.4dbase`. Pin a `tag`;
-floating branches make a build non-reproducible. `{"DateTime": {}}` is the
-local form used when the component folder is provided beside the project.
+resolves `github` + `version` to that repository's release asset
+(`<repository>.zip`) and installs the unpacked `.4dbase`. Pin an exact
+version; floating branches make a build non-reproducible. Declare no version
+at all (`{"DateTime": {}}`) only for the local form, where the component
+folder is provided beside the project.
+
+**The pin key is `version`, not `tag`.** Declarations written by the IDE on
+4D 21 R5 use `"version"`, with `"latest"` and `"4d"` as the two non-numeric
+values:
+
+```json
+{"dependencies": {"dashboard": {"github": "miyako/dashboard", "version": "latest"}}}
+{"dependencies": {"4D AIKit": {"github": "4d/4D-AIKit", "version": "4d"}}}
+```
+
+`"4d"` is how the IDE records a component published in 4D's own catalogue
+rather than on GitHub. The lock file the IDE maintains
+(`userPreferences.<user>/dependencies-lock.json`) echoes the same key back --
+`github`, `version`, `loaded`, `found`, `path` for each declared component --
+so it is also a way to confirm which key a given build reads.
+
+A wrong key is not diagnosed. The file parses, the dependency stays
+declared, and nothing resolves -- which looks like a network or permission
+problem. When hand-writing the declaration, compare it against one the IDE
+itself wrote. Not observed here: whether the manager also accepts `"tag"` as
+an alias; the runs behind this note never resolved through the manager.
 
 Only the full 4D application (IDE) acts on this file. `tool4d` does not —
 see "Headless tool4d" below.
@@ -79,6 +101,13 @@ prerelease selection rules; ask for the exact tag.
 Observed locally with the DateTime 0.1.3 release: `Components/` staging
 works for **interpreted** runs and for `tool4d --startup-method=<method>
 --user-param=<json>`, and the component's CLI executes normally.
+
+The lock file is not the evidence. `userPreferences.<user>/dependencies-lock.json`
+is written on every run and recorded `"loaded": false, "found": false,
+"path": ""` for a `tool4d` run in which the hand-staged `Components/` copy
+loaded and the component's `version()` returned `0.1.2`. `tool4d` has no
+Dependency manager, so the lock answers a question nobody asked; read the
+component's own `version()` instead.
 
 `Components/` is not the only place `tool4d` will find it. `tool4d` also has a
 dependency cache, parallel to the IDE's under the same `Caches` root; priming it
