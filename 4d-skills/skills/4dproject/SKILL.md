@@ -25,6 +25,10 @@ This skill owns project-level knowledge that every other 4D skill relies on:
 * `menus.json` standard actions vs method wrappers -- `references/menus.md`
 * component release versions, prefix-free Git tags and the Dependency manager's
   **Follow 4D version** rule -- `references/component-releases.md`
+* consuming a component from a host project: `dependencies.json` descriptor,
+  `Components/` load priority, the tool4d package-manager warning and the
+  LSP's expected unknown-component-class diagnostics --
+  `references/component-releases.md`
 * hosted CI release-pipeline failures (zero-job workflow-file rejection,
   retired runner labels, cross-job artifact/evidence portability, PR creation
   permission, force-push lease rejection, Windows-runner gaps) --
@@ -48,7 +52,7 @@ This skill owns project-level knowledge that every other 4D skill relies on:
 |---|---|
 | Creating a project, the folder tree, `folders.json`, `roles.json`, `catalog_editor.json`, default `menus.json` | `references/layout.md` |
 | Adding/changing menu items, replacing `m_Quit`-style wrappers with `"action"` | `references/menus.md` |
-| Component release/version/tag, Dependency manager compatibility, GitHub preview/prerelease | `references/component-releases.md` |
+| Component release/version/tag, Dependency manager compatibility, GitHub preview/prerelease, declaring a component in a host project (`dependencies.json`, `Components/` priority) | `references/component-releases.md` |
 | GitHub Actions release run fails with no jobs, "configuration ... not supported", evidence/artifact path mismatches, PR creation refused, force-push rejected, Windows-runner utility missing | `references/hosted-ci-failures.md` |
 | Version, tokens, `.gitignore` | this file |
 
