@@ -150,6 +150,43 @@ Two consequences worth knowing before interpreting logs:
   diagnostics are expected and are not a reason to add placeholder classes to
   the host project. The interpreter/compiler resolve the component normally.
 
+### Where `tool4d` looks for a downloaded dependency
+
+`tool4d` never downloads anything itself, so a headless run needs the component
+to already exist in one of two places:
+
+* the project's `Components/` folder -- simplest, and the escape hatch above;
+* `tool4d`'s own dependency cache, which is parallel to the IDE's but
+  separate from it:
+
+| Tool | Cache root (macOS) |
+| --- | --- |
+| 4D IDE | `~/Library/Caches/4D/Dependencies/.github/` |
+| `tool4d` | `~/Library/Caches/tool4d/Dependencies/.github/` |
+
+Both use `<owner>/<repo>/<tag>/` for the unpacked component plus a sibling
+`<tag>.json` recording the tag identity (`github`, `tag`, `archiveURL`,
+`archiveSize`). Opening the project once in the IDE therefore leaves a copy
+that can be primed into `tool4d`'s cache:
+
+```sh
+cp -R ~/Library/Caches/4D/Dependencies/.github/miyako/DraftEmail/0.1.4 \
+      ~/Library/Caches/tool4d/Dependencies/.github/miyako/DraftEmail/0.1.4
+cp    ~/Library/Caches/4D/Dependencies/.github/miyako/DraftEmail/0.1.4.json \
+      ~/Library/Caches/tool4d/Dependencies/.github/miyako/DraftEmail/0.1.4.json
+```
+
+Copy the `.json` as well; with the folder alone the tag stays unresolved.
+Observed on 4D 21.2 LTS (build 21.100694) and 21 R5 macOS: before priming,
+the component's classes were unknown to a `--startup-method` run; after
+priming, the same project ran `cs.DraftEmail.Composer.version()` successfully
+in `tool4d` with no `Components/` folder in the project. The
+`PackageManager ... cannot be found` pair still appeared -- it is printed on
+every run and is not the load result.
+
+This is about a component the host calls. `install-components` (see `4dlsp`)
+reloads what such a cache supplies; it does not populate one.
+
 Never commit a populated `Components/` folder that the dependency declaration
 reproduces; ignore it and let the Dependency manager or a local install supply
 it.
