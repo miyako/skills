@@ -10,6 +10,7 @@ Given a project named `{ProjectName}`, the standard structure is:
 ├── Project/
 │   ├── {ProjectName}.4DProject        # see ../SKILL.md
 │   └── Sources/
+│       ├── dependencies.json          # components to install -- see "## dependencies.json"
 │       ├── catalog.4DCatalog          # database schema (XML) -- 4dcatalog skill
 │       ├── catalog_editor.json        # visual layout for the Structure editor (JSON)
 │       ├── folders.json               # Explorer folder definitions
@@ -66,6 +67,36 @@ colors, field colors). For agent-generated projects, use a minimal version:
   "trash": {}
 }
 ```
+
+## dependencies.json
+
+Declares the components the project loads. Write it **before the project's
+first open**:
+
+```json
+{
+	"version": 2100,
+	"dependencies": {
+		"SomeComponent": {}
+	}
+}
+```
+
+Use the empty object `{}` (dependency on any version) and omit keys for
+components that are only vendored in `Components/`. If the schema version is
+wrong, 4D either ignores the file or asks to install each dependency.
+
+**Why before first open:** a project without `Project/Sources/dependencies.json`
+can trigger the modal "import components" dialog on first open. In a headless
+run (`tool4d`, CI, `--startup-method`) that dialog blocks forever, because
+nobody can dismiss it -- and the block looks like a compiler or startup hang.
+The file also makes the dependency list explicit for a reader.
+
+Do not add a dependency entry for a component whose release cannot be resolved
+(for example because the published package lacks a CLI for this platform): the
+Dependency manager reports the dependency as not found and a fresh checkout may
+fail to open. Bundling under `Components/` and keeping `dependencies` empty is
+the safer choice for a self-contained demo.
 
 ## menus.json
 
