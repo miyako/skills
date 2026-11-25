@@ -1246,6 +1246,18 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   `--startup-method` run dies that way, bisect the constants
   (`fk home folder`, `fk system folder`, ...) before suspecting paths.
 
+## Screenshot Sanity Check
+
+A written PNG is not proof of a useful capture. Before reporting a
+screenshot, check its size and its share of non-background pixels; a
+CSS-styled project form captured through
+`FORM SCREENSHOT(formName; pic; page)` in `tool4d` produced a valid
+996×699 PNG with roughly 1.5% non-background pixels -- effectively blank
+for a hand-off. The same project, captured through the `dialog_screenshot`
+chain in the full 4D application, produced content-rich pages (100+ KB
+PNGs). When the screenshot must show data or styling, use the full 4D app
+and verify the result, do not trust the file's existence.
+
 ## Tool Dependencies
 
 This skill needs a `tool4d` or `4D` installation on the host. Prefer an
