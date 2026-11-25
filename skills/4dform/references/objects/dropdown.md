@@ -77,6 +77,20 @@ Form.dropFruit.currentValue:="Banana"
 
 To initialize an object-based drop-down list, set `index` to `-1` and, optionally, `currentValue` to a placeholder message (e.g. `"Select a fruit"`) -- this is the only time `currentValue` should be assigned.
 
+Read the selection from `index` first; treat `currentValue` as display text, not
+as the source of truth. After the user changes the selection, `currentValue`
+can still hold the initial placeholder on some builds, so resolving
+`values[currentValue]` by value silently selects the wrong item:
+
+```4d
+var $selected : Text
+If (Form.dropFruit.index>=0)
+	$selected:=Form.dropFruit.values[Form.dropFruit.index]
+Else
+	$selected:=""
+End if
+```
+
 ### Array-based
 
 ```json
