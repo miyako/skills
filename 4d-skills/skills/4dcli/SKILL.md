@@ -685,6 +685,23 @@ When that happens:
    the diagnostics disappear; the host code is correct for the runtime and
    for an IDE compile.
 
+### The compiler also finds defects interpretation forgives
+
+Even when the class-store error blocks the build, the run is worth doing:
+`Compile project` type-checks code the interpreter happily executes. Two
+that came out of a project that ran clean under `tool4d`:
+
+| Interpreted code | Compiler verdict | Fix |
+|---|---|---|
+| `$file.parent.create()` as a statement | `This function has been called as a procedure.` | `create()` returns a Boolean; assign it (`$made:=$file.parent.create()`), do not declare it as `4D.Folder` or the next error is `Impossible to cast Boolean to 4D.Folder` |
+| `ON ERR CALL("handler"; ek local)` whose method reads `$1`, `$2`, `$3` | `The parameter $1 has not been explicitly declared.` | give the handler a prototype: `#DECLARE($mode : Variant; $code : Variant; $text : Variant)`. `var $1; $2; $3 : Variant` is rejected ("should be declared in the prototype") |
+
+Fix these rather than dismissing every diagnostic as the dependency's
+fault. After the fixes the same project reported exactly one error (the
+class store) and three warnings (`convert`, `convertBatch`, `version`),
+which is a useful baseline: anything beyond that list is the host's own
+code.
+
 ## Definition of Done
 
 A CLI task is complete when all three hold. Each is a shell check, not a
@@ -888,6 +905,28 @@ See the Form Class section of
 `skills/4dform/references/form-concepts.md`. These are warnings, not
 errors, so the capture still works -- but they will show up in `4dlsp`
 output and should not be mistaken for a defect in the form.
+
+**Caveat -- a form-data object replaces the class instance.** The generic
+template passes `$form` (a plain object) as `DIALOG`'s form data. On a
+form that declares a `formClass`, that object *is* `Form`: 4D never
+instantiates the class, so `On Load` fails the moment it calls a class
+method with **`A function was expected` (error 317)**, and the capture
+shows the window dimmed behind the error alert -- which reads as "the
+form is greyed out", not as a broken driver. Build the class instance and
+pass that instead:
+
+```4d
+var $lab : cs.TimeLab
+$lab:=cs.TimeLab.new()
+$lab.__page:=2
+$lab.__screenshotPath:=$path
+DIALOG("Lab"; $lab; *)
+```
+
+The two `__` properties still have to be declared in the class (see
+above). Keep both drivers when a project has plain-data forms *and* class
+forms: passing `Null` is not a fix, because it discards the page and
+output path that the chain reads back from `Form`.
 
 **Caveat -- binary.** `dialog_screenshot` requires `4D` **without**
 `--headless`, and does not work under `tool4d` at all. Headless mode
