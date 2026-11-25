@@ -622,7 +622,23 @@ order -- each step costs one run and narrows the cause.
    `LOG EVENT(Into system standard outputs; ...)`, not `TRACE`, which needs
    a debugger; see "Tips".
 
-4. **Do not use `QUIT 4D` as the early-out of a failure branch.** 4D queues
+4. **Isolate calls that go through a component or `SystemWorker`.** A
+   prebuilt component's worker-backed call can abort a startup method with
+   no error at all -- no `ON ERR CALL`, no `QUIT 4D`, exit code 0 -- when
+   another native command already failed in the same method. Give those
+   calls their own `--startup-method` and write a step marker before each
+   one so an abort still tells you where it happened:
+
+   ```4d
+   $build.file("step.txt").setText("show")
+   $handle:=$overlay.show($options; Null)
+   $build.file("step.txt").setText("shown")
+   ```
+
+   The file content after a silent death is the only post-mortem evidence you
+   get; treat a missing final marker as a `failed` step, not as `not_run`.
+
+5. **Do not use `QUIT 4D` as the early-out of a failure branch.** 4D queues
    it for the end of the current method rather than aborting, so a guard
    that reports a problem and quits then falls into the code it was
    guarding, and the cascade of later errors buries the first one. Verified
@@ -1093,7 +1109,20 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   class file.
 * tool4d may fail to resolve a project's dependencies (components): expect
   an error when opening the project or when code calls a component. Test
-  component-free code paths, or use full 4D.
+  component-free code paths, or use full 4D. A declared dependency whose
+  `.4dbase` is already present in `Components/` still loads: the
+  `PackageManager ... cannot be found` lines are diagnostics, so prove the
+  load by calling something (`cs.Ns.Class.new().version()`) and logging it.
+* No SVG rasterizer: `SVG EXPORT TO PICTURE` fails headless with
+  `-9926 The referenced element is invalid` /
+  `action_description: "The XML command cannot be executed"` and leaves
+  `Picture size` at 0 even for a well-formed, Quick Look-renderable document.
+  Report SVG/picture rasterisation as `not_run` and verify it in a GUI run,
+  not by editing the SVG. Keep such known-failing XML/SVG calls out of the
+  same startup method as component or `SystemWorker` calls: an observed
+  run mixed them and the later component call aborted with no catchable
+  error (no `ON ERR CALL` hit, exit code 0); isolating the component checks
+  in their own `--startup-method` succeeded repeatedly.
 
 ## Tool Dependencies
 
