@@ -579,8 +579,31 @@ workflows, use `4D` **without** `--headless`.
 ### Exit Behavior
 
 * **PASS**: stdout contains `PASS`, exit code 0.
-* **FAIL**: `ASSERT` triggers a dialog, headless mode auto-aborts, exit
-  code is non-zero and no `PASS` is printed.
+* **FAIL**: `ASSERT` aborts the method -- no `PASS` is printed and no
+  statement after the assertion runs.
+
+**The exit code alone proves nothing.** Measured with
+`tool4d --dataless --skip-onstartup --startup-method=<method>` on 21.2 LTS
+(100694) and 21 R5 (100175, 100176), a failed `ASSERT` prints
+
+```
+tool4d.4DRT [-10518] Assert failed: deliberate failure (task=-1, taskName=Main task)
+```
+
+and the process still exits **`0`**. An interpreted runtime error inside the
+startup method does the same (`[58] A ")" was expected.` → exit `0`). A
+non-zero status does occur when 4D itself refuses to open the project (for
+example `[-10524] ... current data file not found`), which is a different
+failure and easy to mistake for "the tests failed".
+
+Consequences for a test harness:
+
+* Gate on a marker, never on `$?`. Print `PASS`/`FAIL` lines and/or write a
+  report file the wrapper parses, and make the wrapper read that file.
+* Keep `QUIT 4D` after the final assertion. A failed `ASSERT` aborts the
+  method, so the missing `PASS` line -- not the exit status -- is the signal.
+* Run the same method against a deliberately failing assertion once, and
+  confirm the harness reports failure. With an exit-code gate it will not.
 
 ### When a Startup Method Dies With No Output
 
