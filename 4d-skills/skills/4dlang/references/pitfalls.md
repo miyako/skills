@@ -24,23 +24,45 @@ https://developer.4d.com/docs/Concepts/string
 
 ## Paths, File and Folder
 
-A 4D **system path** (what `Get 4D folder(Database folder)` returns, with `:`
-separators) is not accepted by `File()` / `Folder()`:
-`File($systemPath)` raises `[3] A valid posix path was expected`.
+Three path conventions meet in one call chain and 4D converts none of them:
 
-* Pass `fk platform path`: `File($systemPath; fk platform path)`,
-  `Folder($systemPath; fk platform path)`; or
-* convert first: `File(Convert path system to POSIX($systemPath))`.
+| Value | Convention | Construct with |
+|---|---|---|
+| `Get 4D folder(...)` (e.g. `Database folder`) | HFS system path, **volume-qualified** on macOS (`Macintosh HD:Users:...:`), `:`-separated | `Folder(...; fk platform path)`, then colon-join children |
+| `.platformPath` of a 4D object | HFS on macOS | `File(x; fk platform path)` |
+| path produced by Python, a shell or a CLI | POSIX (`/Users/...`) | `File(x; fk posix path)` |
 
-`File("/tmp/x.png")` (a POSIX path) works as-is. `Folder("/RESOURCES/...")`
-is a 4D relative path and also works. The failure is easy to miss because
-`File()` with a POSIX path succeeds and the system path only shows up on the
-machine-specific branch -- prefer `fk platform path` whenever the string
-came from `Get 4D folder` or `Select folder`.
+A system path passed to `File()` / `Folder()` without a kind raises
+`[3] A valid posix path was expected`; the constructor then yields Null and
+later accesses cascade into `[-10716] Object or Collection Expected` /
+`[55] A Boolean argument was expected` (the first error is the real one).
 
-Reading a text file back on macOS also writes reliably through a POSIX path;
-the "silent write failure" noted for `tool4d` applies to arbitrary locations,
-so prefer the database folder for evidence.
+* Pass `fk platform path` when the string came from `Get 4D folder`,
+  `.platformPath` or `Select folder`; or convert first:
+  `File(Convert path system to POSIX($systemPath))`. On Windows the value is
+  already a platform path, so branch on `Is Windows` rather than converting
+  unconditionally.
+* `File("/tmp/x.png")` (POSIX) works as-is, and `Folder("/RESOURCES/...")`
+  is a 4D relative path that also works. The failure is easy to miss because
+  the POSIX branch succeeds and the system path shows up only on the
+  machine-specific branch.
+* `Folder(<HFS path>; fk platform path).posixPath` returns **empty**: a Folder
+  configured from an HFS path has no POSIX form. Convert explicitly with
+  `Convert path system to POSIX($folder.platformPath)`.
+* The reverse also fails: a `.platformPath` (HFS) given to
+  `File(x; fk posix path)` raises the same error at runtime, which in a
+  headless run looks like a dead method with no output. Give each consumer the
+  convention it names, and convert at the boundary rather than once for the
+  whole call chain.
+* A worker, callback or `--user-param` payload does not inherit your
+  convention: decide one spelling for the boundary and convert on the sending
+  side (see `skills/4dcli/SKILL.md`, "Path Arguments").
+* `4D.SystemWorker.new` takes a POSIX `commandLine` on macOS, so build it from
+  `File(...; fk posix path).platformPath`, never by concatenating an HFS
+  folder path with a name.
+* Writes through a POSIX path are reliable on macOS; the "silent write
+  failure" noted for `tool4d` applies to arbitrary locations, so prefer the
+  database folder for evidence.
 
 ## Shared objects: `Storage`
 
@@ -125,32 +147,7 @@ and to reading properties inside a preemptive process.
 References: https://developer.4d.com/docs/commands/ob-instance-of,
 https://developer.4d.com/docs/Concepts/classes#class-extends-classname
 
-## Paths
-
-Three path conventions meet in one call chain and 4D converts none of them:
-
-| Value | Convention | Construct with |
-|---|---|---|
-| `Get 4D folder(Database folder)` | HFS, **volume-qualified** (`Macintosh HD:Users:...:`) | `Folder(...; fk platform path)`, then colon-join children |
-| `.platformPath` of a 4D object | HFS on macOS | `File(x; fk platform path)` |
-| path produced by Python, a shell or a CLI | POSIX (`/Users/...`) | `File(x; fk posix path)` |
-
-* `Folder(<HFS path>; fk platform path).posixPath` returns **empty**: a Folder
-  configured from an HFS path has no POSIX form. Convert explicitly with
-  `Convert path system to POSIX($folder.platformPath)`.
-* Passing a `.platformPath` (HFS) into `File(x; fk posix path)` raises
-  `A valid posix path was expected` at runtime, which in a headless run looks
-  like a dead method with no output. Give each consumer the convention it
-  names, and convert at the boundary rather than once for the whole call
-  chain.
-* A worker, callback or `--user-param` payload does not inherit your
-  convention: decide one spelling for the boundary and convert on the sending
-  side (see `skills/4dcli/SKILL.md`, "Path Arguments").
-* `4D.SystemWorker.new` takes a POSIX `commandLine` on macOS, so build it from
-  `File(...; fk posix path).platformPath`, never by concatenating an HFS
-  folder path with a name.
-
-## Paths, file names and pictures
+## File names and pictures
 
 * `File("chart.tif")` / `File("sub/x.png")` and `Folder("sub")` raise
   `FiFo [3] A valid posix path was expected.` -- a bare or relative name is
