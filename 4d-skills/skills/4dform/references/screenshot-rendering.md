@@ -72,6 +72,17 @@ data bindings, or verify every 4D stylesheet property. Report unsupported
 features and rendering errors rather than presenting an approximation as
 runtime evidence.
 
+## Deterministic Output
+
+For a pinned `fourdform` build and theme, the same `.4DForm` renders to a
+**byte-identical** PNG on every run (three separate invocations hashed the same
+image; a preview committed a day earlier matched a fresh render too). That makes
+a committed preview a usable regression fixture: re-render it in CI and compare
+hashes instead of eyeballing the image. A mismatch then means either the form changed
+(recommit the preview) or the renderer, theme or version changed (pin those
+before concluding anything). Determinism is per platform, theme and tool
+version; a different renderer is expected to produce different pixels.
+
 Use actual 4D runtime captures below when their behavior is needed. The
 static-template observations in the following sections describe
 `FORM SCREENSHOT`, not a universal promise about `fourdform`.

@@ -16,9 +16,46 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 | Negation | Use `Not($x)`. `!` delimits date literals (`!2026-01-21!`); `not` / `!` as negation exist only inside ORDA query strings. |
 | Text `=` is not exact | `"a"="A"` is True (case ignored), and `@` in the right operand is a wildcard (`"abcd"="ab@"` is True). The same holds in `Case of` branches such as `:($x="abc")` and for `#`. |
 | Exact text comparison | Compare `Character code` of each character; test a literal `@` with `Character code(At sign)`. |
+| No implicit number-to-text conversion | `"count: "+$count` fails (*These operators cannot be used together*, or a compile error on the analyzer): wrap every number, `"count: "+String($count)`. The same applies to `Real`, `Integer` and object/collection `.length` values. |
+| `~=` is not a regex or "matches" operator | Use `Match regex("^/"; $path)`; `$path~=^/` raises *These operators cannot be used together* [50]. 4D has no bare regex comparison operator. |
 
 Reference: https://developer.4d.com/docs/Concepts/operators,
 https://developer.4d.com/docs/Concepts/string
+
+## Paths, File and Folder
+
+A 4D **system path** (what `Get 4D folder(Database folder)` returns, with `:`
+separators) is not accepted by `File()` / `Folder()`:
+`File($systemPath)` raises `[3] A valid posix path was expected`.
+
+* Pass `fk platform path`: `File($systemPath; fk platform path)`,
+  `Folder($systemPath; fk platform path)`; or
+* convert first: `File(Convert path system to POSIX($systemPath))`.
+
+`File("/tmp/x.png")` (a POSIX path) works as-is. `Folder("/RESOURCES/...")`
+is a 4D relative path and also works. The failure is easy to miss because
+`File()` with a POSIX path succeeds and the system path only shows up on the
+machine-specific branch -- prefer `fk platform path` whenever the string
+came from `Get 4D folder` or `Select folder`.
+
+Reading a text file back on macOS also writes reliably through a POSIX path;
+the "silent write failure" noted for `tool4d` applies to arbitrary locations,
+so prefer the database folder for evidence.
+
+## Shared objects: `Storage`
+
+Assigning a property on the shared `Storage` object without entering `Use`
+raises `-10719 Shared Object needs a "Use" before altering a property` at
+runtime (the analyzer does not catch it). Wrap every first write:
+
+```4d
+Use (Storage)
+	Storage.captureWindow:=0
+End use
+```
+
+The same `Use` rule applies to shared objects returned by `New shared object`
+and to reading properties inside a preemptive process.
 
 ## Objects and Literals
 
@@ -38,6 +75,16 @@ https://developer.4d.com/docs/Concepts/string
   true and silently skips its branch. Accept `Is real` (add `Is longint`
   only for values that are not object properties) and check integrality
   separately if it matters.
+* **Collections are 0-based**, while arrays are 1-based. `$c[0]` is the
+  first element, `$c.length` is the count, so the array idiom
+  `For ($i; 1; $c.length)` skips element 0 and then raises
+  `Index in collection is out of range (-10713)` on the final pass.
+  Iterate `For ($i; 0; $c.length-1)` or use `For each ($item; $c)`.
+* `4D.File.name` is the **display name without the extension**: `cube.stl`
+  reads as `cube`. Building a path back from a collected `.name` produces
+  `.../cube` and a "file not found" from whatever consumes it. Use
+  `.fullName` whenever the name must round-trip into a path, and
+  `.extension` when only the suffix is wanted.
 
 ## Instance checks and inheritance boundaries
 
@@ -56,6 +103,26 @@ https://developer.4d.com/docs/Concepts/string
 
 References: https://developer.4d.com/docs/commands/ob-instance-of,
 https://developer.4d.com/docs/Concepts/classes#class-extends-classname
+
+## Paths, file names and pictures
+
+* `File("chart.tif")` / `File("sub/x.png")` and `Folder("sub")` raise
+  `FiFo [3] A valid posix path was expected.` -- a bare or relative name is
+  not a path. Resolve it first
+  (`Folder(fk database folder).folder("Out").file($name).path`) or pass the
+  path kind explicitly. Nested inside another member call's argument list the
+  same failure was reported as `-10729 Unknown member method` naming an
+  **empty** method, which reads as a missing class function; split the chain
+  into locals before concluding the function does not exist.
+* `File.extension` includes the leading dot (`.tif`), so `"."+$ext` yields
+  `name-2..tif`.
+* A typed `Picture` property that was never assigned is not an empty picture:
+  `Picture size($object.picture)` raises `[59] 4D was expecting a picture.`
+  Assign a real picture when the object is constructed (a 4x4 transparent
+  PNG read with `READ PICTURE FILE` is enough); do not leave it unassigned
+  and do not assign `Null`.
+* `Picture size` returns **bytes**, not dimensions; use `PICTURE PROPERTIES`
+  when the width/height matter.
 
 ## Formula, `This` and `.call()`
 
@@ -135,6 +202,18 @@ Reference: https://developer.4d.com/docs/API/SystemWorkerClass
 References: https://developer.4d.com/docs/API/SignalClass,
 https://developer.4d.com/docs/Develop/processes
 
+## Number Formatting, File API and Commands That Look Like Procedures
+
+| Pitfall | Rule |
+|---|---|
+| `String(value; "0.#####")` | Not a safe general formatter: values with two or more integer digits come back as `<<<<<<<` (`41.313` -> `<<<<<<<`, `5618.49` -> `<<<<`, while `0.4` stays `0.4`). `String(value; "##.#####")` works. For machine-readable text (JSON, SVG attributes) use plain `String(value)` or format by hand. |
+| `String(value)` and the locale | Single-argument `String` uses the host decimal separator, so a comma-decimal system emits `41,313` — fatal in a JSON number or an SVG coordinate. Normalise the separator before writing structured text. |
+| `String(value; format; separator)` | Not an overload: the third argument is not a decimal-separator argument, and this call fails compilation with `At least one parameter type does not match the prototype(s) of the function "String"` plus `Invalid constant type : Alphanumeric`. |
+| `Min(a; b)` / `Max(a; b)` | Array commands. With two scalars, compilation fails as `Impossible to cast Real to Array<Variant>.` / `Invalid constant type : Real` — the diagnostics never mention `Min`. Compare with `math` operators or a user helper. |
+| `4D.Folder.delete()` | Refuses a non-empty folder: `[651] Folder  not empty`. Use `DELETE FOLDER($folder.path; Delete with contents)` for scratch directories. The failure is catchable by `Try`, but `Last errors` is empty in that `Catch`. |
+| `Open document(path)` as a statement | It is a function: `This function has been called as a procedure.` Assign or discard the result (`$opened:=String(Open document($path))`). |
+| `var` placement | A `var` inside an `If` or `For each` block compiles and is block-scoped; the "declarations must be at the top" rule forbids a redeclaration, not a block-local declaration. Keep declarations at the top by convention, and do not diagnose block-local `var` as a syntax error. |
+
 ## Command Signatures Often Guessed Wrong
 
 | Command | Correct use |
@@ -144,3 +223,12 @@ https://developer.4d.com/docs/Develop/processes
 | `OBJECT SET COORDINATES(*; name; left; top {; right; bottom})` | Absolute coordinates, not width / height (`skills/4dform/references/layout.md`) |
 | `OBJECT SET CSS CLASS` | Does not exist: use `OBJECT SET RGB COLORS`, `OBJECT SET FONT STYLE`, ... (`skills/4dcss/SKILL.md`) |
 | `BLOB TO PICTURE(blob; picture {; codec})` | Codec is optional |
+| `Time string(time; format)` | One argument only. A format argument is not rejected until run time: `Time string($t; ISO time)` aborts with `[58] A ")" was expected.` |
+| `String(date; ISO date)` | `2026-11-26T00:00:00`, **not** `2026-11-26` -- the string carries a zero time as well |
+| `String(time; ISO time)` | `0000-00-00T05:44:44` -- a zero date as well |
+| `String(date; ISO date; time)` | `2026-11-26T05:44:44`: the three-argument form is the one that yields an ISO timestamp |
+
+The `ISO` format constants produce full date+time strings, so a value destined
+for an API that wants `YYYY-MM-DD` or `HH:MM:SS` needs a slice
+(`Substring(String($d; ISO date); 1; 10)`) or the three-argument combined form.
+Measured on 21 R5 (100176).

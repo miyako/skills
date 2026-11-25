@@ -56,6 +56,12 @@ They appear in three contexts:
 Always give the type explicitly. `var $a:=10` infers `Real`, not
 `Integer`.
 
+`Longint` is **not** a `var` type: `var $x : Longint` is rejected with a
+syntax error in 21 R5. The legacy `C_LONGINT` / `C_INTEGER` declarations both
+map to `Integer` in the table above -- do not carry the word `Longint` over
+from the old command name. When the type is irrelevant (a `Milliseconds`
+difference, an array bound) an untyped `var $x` is also valid.
+
 ## Migration Rules
 
 ### Rule 1: Local Variables — `C_*` → `var`
