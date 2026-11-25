@@ -14,17 +14,39 @@ project that wants to call a component's classes.
   "dependencies": {
     "DateTime": {
       "github": "miyako/DateTime",
-      "tag": "0.1.3"
+      "version": "0.1.3"
     }
   }
 }
 ```
 
 The key (`DateTime`) is the component name; 4D's Dependency manager
-resolves `github` + `tag` to that repository's release asset
-(`<repository>.zip`) and installs the unpacked `.4dbase`. Pin a `tag`;
-floating branches make a build non-reproducible. `{"DateTime": {}}` is the
-local form used when the component folder is provided beside the project.
+resolves `github` + `version` to that repository's release asset
+(`<repository>.zip`) and installs the unpacked `.4dbase`. Pin an exact
+version; floating branches make a build non-reproducible. Declare no version
+at all (`{"DateTime": {}}`) only for the local form, where the component
+folder is provided beside the project.
+
+**The pin key is `version`, not `tag`.** Declarations written by the IDE on
+4D 21 R5 use `"version"`, with `"latest"` and `"4d"` as the two non-numeric
+values:
+
+```json
+{"dependencies": {"dashboard": {"github": "miyako/dashboard", "version": "latest"}}}
+{"dependencies": {"4D AIKit": {"github": "4d/4D-AIKit", "version": "4d"}}}
+```
+
+`"4d"` is how the IDE records a component published in 4D's own catalogue
+rather than on GitHub. The lock file the IDE maintains
+(`userPreferences.<user>/dependencies-lock.json`) echoes the same key back --
+`github`, `version`, `loaded`, `found`, `path` for each declared component --
+so it is also a way to confirm which key a given build reads.
+
+A wrong key is not diagnosed. The file parses, the dependency stays
+declared, and nothing resolves -- which looks like a network or permission
+problem. When hand-writing the declaration, compare it against one the IDE
+itself wrote. Not observed here: whether the manager also accepts `"tag"` as
+an alias; the runs behind this note never resolved through the manager.
 
 Only the full 4D application (IDE) acts on this file. `tool4d` does not —
 see "Headless tool4d" below.
@@ -33,7 +55,7 @@ see "Headless tool4d" below.
 
 | Location | Notes |
 |---|---|
-| `<project>/Components/<Name>.4dbase` | Highest priority; the folder 4D and `tool4d` load at startup. Use this for a component copied by hand or by a script. |
+| `<project>/Components/<Name>.4dbase` | Highest priority; the folder 4D and `tool4d` load at startup. `<project>` is the folder that contains `Project/`: `…/host/Components/CardDAV.4dbase`, **not** `…/host/Project/Components/`. Use this for a component copied by hand or by a script. |
 | `<project>/<Name>.4dbase` (beside `Project/`) | Resolved by the Dependency manager as a local dependency; **not** loaded by `tool4d`. |
 
 A component package is a folder whose name ends in `.4dbase`:
@@ -45,6 +67,14 @@ A component package is a folder whose name ends in `.4dbase`:
 An interpreted host can use either; a compiled host requires a compiled
 component. Do not edit files inside a downloaded component: it is a
 dependency, and its revision is the release tag.
+
+Staging one level too deep -- `<project>/Project/Components/<Name>.4dbase` --
+is silently ignored: the folder is read, never loaded. `tool4d` prints the
+usual pair `PackageManager Dependency '<Name>' cannot be found ()` and the
+first `cs.<ComponentName>...` call then fails with
+`4DRT [-10716] Object or Collection Expected.` because the class store is
+`Null`. Observed with CardDAV 0.1.2 on macOS 27.2.1 arm64 / 4D 21.2 LTS
+(21.100694); moving the same files up one level fixed the run immediately.
 
 Host code reaches the component through the component's declared class
 store, `cs.<ComponentName>.<Class>`. Inside the component the same class is
@@ -76,9 +106,30 @@ asset whose name is `<repo>.zip`, and reject archive members that escape
 the destination directory. Do not duplicate the Dependency manager's
 prerelease selection rules; ask for the exact tag.
 
+Restore the archive's unix mode bits as well. `zipfile` writes every member
+as 0644, so a component whose CLI ships as a regular executable loses its
+exec bit; each call that spawns it then fails with
+`tool4d.POSX [13] Permission denied` and `launch_failed` in the envelope,
+which reads like a component bug rather than an unpacking one:
+
+```python
+mode = (member.external_attr >> 16) & 0o777
+if mode:
+    target.chmod(mode)
+```
+
+The same rule applies to any tool the skills provision from a ZIP.
+
 Observed locally with the DateTime 0.1.3 release: `Components/` staging
 works for **interpreted** runs and for `tool4d --startup-method=<method>
 --user-param=<json>`, and the component's CLI executes normally.
+
+The lock file is not the evidence. `userPreferences.<user>/dependencies-lock.json`
+is written on every run and recorded `"loaded": false, "found": false,
+"path": ""` for a `tool4d` run in which the hand-staged `Components/` copy
+loaded and the component's `version()` returned `0.1.2`. `tool4d` has no
+Dependency manager, so the lock answers a question nobody asked; read the
+component's own `version()` instead.
 
 `Components/` is not the only place `tool4d` will find it. `tool4d` also has a
 dependency cache, parallel to the IDE's under the same `Caches` root; priming it

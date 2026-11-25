@@ -266,6 +266,15 @@ method produces no error at all -- it is simply never called, so the form
 appears to load correctly and does nothing. Enumerate the files under
 `ObjectMethods/` and find each one in the form JSON.
 
+**A fourth check is cheap and worth adding when 4D is available:** have a
+`tool4d` startup method call `FORM LOAD(<form name>; *)` inside `Try`. It
+loads the definition with no window, and an unknown name raises
+`[81] The form was not found`, so a green run proves that the compiler and
+4D accepted this form -- something schema validation cannot show. Do not
+reach for `FORM GET OBJECTS` or `FORM Convert to dynamic` here: both fail
+with `[59]` argument errors headlessly (see `skills/4dcli/SKILL.md`), so
+per-object runtime introspection still needs a GUI run.
+
 The two validators are not interchangeable. Schema validation gates the
 artifact; `.4dm` validation gates the code. Both must pass and neither is
 sufficient alone. `jq empty` is not schema validation and does not count
@@ -487,6 +496,37 @@ language, and appearance with the first preview. Explain discrepancies
 in terms of each renderer's scope rather than assuming either image is
 proof of all runtime behavior. If the required 4D engine is unavailable,
 report that the second opinion could not be obtained.
+
+### Headless Layout Check (no window)
+
+When no capture is possible -- `FORM SCREENSHOT` needs 4D 21 R3 or later, or
+the host is `tool4d` in CI -- a `--startup-method` run can still prove that
+the `.4DForm` JSON and its object tree are loadable, and that the objects a
+form method dispatches on still exist. `FORM LOAD` parses the form and builds
+its objects; `FORM GET OBJECTS` then lists them:
+
+```4d
+// run from a --startup-method method, with a local error handler installed
+ON ERR CALL("FormLoadError"; ek local)   // records Last errors into a Text var
+FORM LOAD("Order")
+FORM GET OBJECTS($names; $types)          // no form-name parameter
+// ... assert on $names: every object the form method branches on
+FORM UNLOAD                               // no parameter either
+ON ERR CALL(""; ek local)
+```
+
+Two traps, observed on 21.2 LTS (21.100694):
+
+* `FORM GET OBJECTS($names; $types; "Order")` does not exist -- the compiler
+  rejects the third argument with `Impossible to cast Text to Integer.`
+  Load the form first, then read the current form's objects.
+* `FORM LOAD` does **not** run the `On Load` method. It validates structure and
+  object names only; call the form's binding entry point directly (keep the
+  binding in a class method that takes a plain object) if its behaviour must be
+  covered headlessly.
+
+`$names` also contains the page and canvas objects, so compare a required-name
+list against it rather than expecting an object count to match the form file.
 
 The standalone CLI supports macOS 12+ and Windows 10+, arm64/x64; Linux
 is unavailable. Do not download a different platform's binary or

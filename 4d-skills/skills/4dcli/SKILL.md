@@ -567,6 +567,29 @@ HFS to POSIX with `Convert path system to POSIX(...)` (or read
 a callback or a `--user-param` payload. See
 `skills/4dlang/references/pitfalls.md`, "Paths".
 
+### The temporary folder is Null under `--dataless`
+
+`Folder(fk temporary folder)` returns **Null** in a `tool4d --dataless`
+run. The failure is quiet: `Folder(fk temporary folder).folder("x")` yields
+Null and the run only dies later, on the first `.file(...)` or write, with a
+message about the consumer rather than the cause. `Get 4D folder(Temporary
+folder; *)` does not help -- it returns an HFS path
+(`Macintosh HD:private:...`) that `Folder()` rejects with `A valid posix path
+was expected.`
+
+Write artefacts under the database folder instead:
+
+```4d
+var $out : 4D.Folder
+$out:=Folder(fk database folder).folder("output")
+var $made : Boolean
+$made:=$out.create()   // create() returns a Boolean, not the folder
+```
+
+`Folder(fk database folder)` resolves to `/PACKAGE/` and is writable in
+`tool4d` and in the IDE alike, which also makes the output easy to find
+afterwards and trivial to gitignore (`/output/`).
+
 ## Choosing the Right Engine
 
 | Engine | Mode | Use for |
@@ -594,8 +617,31 @@ workflows, use `4D` **without** `--headless`.
 ### Exit Behavior
 
 * **PASS**: stdout contains `PASS`, exit code 0.
-* **FAIL**: `ASSERT` triggers a dialog, headless mode auto-aborts, exit
-  code is non-zero and no `PASS` is printed.
+* **FAIL**: `ASSERT` aborts the method -- no `PASS` is printed and no
+  statement after the assertion runs.
+
+**The exit code alone proves nothing.** Measured with
+`tool4d --dataless --skip-onstartup --startup-method=<method>` on 21.2 LTS
+(100694) and 21 R5 (100175, 100176), a failed `ASSERT` prints
+
+```
+tool4d.4DRT [-10518] Assert failed: deliberate failure (task=-1, taskName=Main task)
+```
+
+and the process still exits **`0`**. An interpreted runtime error inside the
+startup method does the same (`[58] A ")" was expected.` → exit `0`). A
+non-zero status does occur when 4D itself refuses to open the project (for
+example `[-10524] ... current data file not found`), which is a different
+failure and easy to mistake for "the tests failed".
+
+Consequences for a test harness:
+
+* Gate on a marker, never on `$?`. Print `PASS`/`FAIL` lines and/or write a
+  report file the wrapper parses, and make the wrapper read that file.
+* Keep `QUIT 4D` after the final assertion. A failed `ASSERT` aborts the
+  method, so the missing `PASS` line -- not the exit status -- is the signal.
+* Run the same method against a deliberately failing assertion once, and
+  confirm the harness reports failure. With an exit-code gate it will not.
 
 ### Waiting on another process
 
@@ -690,7 +736,15 @@ installed. For the declaration file and `Components/` staging, see
 
 `tool4d` does not run the Dependency manager, but it does load a component
 staged in `Components/`, so an **interpreted** run works after staging.
-Do not promise the same for compilation. `Compile project` under `tool4d`
+Do not promise the same for compilation.
+
+Staged executables must keep their Unix modes. A component unpacked by a
+library that drops them (`zipfile.extractall` does; `unzip` and git do not)
+still resolves its classes, then the first process call fails with
+`launch_failed: 4D could not create the system worker` and
+`POSX [13] Permission denied`. Re-apply the archive's
+`external_attr >> 16` modes when staging from Python and check
+`ls -l Resources/bin/<platform>/` before blaming the component. `Compile project` under `tool4d`
 reported, against a real dependency (DateTime 0.1.3) on 21.2 LTS builds
 21.100691/21.100694 and 21 R5 21R5.100176:
 
@@ -965,6 +1019,16 @@ auto-answers dialog boxes, so `DIALOG` is dismissed before the chained
 `CALL FORM` can run, and the process may then hang. The same applies to
 `run_project_form`.
 
+**Headless class-form smoke test.** A form that declares a `formClass` can
+be loaded without a window: `FORM LOAD("Lab")` under `tool4d` instantiates
+the class instance, so `Form.<property>` reads are live right after it
+(observed reading a constructor-computed version Text and the rows of a
+collection property). That is a cheap check that the class constructor and
+its state survive before any GUI attempt; `FORM UNLOAD` releases the form.
+It does not paint widgets, so a `dataSource` typo still only surfaces when
+the widget is actually drawn -- cross-check the form JSON against the class
+properties separately.
+
 ### Installing a Bundled Method
 
 Copy the asset to the project's methods directory, keeping the filename:
@@ -1193,6 +1257,37 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   run mixed them and the later component call aborted with no catchable
   error (no `ON ERR CALL` hit, exit code 0); isolating the component checks
   in their own `--startup-method` succeeded repeatedly.
+* Where `FORM LOAD` stops: an unknown form name raises
+  `[81] The form was not found`, which is what makes a load a real assertion
+  rather than a no-op. The object-level commands do not work headlessly at
+  all -- `FORM GET OBJECTS($pointers; <name>; "")` and
+  `FORM Convert to dynamic(<name>)` fail with `[59]` argument errors
+  (`4D was expecting a variable or a parameter ...` /
+  `4D was expecting a text expression`), not because a window is missing.
+  Treat per-object runtime checks as `not_run` without a GUI.
+* A `Catch` block is not a logging facility: `Last errors` can be empty
+  there (`[-10713] Index in collection is out of range`), and some failures
+  (`DOM Parse XML variable(<object property>)`, `[59]`) are caught by `Try`
+  yet never reach `ON ERR CALL`. Write a fixed sentinel from `Catch` and
+  assert on it; do not build a bridge from `Last errors[1]`.
+* A clean `Compile project` does not prove a method can run. Stale or removed
+  constants such as `Folder(Home folder)` compile without a single error and
+  abort at execution with `tool4d.FiFo [2] The constant value is invalid`,
+  which names neither the constant nor the line. When a
+  `--startup-method` run dies that way, bisect the constants
+  (`fk home folder`, `fk system folder`, ...) before suspecting paths.
+
+## Screenshot Sanity Check
+
+A written PNG is not proof of a useful capture. Before reporting a
+screenshot, check its size and its share of non-background pixels; a
+CSS-styled project form captured through
+`FORM SCREENSHOT(formName; pic; page)` in `tool4d` produced a valid
+996×699 PNG with roughly 1.5% non-background pixels -- effectively blank
+for a hand-off. The same project, captured through the `dialog_screenshot`
+chain in the full 4D application, produced content-rich pages (100+ KB
+PNGs). When the screenshot must show data or styling, use the full 4D app
+and verify the result, do not trust the file's existence.
 
 ## Tool Dependencies
 
