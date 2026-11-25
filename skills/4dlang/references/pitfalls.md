@@ -37,7 +37,10 @@ https://developer.4d.com/docs/Concepts/string
   from JSON. A guard such as `Value type($o.count)=Is longint` is never
   true and silently skips its branch. Accept `Is real` (add `Is longint`
   only for values that are not object properties) and check integrality
-  separately if it matters.
+  separately if it matters. `4D.SystemWorker.exitCode` behaves the same way,
+  and so does any exit code copied into an object property: a guard of
+  `Is longint` hides every exit status, including the nonzero ones that
+  distinguish "the CLI rejected the request" from "the process never started".
 
 ## Instance checks and inheritance boundaries
 

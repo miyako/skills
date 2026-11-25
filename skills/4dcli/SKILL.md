@@ -563,6 +563,17 @@ path on failure -- "no such file" without the path costs a whole CI cycle.
 Use full `4D`, not `tool4d`, for features absent from tool4d, including
 **Label Editor**; use GUI mode when the task needs the editor's windows.
 
+A host project that needs a **runtime** capture (values applied by `On Load`
+and a worker, then `FORM SCREENSHOT`) therefore uses the `4D` binary. `tool4d`
+build 21.2.100694 rejects window creation outright and exits 1:
+
+```
+tool4d.HDLS (Open form window)[{"type":"projectMethod","name":"...","line":16,...}] ()
+```
+
+`HDLS` marks a command it will not run headless. `FORM SCREENSHOT` on a form
+name alone still works there, because it draws the static template.
+
 **Key limitation**: in headless mode (`tool4d` or `4D --headless`) every
 call to a dialog box is intercepted and answered automatically. `DIALOG`
 is therefore dismissed immediately -- the form loads but closes before
