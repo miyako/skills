@@ -40,6 +40,32 @@ The `picture` property is a POSIX-syntax path. Three forms:
 
 Both `/RESOURCES/Images/...` and form-relative filenames (bare filename or `Images/...` next to `form.4DForm`) are valid and render correctly.
 
+### Not for data bound to `Form.*` or an object property
+
+`type: "picture"` is static: it reads only `picture` (a path or `var:name`). A
+`dataSource` such as `"Form.sourcePicture"` on it **validates against the
+schema but is ignored**, and the object renders empty -- no error, no log
+line. To show a picture held in `Form`, an object property or a variable the
+code assigns at runtime, use an input instead (see `input.md`, "Picture-Type
+Input"):
+
+```json
+{
+  "preview": {
+    "type": "input",
+    "left": 20, "top": 20, "width": 356, "height": 221,
+    "dataSource": "Form.previewPicture",
+    "dataSourceTypeHint": "picture",
+    "enterable": false,
+    "pictureFormat": "proportionalCenter"
+  }
+}
+```
+
+`enterable: false` stops the user pasting or dropping a picture over it.
+Use `proportionalCenter` rather than `truncatedCenter` when the source is
+larger than the box, or the preview is cropped.
+
 ## Display (`pictureFormat`)
 
 | JSON value | Effect |
