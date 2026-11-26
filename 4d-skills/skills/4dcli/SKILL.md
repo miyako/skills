@@ -1273,6 +1273,10 @@ window of a `MODIFY SELECTION` / `MODIFY RECORD` process hung until the
 timeout. Run the capture inside that window's own process instead:
 `CALL FORM($window; "screenshot_in_form"; $path)`, which calls
 `FORM SCREENSHOT($picture)` there (verified for output and input forms).
+`CALL FORM` from another process into an idle window is not guaranteed to
+run (`skills/4dlang/references/pitfalls.md`): wait for the PNG with a
+timeout, and if it never appears fall back to the real-window capture in
+`references/shared-desktop.md`.
 
 Find `$window` by title (`WINDOW LIST` + `Get window title`) or by process
 name, not with `Frontmost window`: with `--skip-onstartup`, or once
@@ -1283,18 +1287,12 @@ window this way. Keep such harness methods out of the committed project.
 
 #### Transparent Window Background
 
-`FORM SCREENSHOT` PNGs from 4D have a **transparent window background**.
-In dark appearance the default (light) text then vanishes in most viewers,
-so a dialog looks blank or a title looks missing; more render cycles do not
-change it (10 tested). Flatten before reviewing or publishing (Pillow):
-
-```sh
-python3 skills/4dcli/scripts/flatten_screenshot.py dark out.png
-```
-
-(`light` = RGB 246,246,246, `dark` = 30,30,30.) Runtime captures follow the
-OS appearance and there is no CLI switch for it. Do not add a form
-`colorScheme` just for captures: it changes the deliverable.
+Why `FORM SCREENSHOT` PNGs come back (nearly) transparent in dark
+appearance is in `skills/4dform/references/screenshot-rendering.md`: a
+dialog can look blank or a title missing. Composite before reviewing
+(Pillow): `python3 skills/4dcli/scripts/flatten_screenshot.py dark out.png`
+(`dark` = `#1E1E1E`, `light` = `#F6F6F6`). Do not add a form `colorScheme`
+just for captures: it changes the deliverable.
 
 #### Scratch Copies
 

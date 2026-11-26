@@ -195,7 +195,9 @@ a step in a sequence, it stays open and the children open beside it
 * **Changing language from the hub**: `SET DATABASE LOCALIZATION`,
   `CANCEL` the hub, then `CALL WORKER(1; "<start method>"; {})`; the start
   method reopens it with the new title and menus. Details: `4dlocalise`
-  ("Switching Language at Runtime").
+  ("Switching Language at Runtime"). This does not hit the deadlock in
+  "A second window" below: `CANCEL` ends the hub's dialog first, so
+  worker 1 is free when the message arrives.
 
 ## Leaving Instead of Quitting
 

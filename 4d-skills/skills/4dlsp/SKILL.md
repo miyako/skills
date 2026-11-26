@@ -73,14 +73,9 @@ configuration is needed. Otherwise pass `--tool <path-to-tool4d>` (or set
 `TOOL4D_PATH`) explicitly -- e.g. on macOS a manually-installed 4D.app is
 common and won't be found without this, since it isn't on PATH and isn't
 in the VS Code extension storage or conventional locations list above.
-A 4D downloaded from the 4D website installs into a **build-suffixed
-folder** that holds both apps; point at the `tool4d` inside it:
-
-```sh
-tools/4dlsp/tool4d-lsp-stdio check-syntax \
-  --tool "/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d" \
-  --workspace Project/
-```
+Installer folders carry the build number
+(`--tool "/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d"`);
+see "Binary Paths" in `skills/4dcli/SKILL.md`.
 
 ## Command lookup (before writing code)
 

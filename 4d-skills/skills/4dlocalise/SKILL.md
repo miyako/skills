@@ -311,7 +311,8 @@ take the same path. Validate the result with `4dform`.
 * **Width in every language, at runtime.** Japanese is wider at the same
   font size; two truncations in one demo (a tile subtitle, list box names)
   showed only in `ja` runtime captures. Capture each form in each language
-  (`4dcli`, `dialog_screenshot_with_data`); static previews do not show
+  (`4dcli`: `dialog_screenshot_with_data`, or the real-window capture in
+  `references/shared-desktop.md` for review images); static previews do not show
   strings built in code. Without 4D, ask the user to check label fit.
 
 ## Checklist

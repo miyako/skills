@@ -139,11 +139,10 @@ Visual properties are safe in CSS: `fill`, `stroke`, `alternateFill`,
   properties set only in CSS -- one more reason to keep them in JSON.
 * `borderStyle` / `borderRadius` change the rendered size of the object;
   see `skills/4dform/references/layout.md`.
-* **Coloured tiles** (21 R5 custom buttons): keep `style: custom` and
-  `borderStyle: custom` in the JSON (structural), and put the look in a
-  base class plus one colour class per tile (`class: "tile tileBlue"`):
-  `borderFillColor`, `stroke`, `fontSize: 15px`, `borderRadius: 12` (no
-  unit). Verified on macOS 21 R5; `fourdform` does not draw them.
+* **Coloured tiles** (21 R5 custom buttons, structural pair under
+  "Limits"): a base class plus one colour class per tile
+  (`class: "tile tileBlue"`) holding `borderFillColor`, `stroke`,
+  `fontSize: 15px` and `borderRadius: 12`. Verified on macOS 21 R5.
 
 ## Limits
 
@@ -170,8 +169,6 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
   are project-wide.
 * Test by toggling the system appearance (light/dark) and, for form themes,
   on the platform concerned.
-* Every theme a rule names has its platform file (`fluent-ui` ->
-  `styleSheets_windows.css`, `liquid-glass` -> `styleSheets_mac.css`).
+* Every theme a rule names sits in its platform file ("Stylesheet Files").
 * Header comments name **this** project; copied sheets carried another
   project's name.
-* Heights now set in CSS are removed from the JSON (otherwise the JSON wins).

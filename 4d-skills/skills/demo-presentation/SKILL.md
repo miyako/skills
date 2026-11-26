@@ -30,7 +30,7 @@ downloads and the model load are already done.
 
 1. **UI language**: follows the OS; ship en + ja XLIFF (`4dlocalise`).
    Add an in-app switch when the presenter shows both languages or
-   attendees run a 4D in another language; it cannot rely on `Common*`.
+   attendees run a 4D in another language (`4dlocalise`).
 2. **Data language**: the corpus and the sample inputs may stay Japanese
    in both UI languages. Say so in the English README ("Japanese
    questions work best").

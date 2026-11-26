@@ -213,7 +213,8 @@ Rules:
   canonical list.
 * **Committed sample data.** A demo may ship `Data/data.4DD` on purpose so
   that it opens with records. Replace the `[dD][aA][tT][aA]/` line with
-  narrower entries (`Data/Logs/`, `*.journal`, `Data/Backups/`, and
+  narrower entries for what `demo-data-distribution` leaves out of
+  `Data.zip` (`Data/Logs/`, `*.journal`, `*.Match`, backups, and
   `Data/Settings/` when machine-specific), and say in the README which
   language the data is in (`demo-shareable-repo`). Large data belongs in a
   release asset instead (`demo-data-distribution`).
