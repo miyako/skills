@@ -41,8 +41,10 @@ later accesses cascade into `[-10716] Object or Collection Expected` /
 `[55] A Boolean argument was expected` (the first error is the real one).
 
 * Pass `fk platform path` when the string came from `Get 4D folder`,
-  `.platformPath`, `Select folder` or `Select document` (both its return
-  value and every element of the selected-documents array); or convert first:
+  `.platformPath`, `Select folder`, the `DOCUMENT` system variable set by
+  `Select document`, or an element of its selected-documents array. The
+  *return value* of `Select document` is the file **name** only, so
+  `File($returned)` fails; read the full path from `DOCUMENT`. Or convert first:
   `File(Convert path system to POSIX($systemPath))`. On Windows the value is
   already a platform path, so branch on `Is Windows` rather than converting
   unconditionally.
@@ -336,7 +338,7 @@ https://developer.4d.com/docs/Develop/processes
 | `String(value)` and the locale | Single-argument `String` uses the host decimal separator, so a comma-decimal system emits `41,313` — fatal in a JSON number or an SVG coordinate. Normalise the separator before writing structured text. |
 | `String(value; format; separator)` | Not an overload: the third argument is not a decimal-separator argument, and this call fails compilation with `At least one parameter type does not match the prototype(s) of the function "String"` plus `Invalid constant type : Alphanumeric`. |
 | `String(n; "&x")` | Already returns the `0x` prefix, zero-padded to four digits: `String(81; "&x")` is `0x0051`. Prepending `"0x"` yourself prints `0x0x0051`. Measured on 21 R5 (100175). |
-| `Select document(...)` result | Returns Text (the path; empty on Cancel), not a number: `Value type($r)=Is real` is never true and silently skips the whole branch. Test `$r#""` and `Size of array($paths)>0`. Every element is a platform path (see the path section above). |
+| `Select document(...)` result | Returns Text, not a number: `Value type($r)=Is real` is never true and silently skips the whole branch. The text is the file **name** only (empty on Cancel), not a path; the full platform path is in the `DOCUMENT` system variable, so use `If ((OK=1) & ($r#""))` then `File(DOCUMENT; fk platform path)`. With multiple selection test `Size of array($paths)>0`; every element is a platform path (see the path section above). |
 | `Min(a; b)` / `Max(a; b)` | Array commands. With two scalars, compilation fails as `Impossible to cast Real to Array<Variant>.` / `Invalid constant type : Real` — the diagnostics never mention `Min`. Compare with `math` operators or a user helper. |
 | `4D.Folder.delete()` | Refuses a non-empty folder: `[651] Folder  not empty`. Use `DELETE FOLDER($folder.path; Delete with contents)` for scratch directories. The failure is catchable by `Try`, but `Last errors` is empty in that `Catch`. |
 | `Open document(path)` as a statement | It is a function: `This function has been called as a procedure.` Assign or discard the result (`$opened:=String(Open document($path))`). |
