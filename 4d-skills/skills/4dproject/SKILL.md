@@ -98,6 +98,9 @@ four-character code `MMRL`:
 | `2101` | 21.1 (LTS) |
 | `2120` | 21 R2 |
 | `2130` | 21 R3 |
+| `2140` | 21 R4 |
+| `2150` | 21 R5 |
+| `2160` | 21 R6 |
 
 **Comparing versions.** Decode to the tuple `(major, R, L)` and compare
 tuples; do not compare the raw value as a number (`20A0` is not numeric) or
@@ -112,6 +115,7 @@ Feature gates used by other skills:
 | `C_*` declarations deprecated; simplified command names such as `Localized string` | >= 20 R7 (`2070`) |
 | Fluent UI form theme | >= 21 R2 |
 | Liquid Glass form theme | >= 21 R3 |
+| `verticalAlign` and `padding*` on input and text objects; `OBJECT SET RGB COLORS` 4th parameter; coloured custom buttons | >= 21 R5 (`2150`) |
 | Any project in `.4DProject` form | >= v17 (version checks against older releases are dead code) |
 
 A newer 4D or `tool4d` can run a project with an older
@@ -137,10 +141,25 @@ other skills link here rather than restating them.
   invented `File:C477` -- resolved as "Get text resource" -- and
   `Folder:C482` -- resolved as "SET DOCUMENT POSITION" -- and wrote event
   constants in a nonexistent `K4` namespace, `On Clicked:K4:1`; a third
-  session invented `New collection:C1487`, which **passed
-  `tool4d-lsp-stdio validate`** and was caught only when the interpreted
-  runtime aborted the form's On Load with a syntax error -- so `validate`
-  passing is not evidence that every token is real).
+  session invented `New collection:C1781`, which resolved to a Text-returning
+  command, left the typed variable Null and surfaced much later as
+  `Undefined collection` on the first `.push()` -- in a form's `On Load`,
+  so the demo window never finished loading; a fourth invented
+  `New collection:C1487`, also caught only when the interpreted runtime
+  aborted the form's On Load with a syntax error).
+* **The LSP does not catch a wrong token number.** Both `New collection`
+  inventions passed `4dlsp` / `tool4d-lsp-stdio validate` with 0
+  diagnostics; only running the code exposed them, so `validate` passing is
+  not evidence that every token is real. A project-wide audit is cheap and
+  catches every invention at once:
+  `git grep -hoE ":C[0-9]+|:K[0-9]+:[0-9]+" <bad-ref> -- Project/Sources`
+  vs the same on the good ref, then `comm -13`. Any token that appears only
+  on the bad side was invented -- remove it or verify it.
+* **A bare (paren-less) tokenized call can also fail to parse.** Under
+  `tokenizedText: false`, `New collection:C1781` raised
+  `[59] 4D was expecting an expression` in isolation, while constant tokens
+  (`True:C214`) and `Form:C1466` in expression position parsed fine -- so a
+  clean run of other tokenized lines proves nothing about the suspect one.
 * **Mandatory grep-first check, every time:** before writing any `:CNNN` or
   `:KNN:NN`, grep the project's own source for that exact
   `Name:CNNN` / `Name:KNN:NN` string.
@@ -187,6 +206,9 @@ Thumbs.db
 /tools/4dlsp/
 /tools/4dlang/
 /tools/4dcli/
+
+# Staged components (fetched artifact; see references/dependencies.md)
+/Components/
 ```
 
 When the project sits in a subfolder of the repository (e.g. `demo/<Name>/`),

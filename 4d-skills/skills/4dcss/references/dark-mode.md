@@ -49,6 +49,17 @@ Colour schemes are not supported with the `win-classic` form theme.
 
 - Do not force a fixed light page (a full-form `#FFFFFF` rectangle) under native controls. Buttons and list box headers follow the system appearance, so in dark mode a forced white page left them light-on-light and unreadable (observed in a `FORM SCREENSHOT` capture on 21.2 LTS, build 100695). Give the page, text and list box classes light and dark values in `@media (prefers-color-scheme: ...)` instead, and capture the form in the appearance you claim to support.
 
+- **A JSON colour beats a dark CSS rule for that object.** Symptom: in
+  dark mode, panels stay white and their text (now light) is invisible.
+  Cause: `"fill": "#FFFFFF"` (or a fixed `stroke`) left in the
+  `.4DForm`, while the class gives a dark value. Remove the JSON value and
+  give the class a `prefers-color-scheme` pair (`../SKILL.md`,
+  "Specificity").
+- **Styled-text inputs** carrying `<span style="color:#000000">` stay
+  black on a dark page. Strip the colour from the spans (the text, not the
+  object) and set `"stroke": "automatic"` on the input. Do not write
+  `color:automatic` into the spans (next section).
+
 ### ⚠️ Scope: `"automatic"` is a form-object CSS property value, not an HTML/rich-text colour
 
 `"automatic"` and `"automaticAlternate"` are only meaningful as the value of a `fill`/`stroke`/`alternateFill` **property on a form object or CSS class** (in `form.4DForm`, `styleSheets*.css`). They are **not** valid inside inline HTML/rich-text markup such as `<span style="color:#000000">` embedded in JSON sample data, area/4D Write Pro content, or any other string that is rendered by an HTML/rich-text parser rather than 4D's own form-CSS engine.

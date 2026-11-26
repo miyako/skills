@@ -58,15 +58,26 @@ searches for tool4d automatically in this order:
    - Windows: `%ProgramFiles%\4D\<version>\tool4d\`
    - Linux: `/opt/4d/`, `/opt/4D*/`, `/usr/local/bin/`
 
-Discovery takes the first hit in that order, not the newest build: with
-both a 4D Analyzer extension copy (21 R4) and a newer installed
-`/Applications/4D 21.2 LTS (100694)/tool4d.app` present, the extension copy
-was chosen. Pass `--tool` when the project needs a specific build.
+Discovery takes the first hit in that order, not the newest build, and
+gives no warning: on a 21 R5 project with 4D 21 R5 installed, it silently
+chose the 4D Analyzer extension's 21 R4 copy. An older build reports false
+errors on newer syntax (21 R4 flagged the 21 R5 fourth parameter of
+`OBJECT SET RGB COLORS`; 21 R5 reported nothing), so before fixing such a
+diagnostic, check which tool4d the run used.
 
-Use a tool4d at least as new as the project's `compatibilityVersion`. An
-older build reports false errors on newer syntax: 21 R4 flagged the 21 R5
-fourth parameter of `OBJECT SET RGB COLORS`; 21 R5 reported nothing.
-Before fixing such a diagnostic, check which tool4d the run used.
+**Pin the build; do not rely on discovery.** Use a tool4d at least as new
+as the project's `compatibilityVersion`: for every run, set `TOOL4D_PATH`
+(or `--tool`) to the tool4d of the release the project targets, and read
+the first stderr line, which names the build used:
+
+```sh
+export TOOL4D_PATH="/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d"
+tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project
+# tool4d-lsp-stdio: using ... tool4d at <path>   <- check the version in this path
+```
+
+A clean result proves nothing until the checker has reported a deliberate
+error once (negative control) on the same build.
 
 If tool4d is installed via the 4D Analyzer VS Code extension, no
 configuration is needed. Otherwise pass `--tool <path-to-tool4d>` (or set
@@ -75,7 +86,9 @@ common and won't be found without this, since it isn't on PATH and isn't
 in the VS Code extension storage or conventional locations list above.
 Installer folders carry the build number
 (`--tool "/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d"`);
-see "Binary Paths" in `skills/4dcli/SKILL.md`.
+see "Binary Paths" in `skills/4dcli/SKILL.md`. On macOS the path is the
+**binary inside the bundle** (`.../tool4d.app/Contents/MacOS/tool4d`):
+pointing at `tool4d.app` fails with "tool4d path is not a file".
 
 ## Command lookup (before writing code)
 
@@ -153,6 +166,11 @@ tools/4dlsp/tool4d-lsp-stdio validate --json --workspace Project/ Sources/Method
   the command name does not exist (observed: `Get localized document path`;
   the real name is `Localized document path`). Look the name up with
   `4dlang` rather than rewriting the line.
+- **"Undeclared property 'x' used"** in an object or form method of a
+  form with a `formClass`: `Form` is typed by that class, so declare the
+  property in the class (`property quotas : Object`). Details:
+  `skills/4dform/references/form-concepts.md` ("Property Declarations and
+  Compiler Warnings").
 
 ## Check-syntax command (project-wide)
 
@@ -192,6 +210,14 @@ tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project/ \
 - If omitted, the tool automatically picks the first `.4dm` file found
   under `Sources/` (falling back to the project root if no `Sources/`
   directory exists) and opens that as the anchor document.
+  > **Anchor failure mode** (tool4d 21.2 LTS build 100694, macOS, host
+  > project [miyako/ldap-demo](https://github.com/miyako/ldap-demo)):
+  > when `--workspace` points at a repository root that has no `Sources/`
+  > directory of its own, the fallback can anchor on an unrelated `.4dm`
+  > file -- in that project, a skill asset inside the `.agents` submodule
+  > -- and the session fails with `failed to fill whole buffer`. Point
+  > `--workspace` at the `Project/` folder, or pass an explicit file, in
+  > such layouts.
 - Exactly **one** `experimental/checkSyntax` request is sent (not one
   per file), anchored at the first opened document. Per the 4D Analyzer
   VS Code extension's own usage of this request, the anchor document is
@@ -380,6 +406,17 @@ invocation, no per-file breakdown:
 Unlike `validate`/`check-syntax`, there is no diagnostics-found/
 diagnostics-not-found duality here -- `install-components` either
 confirms the install completed or fails outright.
+
+> **Observed failure, exit code 0 anyway** (tool4d-lsp-stdio 0.3.0,
+> tool4d 21.2 LTS build 100694, macOS ARM64, host project
+> [miyako/ldap-demo](https://github.com/miyako/ldap-demo)): the run
+> aborted with `waiting for dependency/installComponents/done: failed to
+> read LSP header: Resource temporarily unavailable (os error 35)` and
+> the process still exited `0`. A zero exit is therefore not proof of an
+> install; check the success line (or `--json` `installed: true`) and,
+> when the notification never arrives, stage the component manually
+> instead -- unpack the release ZIP and map it through
+> `environment4d.json`, which `tool4d` honours and the IDE ignores.
 
 ## Workflow
 

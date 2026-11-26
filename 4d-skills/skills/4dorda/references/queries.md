@@ -123,9 +123,10 @@ $sel:=ds.Document.query("embedding > :1 order by embedding desc"; $cmp)
 * Vectors usually come from an embeddings model, e.g. through 4D AI Kit
   (`skills/4daikit/SKILL.md`); for a local model and checking its quality
   see `skills/4dembeddings/SKILL.md`.
-* **Thresholds are model-specific.** Some models compress cosine scores
-  (ruri-v3: unrelated texts ≈ 0.8), so 0.01 changes hit counts tenfold.
-  Calibrate on the real corpus (`skills/demo-vector-search/SKILL.md`).
+* **Thresholds are model-specific**: some models compress cosine scores
+  into a narrow band (ruri-v3: unrelated texts ≈ 0.8), so 0.01 changes hit
+  counts tenfold. Calibrate on the real corpus
+  (`skills/demo-vector-search/SKILL.md`, "Calibrate the Threshold").
 * **Low thresholds also slow the indexed query.** The vector index earns its
   keep only above the noise floor: on 300k x 768-dim vectors, threshold 0.85
   answered in ≈ 320 ms while 0.55-0.75 (returning nearly every record) took

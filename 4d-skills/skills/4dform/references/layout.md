@@ -2,7 +2,7 @@
 object: "layout"
 json_type: ""
 keywords: ["layout", "left", "top", "width", "height", "align", "alignment", "gap", "overlap", "spacing", "center", "borderRadius", "borderStyle", "focus ring", "scrollbar", "rendered size", "visual edge"]
-summary: "Rendered vs declared geometry of form objects (border +1, radius +r outward, focus ring +5 live only, vertical scrollbar +15 right), alignment / gap / centering formulas, and the scripts/form_layout_calc.py calculator."
+summary: "Rendered vs declared geometry of form objects (border +1, radius +r left/right on text and input (none on rectangles), focus ring +5 live only, vertical scrollbar +15 right), alignment / gap / centering formulas, and the scripts/form_layout_calc.py calculator."
 ---
 
 # Form Layout: Declared vs Rendered Geometry
@@ -22,14 +22,30 @@ Measured on macOS, in logical pixels (screenshot pixels on Retina = x2).
 | Effect | Offset | Sides | When |
 |---|---|---|---|
 | `borderStyle: "solid"` | +1 | all four | always |
-| `borderRadius: r` | +r | all four | always -- the arc extends **outward** from the declared corners (unlike web CSS) |
+| `borderRadius: r` on `text` (with `fill`) or `input` | +r | left and right only | always -- the arc extends **outward** horizontally (unlike web CSS); top and bottom do not move |
+| `borderRadius: r` on `rectangle` | 0 | -- | the rounded rectangle stays inside its declared bounds |
 | macOS focus ring | +5 | all four | **running form only**, focusable objects; not drawn in the Form Editor |
 | `scrollbarVertical: "automatic"` | +15 | right only | always |
 
 ```
 rendered_w = declared_w + 2 x (border + radius + focus_ring) + scrollbar_v
-rendered_h = declared_h + 2 x (border + radius + focus_ring)
+rendered_h = declared_h + 2 x (border + focus_ring)
 ```
+
+Radius outsets measured on 4D 21 R5, macOS 27 (`FORM SCREENSHOT`, objects
+declared 200 x 30):
+
+| Object | Painted left..right | Painted top..bottom |
+|---|---|---|
+| `rectangle`, `borderRadius: 8` | 300..500 (0) | 20..50 (0) |
+| `text` + `fill`, `borderRadius: 8` | 292..508 (+8) | 80..110 (0) |
+| `input`, solid border, `borderRadius: 6` | fill 294..506 (+6), border +1 more | border only (+1) |
+
+Consequence: a rounded `text` header placed flush with a rectangular
+section body (same `left` and `width`) overhangs it by `r` on each side,
+and two such headers side by side touch. Inset rounded text and input
+objects by `r` (`left += r`, `width -= 2r`). Rendering changes between
+releases: measure a capture rather than assume (`skills/4dcli/SKILL.md`).
 
 Measured: an input declared 280 wide with a solid border and radius 8 is
 282 px wide in the editor with radius 0, 298 px with radius 8, and 308 px
@@ -38,7 +54,7 @@ in the running form (focus ring added).
 * A `roundedBevel` button draws its bevel about 4 px **inside** its declared
   bounds: its declared left edge is its visual left edge.
 * Bordered inputs and combos extend **outside** their declared bounds
-  (9 px per side in the editor with radius 8).
+  (9 px left and right, 1 px top and bottom, in the editor with radius 8).
 * Offsets are symmetric (except the scrollbar), so the visual centre equals
   the declared centre.
 
@@ -88,7 +104,7 @@ The calculator defines these presets; adjust `radius` to the project's CSS.
 | Minimum declared gap for a clearance c | `offset_right(1) + offset_left(2) + c` | `min_declared_gap` |
 | Declared size for a target visual size | `visual - offset_left - offset_right` | `declared_for_visual`, `--solve W H` |
 
-Examples (editor offsets, bordered input with radius 8 = 9 px per side):
+Examples (editor offsets, bordered input with radius 8 = 9 px left and right):
 
 * Align an input to a button whose left is 12: declare the input at
   `left = 21`.
@@ -120,5 +136,6 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 - [ ] Editor vs live: measuring the Form Editor? editor offsets. Measuring a screenshot? live offsets.
 - [ ] The focus ring never appears in the Form Editor: a button's editor offset is 0, not 5.
 - [ ] Check every adjacent pair after moving objects, not only the one you moved.
-- [ ] `borderRadius` grows the object outward: a wider radius means a wider rendering.
+- [ ] Leave at least 8 px between a text box and the next framed object (input, list box, rectangle): Japanese glyphs are taller and were clipped at 2-4 px gaps.
+- [ ] `borderRadius` on text and input grows the object outward horizontally (not vertically, and not on rectangles): inset it by `r` to line up with a square neighbour.
 - [ ] Moving styling to CSS must not move structural properties out of the JSON -- see "What stays in JSON" in `skills/4dcss/SKILL.md`.

@@ -7,14 +7,16 @@ JSON coordinates, accounting for 4D rendering offsets measured empirically
 (macOS, logical pixels; Retina px = logical x 2):
 
   borderStyle solid   -> +1 px each side (stroke drawn OUTSIDE declared bounds)
-  borderRadius r      -> +r px each side (arcs extend OUTWARD from the
-                         declared corners -- opposite of web CSS)
+  borderRadius r      -> +r px LEFT and RIGHT only, on text and input
+                         objects (the arc extends outward horizontally;
+                         top and bottom stay put). Rectangles: no outset.
+                         Measured on 4D 21 R5, macOS 27.
   macOS focus ring    -> +5 px each side, ONLY in live rendering
                          (not drawn by the Form Editor)
   scrollbarVertical   -> +15 px, right side only
 
   rendered_w = declared_w + 2*(border + radius + focus_ring) + scrollbar_v
-  rendered_h = declared_h + 2*(border + radius + focus_ring)
+  rendered_h = declared_h + 2*(border + focus_ring)
 
 Pass live=False for Form Editor coordinates, live=True (default) for the
 running form / screenshots.
@@ -74,19 +76,22 @@ class ControlProps:
         if self.scrollbar_v:  parts.append("scrollbar_v")
         return f"ControlProps({', '.join(parts) or 'none'})"
 
-    def _base(self, live=True) -> int:
+    def _base(self, live=True, horizontal=True) -> int:
         """
         Per-side base offset (excluding scrollbar).
         live=False = Form Editor view (no focus ring).
+        The radius outset applies to the left and right edges only.
         """
-        b = (BORDER_PX if self.border else 0) + self.radius
+        b = BORDER_PX if self.border else 0
+        if horizontal:
+            b += self.radius
         if live and self.focusable:
             b += FOCUS_PX
         return b
 
     def edge_offset(self, side='left', live=True) -> int:
         """Render offset for a specific edge in logical pixels."""
-        b = self._base(live)
+        b = self._base(live, horizontal=side in ('left', 'right'))
         if side == 'right' and self.scrollbar_v:
             b += SCROLLBAR_PX
         return b
@@ -256,6 +261,8 @@ def props_from_json(obj: dict, css_border=False, css_radius=0) -> ControlProps:
     radius = obj.get("borderRadius", css_radius)
     if isinstance(radius, str):
         radius = int("".join(ch for ch in radius if ch.isdigit()) or 0)
+    if otype == "rectangle":
+        radius = 0  # a rounded rectangle stays inside its declared bounds
     focusable = (otype in FOCUSABLE_TYPES and obj.get("enterable", True) is not False
                  and not obj.get("hideFocusRing", False))
     scroll = otype in ("listbox", "input", "hierarchicalList") and \

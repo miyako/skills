@@ -142,6 +142,14 @@ button.
 **Rule:** "no other button uses this class yet" is not a stopping point --
 it is a prompt to find every other button that should use it.
 
+**Exclude from the height audit** buttons with `"style": "custom"` (no
+native chrome, so the 27px threshold does not apply: coloured tiles,
+toolbar icons) and `"display": false` hit areas laid over another object.
+Listing them produces false positives. A custom button that paints
+nothing or a grey pill under Liquid Glass is missing
+`"borderStyle": "custom"` (`skills/4dform/references/objects/button.md`,
+"Coloured buttons").
+
 ### Critical: CSS Specificity vs Form JSON
 
 Properties defined directly in the `.4DForm` JSON have **the highest specificity** and override CSS rules — unless the CSS uses `!important` (which is discouraged).
@@ -221,6 +229,21 @@ on macOS. Until it is captured on Windows 11 with 4D 21 R2+, put the
 Windows rule behind `@media (form-theme: fluent-ui)`, keep the height
 equal to the existing Windows forms, and record "Fluent UI unverified"
 in the PR description instead of asserting it works.
+
+One en/ja demo (21 R5) used `fluent-ui` 32 px / `win-classic` 23 px
+next to `liquid-glass` 27 px / `mac-classic` 23 px. The Windows values
+are still unverified on Windows.
+
+### Fluent UI (Windows): Enabling It
+
+Fluent UI is opt-in. It is a project setting (Settings > Interface) or a
+per-form JSON property, `"fluentUI": true` (absent = inherited from the
+project; ignored on macOS). The project setting lives in `Settings/`,
+which many repositories ignore: set the **form** property when the
+project is shared (an attendee demo), so the choice travels with the
+repository. The 4D blog (October 2025) says Fluent UI needs the Windows
+App SDK (1.7.3) at runtime; without it the form falls back to the classic
+theme with no error. Treat that as unverified until captured on Windows.
 
 
 ## Runtime Theme Detection
@@ -350,6 +373,7 @@ When adapting a 4D project for Liquid Glass:
 - [ ] `styleSheets_mac.css` exists in `Project/Sources/`
 - [ ] `@media (form-theme: liquid-glass)` rule sets `height: 27px` for **both** `.default` and `button.default`
 - [ ] `@media (form-theme: mac-classic)` rule sets `height: 23px` for **both** `.default` and `button.default`
+- [ ] `style: custom` buttons and `display: false` hit areas left out of the height audit; coloured custom buttons carry `borderStyle: custom`
 - [ ] All target buttons in `form.4DForm` have `"class"` assigned (e.g., `"default"`)
 - [ ] `height` property removed from target buttons in `form.4DForm`
 - [ ] `bottom` property removed from target buttons in `form.4DForm` (if present)

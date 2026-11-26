@@ -31,7 +31,11 @@ table below.
 ### Not in this skill
 
 * `.4dm` code validation -- `skills/4dlsp/SKILL.md`
-* 4D command and OOP class syntax -- `skills/4dlang/SKILL.md`
+* 4D command and OOP class syntax -- `skills/4dlang/SKILL.md`. Before
+  writing geometry code (centring, `OBJECT SET COORDINATES`, sizes from
+  `OBJECT GET BEST SIZE`): 4D evaluates arithmetic **left to right with no
+  precedence**, so `$l+($r-$l-$w)\2` is wrong. Parenthesise every
+  sub-expression (`skills/4dlang/references/pitfalls.md`).
 * project layout, `.gitignore`, `menus.json`, `roles.json` --
   `skills/4dproject/SKILL.md`
 * stylesheets, dark mode, Liquid Glass / form themes --
@@ -235,6 +239,7 @@ Open only the file for the object(s) the task touches.
 | Long operations without freezing the form: `SET TIMER`, `CALL FORM`, async callbacks, status lines fed by callbacks | `references/async-ui.md` |
 | Positioning, sizing, aligning, spacing objects; rendered vs declared size; overlap checks | `references/layout.md` (+ `scripts/form_layout_calc.py`) |
 | Official doc page for an object type, property group or event | `references/docs-index.md` |
+| Fake buttons (hidden button over a rectangle and a label) to real buttons | `references/objects/button.md` (+ `scripts/fake_buttons.py`) |
 | SVG rendering engine: supported elements, filters, `SVG SET ATTRIBUTE` | `references/objects/svg-rendering.md` |
 | Resolving a property name: JSON key, CSS name, getter/setter command | `references/property-reference.md` |
 | Quick visual assessment with `fourdform`, or a second opinion using `FORM SCREENSHOT` or printing | `references/screenshot-rendering.md` |
@@ -266,10 +271,20 @@ A form task is complete when all three hold. Report each explicitly.
 3. **Every `ObjectMethods/*.4dm` is referenced by a `"method"` property**
    in the form JSON, and the object also declares the `"events"` it needs.
 
-Step 3 is a manual check: there is no validator for it. An orphaned object
-method produces no error at all -- it is simply never called, so the form
-appears to load correctly and does nothing. Enumerate the files under
-`ObjectMethods/` and find each one in the form JSON.
+Run step 3 with the bundled script (stdlib only, exit code `1` on a problem):
+
+```sh
+python3 skills/4dform/scripts/check_object_methods.py Project/Sources/Forms
+```
+
+It reports every `ObjectMethods/*.4dm` that no object references, every
+`"method"` that points to a missing file, and every object method whose
+object has no `"events"`. An orphaned object method produces no error at
+all -- it is simply never called, so the form appears to load correctly and
+does nothing. Neither schema validation, `validate`/`check-syntax`, nor a
+headless self-test that calls the form's class directly can see it (seen on
+a demo whose 16 buttons all did nothing while every headless check passed).
+Only a GUI click or this check does.
 
 **A fourth check is cheap and worth adding when 4D is available:** have a
 `tool4d` startup method call `FORM LOAD(<form name>; *)` inside `Try`. It

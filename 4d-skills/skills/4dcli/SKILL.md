@@ -294,9 +294,8 @@ quickly -- the rule above does not. (Later, `21 R5` also 404ed while
 `tool4d.app`: the local probe is what found it.)
 
 Among local builds, pick one **at least as new as** the project's
-`compatibilityVersion`. An older build still runs the code but rejects
-newer parameters: 21 R4 flagged the 21 R5 fourth parameter of
-`OBJECT SET RGB COLORS` as an error that 21 R5 does not report.
+`compatibilityVersion`: an older build still runs the code but reports
+false errors on newer syntax (`skills/4dlsp/SKILL.md`, "Pin the build").
 
 ### Step 2: Download
 
@@ -522,7 +521,7 @@ Do not install tool4d globally and do not modify the user's PATH.
 | `--create-data` | With `--data`: create the data file if it does not exist instead of failing. Easy to miss in `tool4d --help`; without it a fresh checkout fails with `[-10524] current data file not found` |
 | `--user-param` | A single text argument, read back with `Get database parameter(User param value; $text)` |
 | `--headless` | Full `4D` only: run without a GUI. Requires a license |
-| `--skip-onstartup` | Do not run the `On Startup` database method (which typically opens windows) before `--startup-method` |
+| `--skip-onstartup` | Do not run the `On Startup` database method (which typically opens windows) before `--startup-method`. Without it, tool4d **and** full 4D run both: a start method called from `On Startup` and from the test method runs twice (`skills/4dstartup/SKILL.md`, "Why the check runs in the worker") |
 
 `--create-data` is the missing piece for headless builds that start from an
 empty checkout (the repository ships no `Data/`, or the build drops and
@@ -857,7 +856,7 @@ came out of projects that ran clean under `tool4d`:
 | `$file.parent.create()` as a statement | `This function has been called as a procedure.` | `create()` returns a Boolean; assign it (`$made:=$file.parent.create()`), do not declare it as `4D.Folder` or the next error is `Impossible to cast Boolean to 4D.Folder` |
 | `For each ($item; $collection)` in a class function or method, with no `var $item` anywhere | `The variable $ITEM has not been explicitly declared.` (reported once per use, name upper-cased). `validate` and `check-syntax` stay silent | declare it: `var $item : Object` (or add it to an existing `var` line). The loop variable is not auto-declared in compiled mode |
 | `#DECLARE($params : Object)` at the top of a form method (`Forms/<Name>/method.4dm`) | `Too many parameters have been passed to this method.` and `The parameter $1 has not been explicitly declared.`, `code.type` `formMethod`. Silent when interpreted and under `validate` | remove it; a form method receives no parameters, read `Form` (see [4dform](../4dform/SKILL.md)) |
-| `ON ERR CALL("handler"; ek local)` whose method reads `$1`, `$2`, `$3` | `The parameter $1 has not been explicitly declared.` | give the handler a prototype: `#DECLARE($mode : Variant; $code : Variant; $text : Variant)`. `var $1; $2; $3 : Variant` is rejected ("should be declared in the prototype") |
+| `ON ERR CALL("handler"; ek local)` whose method reads `$1`, `$2`, `$3` | `The parameter $1 has not been explicitly declared.` | remove the parameters: a handler is called with none (`skills/4dlang/references/pitfalls.md`), so `$1`..`$3` are never set and a `#DECLARE` only silences the compiler. Read `Last errors`, `Error method`, `Error line` and `Error formula` instead (the `dump_on_err` sample above) |
 
 `Compile project` does not choke on form-bearing projects: with the two
 forms present it still returned a normal status object with `formMethod`
@@ -1282,6 +1281,42 @@ Architecture: `dialog_screenshot` opens `DIALOG` with `*`
 (non-blocking), then `CALL FORM(goto_page_then_screenshot)`, then
 `CALL FORM(screenshot_and_accept)`.
 
+Full 4D also opens the Design environment (Explorer) behind the dialog.
+`FORM SCREENSHOT` captures the form only and is unaffected; a real-window
+capture by window ID (`references/shared-desktop.md`) is too. Never take a
+whole-screen `screencapture` to look at 4D: 4D is not frontmost, so it
+records the user's desktop and other apps (delete such images).
+
+#### Smoke-testing a running app without UI automation
+
+To test flows that start from buttons (open a second window, switch
+language), let a scratch startup method call the app's real entry point,
+then drive the open form with `CALL FORM(<window>; "<method the button
+calls>"; ...)`: the method runs in the form's context, as a click would.
+Between steps, log the state as JSON and quit:
+
+```4d
+// smoke_log -- appends one step to /PACKAGE/out/smoke.json
+#DECLARE($step : Text)
+ARRAY LONGINT($windows; 0)
+WINDOW LIST($windows)
+var $list : Collection:=[]
+var $i; $l; $t; $r; $b : Integer
+For ($i; 1; Size of array($windows))
+	GET WINDOW RECT($l; $t; $r; $b; $windows{$i})
+	$list.push({title: Get window title($windows{$i}); process: Window process($windows{$i}); rect: [$l; $t; $r; $b]})
+End for 
+var $file : 4D.File:=File("/PACKAGE/out/smoke.json")
+var $log : Collection:=$file.exists ? JSON Parse($file.getText()) : []
+$log.push({step: $step; language: Get database localization(Current localization); windows: $list})
+Folder("/PACKAGE/out").create()
+$file.setText(JSON Stringify($log; *))
+```
+
+Assert on the JSON from the shell (window count, titles in the new
+language, rects kept). Such a log caught a start method that opened two
+windows. Keep the harness in a scratch copy, out of the shipped project.
+
 #### Form Rendering Cycle
 
 4D defers form rendering to the end of each execution cycle (a form event
@@ -1345,10 +1380,14 @@ window this way. Keep such harness methods out of the committed project.
 
 Why `FORM SCREENSHOT` PNGs come back (nearly) transparent in dark
 appearance is in `skills/4dform/references/screenshot-rendering.md`: a
-dialog can look blank or a title missing. Composite before reviewing
-(Pillow): `python3 skills/4dcli/scripts/flatten_screenshot.py dark out.png`
+dialog can look blank or a title missing. For review and README images,
+prefer the real-window capture (`references/shared-desktop.md`), which has
+an opaque background. When a `FORM SCREENSHOT` PNG is all you have,
+composite it before reviewing (Pillow):
+`python3 skills/4dcli/scripts/flatten_screenshot.py dark out.png`
 (`dark` = `#1E1E1E`, `light` = `#F6F6F6`). Do not add a form `colorScheme`
-just for captures: it changes the deliverable.
+just for captures: it changes the deliverable (pinning one is a
+deliberate design decision, `demo-presentation`, "Appearance").
 
 #### Scratch Copies
 
@@ -1366,19 +1405,28 @@ chained `CALL FORM` runs.
 
 ## Writing Output Files
 
-`tool4d` can write within the project scope, for example under
-`Get 4D folder(Database folder)`. Writing to arbitrary locations such as
-`/tmp/` may fail **silently** on macOS due to sandboxing, so do not read a
-missing output file as proof that the code did not run.
+Write output next to the project with the filesystem objects, then read it
+back from the shell:
 
 ```4d
-// Safe output path within project scope
-var $path : Text
-$path:=Get 4D folder(Database folder)+"output.json"
-BLOB TO DOCUMENT($path; $blob)
+Folder("/PACKAGE/out").create()
+File("/PACKAGE/out/debug.json").setText(JSON Stringify($log; *))
 ```
 
-Write output next to the project, then read it back from the shell.
+A missing output file is not proof that the code did not run. The usual
+cause is the path syntax, and the write fails without an error:
+
+* Classic document commands (`TEXT TO DOCUMENT`, `BLOB TO DOCUMENT`) take a
+  **platform** path, which on macOS is not a POSIX path. In a headless
+  21 R5 run, `TEXT TO DOCUMENT("/tmp/x.json"; ...)` wrote nothing while
+  `File("/tmp/x.json"; fk posix path).setText(...)` worked. For a POSIX
+  path, use `File($path; fk posix path)`.
+* `Get 4D folder` returns a system path (`:`-separated on macOS). Append
+  only system-path fragments (`Get 4D folder(Database folder)+"output.json"`
+  works with `BLOB TO DOCUMENT`); a POSIX fragment such as `"out/x.txt"`
+  gives a path that does not exist.
+* Locations outside the project may also be blocked by macOS sandboxing:
+  prefer the project folder (`/PACKAGE`).
 
 The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
 `Convert path POSIX to system`) are language-level -- look them up via
@@ -1394,8 +1442,13 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   for pretty-printing.
 * `LOG EVENT(Into system standard outputs; $message)` prints to stdout,
   the simplest way to get short results out of a headless run.
-* Omit `--dataless` only when a test must read or write records, and run
+ * Omit `--dataless` only when a test must read or write records, and run
   it on a copy of the data file.
+* A run that opens the data file can rewrite it even when the method only
+  reads: the engine builds indexes on first use (`IndexManager ... built
+  ...` in the log) and the bytes of a committed `Data.4DD` change. In a
+  repo where `Data/` is committed on purpose, `git checkout` the data
+  files before committing, or the verification run ships binary churn.
 * Runtime error line numbers count from the start of the **method or
   function** (the `Function` line is line 1), not from the start of the
   class file.
@@ -1445,9 +1498,8 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   wrong: ask the user to quit 4D completely and reopen the project. Before
   saying so, prove the fix in a fresh instance of the user's exact build, old
   code against fixed code: a scratch copy of the project for each, and a
-  startup method that wraps the call in `ON ERR CALL` (handler
-  `#DECLARE($mode : Variant; $code : Variant; $text : Variant)` writing
-  `Last errors` to a file), writes a small result object to a file, then
+  startup method that wraps the call in `ON ERR CALL` (a parameterless
+  handler, like `dump_on_err` above, writing `Last errors` to a file), writes a small result object to a file, then
   `QUIT 4D`. Launch with `open -n -a "<exact build>/4D.app" --args
   --project=<copy> --dataless --skip-onstartup --startup-method=<name>`, poll
   for the file, and stop only the PID you started (`references/shared-desktop.md`).
@@ -1457,13 +1509,15 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
 
 ## Smoke Scripts: Locating tool4d and Keeping Assertions Honest
 
-Two defects found in a demo repository whose smoke script was fully green:
+Defects found in a demo repository whose smoke script was fully green:
 
 * **Do not pin one tool4d build in the script.** A hardcoded
   `.../tool4d/21R4/100224/tool4d.app/...` breaks the moment that build is
   removed. The standalone installer lays builds out as
   `/Applications/tool4d/tool4d/<release>/<build>/tool4d.app`, so resolve the
-  newest one and let `TOOL4D` override it:
+  newest one and let `TOOL4D` override it (set it to the build the project
+  targets when the newest is a beta; a 4D installer puts tool4d under
+  `/Applications/4D <version> (<build>)/` instead, see "Binary Paths"):
 
   ```sh
   if [ -z "${TOOL4D:-}" ]; then
@@ -1496,6 +1550,25 @@ for a hand-off. The same project, captured through the `dialog_screenshot`
 chain in the full 4D application, produced content-rich pages (100+ KB
 PNGs). When the screenshot must show data or styling, use the full 4D app
 and verify the result, do not trust the file's existence.
+
+When the agent has no image input, read the capture with macOS **Vision
+OCR** instead -- one small Swift binary verifies both the window title
+(see `references/shared-desktop.md`, the `winid` helper prints it) and the
+rendered text:
+
+```sh
+# ocr.swift -- usage: ocr <image.png>
+# VNRecognizeTextRequest, recognitionLevel .accurate,
+# recognitionLanguages ["en-US", "ja-JP"]; swiftc ocr.swift -o ocr
+/tmp/winid/ocr /tmp/capture.png
+```
+
+The text output is enough to assert the things that matter after a run:
+the localised window title, that a version gate shows its error and Close
+button, that tab captions and status lines resolved from XLIFF, and that
+no `Syntax Error` dialog is stacked in front of the form (a dialog appears
+as its own window in `winid`'s list before you even capture). Compile both
+helpers once per host; they have no dependencies beyond the OS.
 
 ## Tool Dependencies
 

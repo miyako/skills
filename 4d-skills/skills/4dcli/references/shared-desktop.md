@@ -106,7 +106,12 @@ the object, coordinates come back 0 and a window resized from them shrank
 to 20 px.
 
 After the capture, wait for the PID to exit (`kill -0 <pid>` in a loop);
-if it is still there, `kill <literal PID>`.
+if it is still there, `kill <literal PID>`. SIGTERM may leave the instance
+running with the data file still locked: a `kill`ed 4D kept `Data.4DD` open
+(visible with `lsof`) and the next launch failed with "You cannot open this
+database because the data file (or one of its segments) is locked." Check
+`lsof <data file>`, then `kill -9 <literal PID>` and wait for the lock to
+release before relaunching.
 
 ## Background servers started by the project
 
@@ -138,4 +143,7 @@ Some agent hosts reject shell forms they cannot attribute:
   could not be completed") -- use absolute paths, or write a script file and
   run it;
 * `kill $(...)` / `kill $pid` -- list the PIDs first, then
-  `kill <literal PIDs>`.
+  `kill <literal PIDs>`;
+* any heredoc whose body contains the 4D command `KILL WORKER` (parsed as a
+  `kill`): write `.4dm` files with the agent's file-editing tool, never
+  with `cat <<EOF`.
