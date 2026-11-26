@@ -247,7 +247,7 @@ These two events are special **gate events**:
 
 **Critical rule**: Individual form objects can subscribe to `onLoad` or `onUnload`, but these events are **only processed for objects if the form itself also subscribes to them**. If an object needs `onLoad`, the form must have `onLoad` in its `events` array.
 
-All other events (e.g., `onClick`) can be enabled independently at the object level — they do not require the form to also subscribe.
+All other events (e.g., `onClick`) can be enabled independently at the object level — they do not require the form to also subscribe, **for the object's own method**. The **form method** is different: it receives an object's `onClick` only if the form's own `events` array also lists `onClick`. A form whose method dispatches on `FORM Event.objectName` (instead of using object methods) must list every event its objects raise; otherwise buttons do nothing and no error is reported.
 
 ### The `FORM Event` Command
 
