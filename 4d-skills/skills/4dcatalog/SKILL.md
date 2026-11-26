@@ -254,6 +254,24 @@ values, required for vector similarity queries
 
 `<field_extra>` must stay the last child of `<field>`.
 
+**Vector index** -- a top-level `<index>` with `type="20"` on the vector
+field (see "Indexes"). As observed after
+`CREATE INDEX([T]; $fields; Vector cosine index; "name")`, the metric is
+not written to the catalog; the index data lives in `data.4DVI/` next to
+the data file (one folder per index, e.g. `t3_f3_c` for table 3, field 3):
+
+```xml
+<index kind="regular" name="IndexedVector_cosine" uuid="{UUID}" type="20">
+  <field_ref uuid="{FIELD_UUID}" name="IndexedVector">
+    <table_ref uuid="{TABLE_UUID}" name="Tickets"/>
+  </field_ref>
+</index>
+```
+
+A `type="3"` (or other) index on a vector field is **not** a vector index:
+a demo comparing "indexed vs scan" with one compares nothing. Also check
+that the `type="20"` index belongs to the intended, non-trashed table.
+
 ## Field Attributes
 
 Common attributes on `<field>`:
@@ -355,6 +373,7 @@ Indexes are defined as top-level elements (siblings of `<table>`, before
 | `3` | Cluster B-tree | Foreign keys, booleans, low-cardinality fields |
 | `7` | Automatic | **Default -- safe choice for agents** |
 | `8` | Automatic for Object | Only for Object (type 21) fields |
+| `20` | Vector | `4D.Vector` fields (4D 21+); see "Vector index" above |
 
 **Index kind values:**
 

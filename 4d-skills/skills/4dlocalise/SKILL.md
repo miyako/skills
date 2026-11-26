@@ -54,6 +54,19 @@ messages too), the languages (source + targets, keep existing ones?), any
 new per-language attributes, and whether displayed names should follow the
 UI language.
 
+**UI language and data language are separate decisions.** A demo whose
+data is Japanese may keep Japanese sample inputs (questions, search terms)
+in both UI languages; ask early instead of translating them by default.
+
+### Following the OS language
+
+To open in the user's OS language with a fallback, in `On Startup`:
+
+```4d
+var $language:=Get database localization(User system localization)
+SET DATABASE LOCALIZATION(($language="ja@") ? "ja" : "en")
+```
+
 ## Files
 
 ```
@@ -173,6 +186,10 @@ Descriptive PascalCase IDs that show purpose and scope:
 | `AlertButton{Name}` | `AlertButtonQuit` | alert / confirm buttons |
 | `{Feature}_{Property}` | `Welcome_Title` | strings assigned in code |
 
+IDs match `^[A-Za-z][A-Za-z0-9_]*$`: no dots or dashes (rename
+`model.ready` to `Model_Ready`). Lint every `id`/`resname` and every
+`:xliff:`/`Localized string` reference against it.
+
 ## Verification
 
 * Every ID referenced by `:xliff:` or `Localized string` exists in every
@@ -182,7 +199,9 @@ Descriptive PascalCase IDs that show purpose and scope:
 * Changed `.4dm` files pass `4dlsp`.
 * When 4D or tool4d is available (`4dcli`), run a test method that calls
   `SET DATABASE LOCALIZATION("ja")` then `Localized string` for several IDs,
-  and again for the source language.
+  and again for the source language. Built-in `Common*` IDs were observed
+  to stay English in tool4d (`CommonMenuItemQuit` → "Quit" under `ja`):
+  check those in the 4D GUI before concluding they are broken.
 * Forms cannot be checked headlessly: ask the user to open them and check
   label fit (translations can be much longer or shorter).
 
@@ -195,4 +214,5 @@ Descriptive PascalCase IDs that show purpose and scope:
 - [ ] ID-based entries directly under `<body>`, not in form groups
 - [ ] No `Common*` ID redefined
 - [ ] Multi-line strings keep CR line breaks (`&#13;`)
+- [ ] IDs match `^[A-Za-z][A-Za-z0-9_]*$`
 - [ ] `<source>` is English; `<target>` translated (identical in the English file)

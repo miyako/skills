@@ -63,6 +63,7 @@ Engine".
 | Obtain or install tool4d | "Obtaining tool4d" | none |
 | Make an installed tool4d visible to `4dlsp` | "Pointing `4dlsp` at it" | none |
 | Understand what a capture actually *shows* | `skills/4dform/references/screenshot-rendering.md` | none |
+| Open the full 4D app on the user's desktop without stealing focus, capture its window, quit it; stop helper servers (llama-server) a run started | `references/shared-desktop.md` | `4D` (GUI) |
 
 ### Reading budget
 

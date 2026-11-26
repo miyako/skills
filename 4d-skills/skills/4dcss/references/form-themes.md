@@ -212,6 +212,16 @@ Unlike buttons, dropdowns are usually **not** managed via CSS classes -- their h
 
 If a form contains multiple buttons in a row, ensure they all have **consistent heights**. A one-pixel difference can cause some buttons to render as square and others as rounded, creating a visually jarring mix.
 
+### Fluent UI (Windows): Unverified Heights
+
+The 27px threshold is a Liquid Glass fact. No equivalent threshold has
+been verified for `fluent-ui`. Projects copying the macOS sheet into
+`styleSheets_windows.css` with a 23px or 27px height have only been checked
+on macOS. Until it is captured on Windows 11 with 4D 21 R2+, put the
+Windows rule behind `@media (form-theme: fluent-ui)`, keep the height
+equal to the existing Windows forms, and record "Fluent UI unverified"
+in the PR description instead of asserting it works.
+
 
 ## Runtime Theme Detection
 

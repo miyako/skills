@@ -227,7 +227,7 @@ Open only the file for the object(s) the task touches.
 | Picture input: interactive SVG, mouse tracking, clickable map, drawing tool | `references/objects/picture-input.md` |
 | List box: columns, footers, `truncateMode`, `resizingMode`, `rowHeight`, selection binding | `references/objects/listbox.md` |
 | Subform container: `Form` inside a subform, parent ↔ subform calls, subform pages | `references/objects/subform.md` |
-| Long operations without freezing the form: `SET TIMER`, `CALL FORM`, async callbacks | `references/async-ui.md` |
+| Long operations without freezing the form: `SET TIMER`, `CALL FORM`, async callbacks, status lines fed by callbacks | `references/async-ui.md` |
 | Positioning, sizing, aligning, spacing objects; rendered vs declared size; overlap checks | `references/layout.md` (+ `scripts/form_layout_calc.py`) |
 | Official doc page for an object type, property group or event | `references/docs-index.md` |
 | SVG rendering engine: supported elements, filters, `SVG SET ATTRIBUTE` | `references/objects/svg-rendering.md` |

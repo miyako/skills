@@ -75,7 +75,8 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 8. **Compatible and local providers** (Ollama, LM Studio, Mistral...): pass
    `baseURL` **and** an `apiKey` -- a dummy one for local servers that need
    none (observed: without `apiKey` the client can be Null). Configured
-   provider names and model aliases are an alternative.
+   provider names and model aliases are an alternative. Local embeddings
+   with the `miyako/llama-cpp` component: `skills/4dembeddings/SKILL.md`.
 9. Call providers through AI Kit, not raw `4D.HTTPRequest`.
 10. Write commands without token suffixes unless the exact token already
     exists in the project (token rules in `skills/4dproject/SKILL.md`).
