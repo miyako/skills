@@ -769,13 +769,22 @@ When that happens:
 ### The compiler also finds defects interpretation forgives
 
 Even when the class-store error blocks the build, the run is worth doing:
-`Compile project` type-checks code the interpreter happily executes. Two
-that came out of a project that ran clean under `tool4d`:
+`Compile project` type-checks code the interpreter happily executes. These
+came out of projects that ran clean under `tool4d`:
 
 | Interpreted code | Compiler verdict | Fix |
 |---|---|---|
 | `$file.parent.create()` as a statement | `This function has been called as a procedure.` | `create()` returns a Boolean; assign it (`$made:=$file.parent.create()`), do not declare it as `4D.Folder` or the next error is `Impossible to cast Boolean to 4D.Folder` |
+| `For each ($item; $collection)` in a class function or method, with no `var $item` anywhere | `The variable $ITEM has not been explicitly declared.` (reported once per use, name upper-cased). `validate` and `check-syntax` stay silent | declare it: `var $item : Object` (or add it to an existing `var` line). The loop variable is not auto-declared in compiled mode |
+| `#DECLARE($params : Object)` at the top of a form method (`Forms/<Name>/method.4dm`) | `Too many parameters have been passed to this method.` and `The parameter $1 has not been explicitly declared.`, `code.type` `formMethod`. Silent when interpreted and under `validate` | remove it; a form method receives no parameters, read `Form` (see [4dform](../4dform/SKILL.md)) |
 | `ON ERR CALL("handler"; ek local)` whose method reads `$1`, `$2`, `$3` | `The parameter $1 has not been explicitly declared.` | give the handler a prototype: `#DECLARE($mode : Variant; $code : Variant; $text : Variant)`. `var $1; $2; $3 : Variant` is rejected ("should be declared in the prototype") |
+
+`Compile project` does not choke on form-bearing projects: with the two
+forms present it still returned a normal status object with `formMethod`
+errors, and with the form methods fixed it returned `success:true`. Do not
+attribute a failed compile to the `Forms/` folder before reading `errors`;
+if a form-load crash (`VFormList_json::_LoadFolder`) is ever seen, bisect by
+removing one `Forms/<name>/` at a time in a scratch copy.
 
 Fix these rather than dismissing every diagnostic as the dependency's
 fault. After the fixes the same project reported exactly one error (the
