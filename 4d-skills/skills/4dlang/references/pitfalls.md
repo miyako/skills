@@ -177,6 +177,12 @@ and to reading properties inside a preemptive process.
   `CALL WORKER` messages **and starts as Null** in a fresh process, not as 0
   or empty. `If ($counter<$limit)` is then never true, and the loop silently
   runs zero times: seed it (`If (Not(IsNumeric($counter))) $counter:=0`).
+* An unassigned **typed object or class variable** reports
+  `Value type(...)=Is object` (38) while `=Null` is also True (measured on
+  tool4d 21R4 for `var $f : 4D.File` and `var $o : Object`). A guard such as
+  `If (Value type($file)=Is object) $file.setText(...)` therefore passes for
+  a file that was never set and fails with `-10701 Undefined Object` on the
+  member call. Guard with `$file#Null`.
 * Comparing anything with Null is False, including `$x>=0` and `$x#0`.
   Null is only caught by an explicit `#Null` / `Value type($x)=Is Null` test.
 
