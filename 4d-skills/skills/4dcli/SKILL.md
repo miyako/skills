@@ -1290,14 +1290,25 @@ the **same** cycle therefore capture the **old** page.
 
 Chain `CALL FORM` calls instead; each one is a separate cycle:
 
-1. **Cycle 1** (`goto_page_then_screenshot`): call `FORM GOTO PAGE($page)`,
-   then issue `CALL FORM(screenshot_and_accept)`. Rendering happens at the
-   end of this cycle.
+0. **Cycle 0** (`goto_page_then_screenshot`, first run): with
+   `DIALOG(...; *)` the queued `CALL FORM` can execute before the form's
+   first display cycle, and a `FORM GOTO PAGE` issued that early is
+   silently ignored -- the form then displays page 1 no matter what was
+   requested. The shipped asset requeues itself once (`Form.__hop`) so the
+   navigation lands on a displayed form.
+1. **Cycle 1** (`goto_page_then_screenshot`, second run): call
+   `FORM GOTO PAGE($page)`, then issue `CALL FORM(screenshot_and_accept)`.
+   Rendering happens at the end of this cycle.
 2. **Cycle 2** (`screenshot_and_accept`): call `FORM SCREENSHOT` -- now the
    page is correctly rendered. Then `ACCEPT` and `QUIT 4D`.
 
 ```4d
 // goto_page_then_screenshot -- called via CALL FORM
+If (Form.__hop=Null)  // first run may precede the first display cycle
+	Form.__hop:=1
+	CALL FORM(Current form window; Formula(goto_page_then_screenshot))
+	return 
+End if 
 FORM GOTO PAGE(Form.__page)
 // Chain: screenshot runs in the NEXT cycle, after this cycle renders
 CALL FORM(Current form window; Formula(screenshot_and_accept))
@@ -1305,6 +1316,11 @@ CALL FORM(Current form window; Formula(screenshot_and_accept))
 
 The same rule applies anywhere state is changed and then observed: the
 change and the observation must be in separate execution cycles.
+
+If the target form has a tab control with the `gotoPage` standard action,
+the action reverts programmatic `FORM GOTO PAGE` to the tab's own page --
+remove the action for the capture and restore it afterwards
+(`skills/4dform/references/objects/tab.md`, "Goto Page").
 
 #### Windows Owned by Another Process
 

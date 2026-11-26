@@ -4,6 +4,16 @@
 // The page rendering completes at the end of THIS execution cycle,
 // so the screenshot in the NEXT cycle captures the correct page.
 
+// With DIALOG(...; *) the first CALL FORM can execute before the form's
+// first display cycle, and a FORM GOTO PAGE issued that early is silently
+// ignored (the form then displays page 1). Requeue once so the navigation
+// lands on a displayed form.
+If (Form.__hop=Null)
+	Form.__hop:=1
+	CALL FORM(Current form window; Formula(goto_page_then_screenshot))
+	return 
+End if 
+
 var $page : Integer
 $page:=Form.__page
 If ($page>1)
