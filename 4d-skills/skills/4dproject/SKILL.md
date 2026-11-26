@@ -136,7 +136,11 @@ other skills link here rather than restating them.
   `Movable form dialog box:K39:8`, `On Data Change:K2:15`; another session
   invented `File:C477` -- resolved as "Get text resource" -- and
   `Folder:C482` -- resolved as "SET DOCUMENT POSITION" -- and wrote event
-  constants in a nonexistent `K4` namespace, `On Clicked:K4:1`).
+  constants in a nonexistent `K4` namespace, `On Clicked:K4:1`; a third
+  session invented `New collection:C1487`, which **passed
+  `tool4d-lsp-stdio validate`** and was caught only when the interpreted
+  runtime aborted the form's On Load with a syntax error -- so `validate`
+  passing is not evidence that every token is real).
 * **Mandatory grep-first check, every time:** before writing any `:CNNN` or
   `:KNN:NN`, grep the project's own source for that exact
   `Name:CNNN` / `Name:KNN:NN` string.
