@@ -75,7 +75,9 @@ common and won't be found without this, since it isn't on PATH and isn't
 in the VS Code extension storage or conventional locations list above.
 Installer folders carry the build number
 (`--tool "/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d"`);
-see "Binary Paths" in `skills/4dcli/SKILL.md`.
+see "Binary Paths" in `skills/4dcli/SKILL.md`. On macOS the path is the
+**binary inside the bundle** (`.../tool4d.app/Contents/MacOS/tool4d`):
+pointing at `tool4d.app` fails with "tool4d path is not a file".
 
 ## Command lookup (before writing code)
 
@@ -153,6 +155,11 @@ tools/4dlsp/tool4d-lsp-stdio validate --json --workspace Project/ Sources/Method
   the command name does not exist (observed: `Get localized document path`;
   the real name is `Localized document path`). Look the name up with
   `4dlang` rather than rewriting the line.
+- **"Undeclared property 'x' used"** in an object or form method of a
+  form with a `formClass`: `Form` is typed by that class, so declare the
+  property in the class (`property quotas : Object`). Details:
+  `skills/4dform/references/form-concepts.md` ("Property Declarations and
+  Compiler Warnings").
 
 ## Check-syntax command (project-wide)
 

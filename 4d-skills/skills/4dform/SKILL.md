@@ -235,6 +235,7 @@ Open only the file for the object(s) the task touches.
 | Long operations without freezing the form: `SET TIMER`, `CALL FORM`, async callbacks, status lines fed by callbacks | `references/async-ui.md` |
 | Positioning, sizing, aligning, spacing objects; rendered vs declared size; overlap checks | `references/layout.md` (+ `scripts/form_layout_calc.py`) |
 | Official doc page for an object type, property group or event | `references/docs-index.md` |
+| Fake buttons (hidden button over a rectangle and a label) to real buttons | `references/objects/button.md` (+ `scripts/fake_buttons.py`) |
 | SVG rendering engine: supported elements, filters, `SVG SET ATTRIBUTE` | `references/objects/svg-rendering.md` |
 | Resolving a property name: JSON key, CSS name, getter/setter command | `references/property-reference.md` |
 | Quick visual assessment with `fourdform`, or a second opinion using `FORM SCREENSHOT` or printing | `references/screenshot-rendering.md` |

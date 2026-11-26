@@ -222,6 +222,21 @@ Windows rule behind `@media (form-theme: fluent-ui)`, keep the height
 equal to the existing Windows forms, and record "Fluent UI unverified"
 in the PR description instead of asserting it works.
 
+One en/ja demo (21 R5) used `fluent-ui` 32 px / `win-classic` 23 px
+next to `liquid-glass` 27 px / `mac-classic` 23 px. The Windows values
+are still unverified on Windows.
+
+### Fluent UI (Windows): Enabling It
+
+Fluent UI is opt-in. It is a project setting (Settings > Interface) or a
+per-form JSON property, `"fluentUI": true` (absent = inherited from the
+project; ignored on macOS). The project setting lives in `Settings/`,
+which many repositories ignore: set the **form** property when the
+project is shared (an attendee demo), so the choice travels with the
+repository. The 4D blog (October 2025) says Fluent UI needs the Windows
+App SDK (1.7.3) at runtime; without it the form falls back to the classic
+theme with no error. Treat that as unverified until captured on Windows.
+
 
 ## Runtime Theme Detection
 

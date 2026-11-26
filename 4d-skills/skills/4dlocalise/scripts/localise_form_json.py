@@ -5,13 +5,15 @@ mapping.json: {"<literal text>": "<XLIFF id>", ...}   (exact, whole-value matche
 
 Touched properties: text, windowTitle, tooltip, placeholder, and string items
 of labels. Each file is first round-tripped (json.loads -> json.dumps with tab
-indent, ensure_ascii=False, no trailing newline). A file whose bytes differ is
+indent, ensure_ascii=False, no trailing newline; a leading UTF-8 BOM, which
+4D writes in some files, is kept). A file whose bytes differ is
 SKIPPED, because 4D wrote it in a form this script cannot reproduce: edit it
 by hand. Unmatched literals are listed so that nothing is missed silently.
 """
 import argparse
 import json
 
+BOM = "\ufeff"
 PROPS = ("text", "windowTitle", "tooltip", "placeholder")
 
 
@@ -56,8 +58,9 @@ def main():
     for path in args.forms:
         with open(path, encoding="utf-8", newline="") as f:
             raw = f.read()
-        obj = json.loads(raw)
-        if dump(obj) != raw:
+        bom = BOM if raw.startswith(BOM) else ""
+        obj = json.loads(raw[len(bom):])
+        if bom + dump(obj) != raw:
             print(f"SKIP {path}: not byte-exact on round-trip")
             skipped += 1
             continue
@@ -68,7 +71,7 @@ def main():
             print("   unmatched", miss)
         if hits and not args.dry_run:
             with open(path, "w", encoding="utf-8", newline="") as f:
-                f.write(dump(obj))
+                f.write(bom + dump(obj))
     if skipped:
         print(f"{skipped} file(s) skipped: edit them by hand")
 
