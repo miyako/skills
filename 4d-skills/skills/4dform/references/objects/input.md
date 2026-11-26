@@ -256,7 +256,9 @@ All properties from the schema's `input` definition, with exact JSON keys and va
 | `scrollbarVertical` | `"visible"`, `"hidden"`, `"automatic"` | |
 | `dragging` | `"none"`, `"automatic"`, `"custom"` | |
 | `dropping` | `"none"`, `"automatic"`, `"custom"` | |
-| `borderRadius` | integer (≥ 0) | Added 19 R7; **not** `cornerRadius` — that key is silently ignored |
+| `borderRadius` | integer (≥ 0) | Added 19 R7; **not** `cornerRadius` — that key is silently ignored. Paints `r` px outside the left and right edges (`../layout.md`) |
+| `verticalAlign` | `"automatic"`, `"top"`, `"middle"`, `"bottom"` | 21 R5 for this object type. `automatic` = bottom for text |
+| `paddingLeft`, `paddingRight`, `paddingTop`, `paddingBottom` | integer (≥ 0) | 21 R5. Space between the edge and the text; replaces a rectangle drawn behind a borderless object |
 | `tooltip` | string | |
 
 Plus inherited from `objectCommon`: `top` (required), `left` (required), `width`, `height`, `bottom`, `right`, `sizingX` (`"move"`, `"grow"`, `"fixed"`), `sizingY` (`"move"`, `"grow"`, `"fixed"`), `class`, `visibility` (`"visible"`, `"hidden"`, `"selectedRows"`, `"unselectedRows"`).

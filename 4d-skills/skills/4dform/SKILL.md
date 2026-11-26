@@ -31,7 +31,11 @@ table below.
 ### Not in this skill
 
 * `.4dm` code validation -- `skills/4dlsp/SKILL.md`
-* 4D command and OOP class syntax -- `skills/4dlang/SKILL.md`
+* 4D command and OOP class syntax -- `skills/4dlang/SKILL.md`. Before
+  writing geometry code (centring, `OBJECT SET COORDINATES`, sizes from
+  `OBJECT GET BEST SIZE`): 4D evaluates arithmetic **left to right with no
+  precedence**, so `$l+($r-$l-$w)\2` is wrong. Parenthesise every
+  sub-expression (`skills/4dlang/references/pitfalls.md`).
 * project layout, `.gitignore`, `menus.json`, `roles.json` --
   `skills/4dproject/SKILL.md`
 * stylesheets, dark mode, Liquid Glass / form themes --
