@@ -134,7 +134,7 @@ For demo, webinar and seminar projects shared with attendees.
 
 | Task | Skill | File path |
 |----------|-------|-----------|
-| Make a demo cloneable and runnable by attendees; README conventions; optional `.agents` submodule workflows; earlier template baseline | demo-shareable-repo | `skills/demo-shareable-repo/SKILL.md` |
+| Make a demo cloneable and runnable by attendees; README conventions; companion WebFolder pages and live browser verification; optional `.agents` submodule workflows; earlier template baseline | demo-shareable-repo | `skills/demo-shareable-repo/SKILL.md` |
 | Size, package, verify and publish demo data (Git vs LFS vs release asset) | demo-data-distribution | `skills/demo-data-distribution/SKILL.md` |
 | Generate per-language demo sample data that looks plausible to the audience; regenerate button | demo-sample-data | `skills/demo-sample-data/SKILL.md` |
 | Vector-search demo: scale, real vector index, threshold calibration, indexed vs scan timing | demo-vector-search | `skills/demo-vector-search/SKILL.md` |
