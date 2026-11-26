@@ -12,6 +12,18 @@
 				"type": "string",
 				"$comment": "sandboxed absolute or relative path"
 			},
+			"tipsRef": {
+				"type": "object",
+				"$comment": "a tooltip stored in tips.json, written by the Form editor as a JSON reference",
+				"properties": {
+					"$ref": {
+						"type": "string",
+						"pattern": "^/SOURCES/tips.json#/"
+					}
+				},
+				"required": ["$ref"],
+				"additionalProperties": false
+			},
 			"dateFormat": {
 				"type": "string",
 				"pattern": "^(systemShort|systemMedium|systemLong|iso8601|rfc822|short|shortCentury|abbreviated|long)( blankIfNull)?$"
@@ -539,7 +551,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					}
 				}
 			}, {
@@ -655,7 +671,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"min": {
 						"type": [ "string", "number" ],
@@ -767,7 +787,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"display": {
 						"type": "boolean",
@@ -868,7 +892,11 @@
 						"type": "boolean"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"textPlacement": {
 						"enum": [ "left", "right", "top", "bottom", "center" ],
@@ -951,7 +979,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"textPlacement": {
 						"enum": [ "left", "right", "top", "bottom", "center" ],
@@ -1025,7 +1057,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"textFormat": {
 						"type": "string"
@@ -1112,7 +1148,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"dragging": {
 						"enum": [ "none", "automatic", "custom" ]
@@ -1432,7 +1472,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"stroke": {
 						"$ref": "#/definitions/types/color"
@@ -1469,7 +1513,11 @@
 						"enum": ["gotoPage"]
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"rowCount": {
 						"type": "integer",
@@ -1504,7 +1552,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"enterable": {
 						"type": "boolean"
@@ -1565,7 +1617,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"focusable": {
 						"type": "boolean",
@@ -1630,7 +1686,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					}
 				}
 			}, {
@@ -1657,7 +1717,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"enterable": {
 						"type": "boolean"
@@ -1703,7 +1767,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"focusable": {
 						"type": "boolean",
@@ -1765,7 +1833,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"picture": {
 						"$ref": "#/definitions/types/picture"
@@ -1828,7 +1900,11 @@
 						"type": "string"
 					},
 					"tooltip": {
-						"type": "string"
+						"oneOf": [{
+							"$ref": "#/definitions/types/tipsRef"
+						}, {
+							"type": "string"
+						}]
 					},
 					"picture": {
 						"$ref": "#/definitions/types/picture"

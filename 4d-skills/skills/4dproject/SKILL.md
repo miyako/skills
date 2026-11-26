@@ -137,7 +137,22 @@ other skills link here rather than restating them.
   A confidently remembered token is exactly as dangerous as a random one
   (a real incident: `Size of array:C267` was written from memory; `C267` is
   another command; one later session invented three more: `Not:C34`,
-  `Movable form dialog box:K39:8`, `On Data Change:K2:15`).
+  `Movable form dialog box:K39:8`, `On Data Change:K2:15`; a third session
+  invented `New collection:C1781`, which resolved to a Text-returning
+  command, left the typed variable Null and surfaced much later as
+  `Undefined collection` on the first `.push()` -- in a form's `On Load`,
+  so the demo window never finished loading).
+* **The LSP does not catch a wrong token number.** The `New collection:C1781`
+  file passed `4dlsp` validation with 0 diagnostics; only running the code
+  exposed it. A project-wide audit is cheap and catches every invention at
+  once: `git grep -hoE ":C[0-9]+|:K[0-9]+:[0-9]+" <bad-ref> -- Project/Sources`
+  vs the same on the good ref, then `comm -13`. Any token that appears only
+  on the bad side was invented -- remove it or verify it.
+* **A bare (paren-less) tokenized call can also fail to parse.** Under
+  `tokenizedText: false`, `New collection:C1781` raised
+  `[59] 4D was expecting an expression` in isolation, while constant tokens
+  (`True:C214`) and `Form:C1466` in expression position parsed fine -- so a
+  clean run of other tokenized lines proves nothing about the suspect one.
 * **Mandatory grep-first check, every time:** before writing any `:CNNN` or
   `:KNN:NN`, grep the project's own source for that exact
   `Name:CNNN` / `Name:KNN:NN` string.
