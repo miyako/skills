@@ -351,6 +351,12 @@ tools/4dform/boon schemas/4dform/formsSchema.json <file>
 
 Do not assume that `jq` alone performs JSON Schema validation.
 
+`boon` reports a mismatch for every `oneOf` branch of a failing object, so
+one real error can print many lines. Filter on the instance path to find
+it. Before calling an error a defect, validate the unmodified form too: if
+4D itself wrote the failing value, suspect a schema gap and fix the schema
+with evidence from the 4D docs (`borderStyle: "custom"` was such a gap).
+
 ## Modification
 
 When modifying a `.4DForm`:

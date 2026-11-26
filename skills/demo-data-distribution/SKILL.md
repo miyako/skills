@@ -67,7 +67,8 @@ indexed and one scan query, which must return the same hits.
 
 ## Backup
 
-`Data/` is git-ignored, and archiving a worktree deletes it. Keep a
+`Data/` is git-ignored (unless committed on purpose, `4dproject`), and
+archiving a worktree deletes it. Keep a
 verified copy of `Data.zip` (re-embedding took ≈ 8 min per 100k on
 Apple Silicon, and longer elsewhere) outside the worktree until the
 release is published and downloaded once.

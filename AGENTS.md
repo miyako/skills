@@ -103,7 +103,7 @@ the group is in the name:
 | `.4DSettings` (settings) | 4dsettings | `skills/4dsettings/SKILL.md` |
 | `.4dm` validation / syntax check / LSP / MCP | 4dlsp | `skills/4dlsp/SKILL.md` |
 | 4D command / OOP class member lookup, doc and forum search | 4dlang | `skills/4dlang/SKILL.md` |
-| Running tool4d / 4D from the command line (tests, compile, render); obtaining tool4d and digest-pinning exact builds; background launch, PID-scoped window capture (never quit 4D by name or path) and helper-process cleanup on a shared desktop | 4dcli | `skills/4dcli/SKILL.md` |
+| Running tool4d / 4D from the command line (tests, compile, render); obtaining tool4d and digest-pinning exact builds; background launch, PID-scoped window capture (never quit 4D by name or path), per-language / `formClass` / other-process window screenshots and helper-process cleanup on a shared desktop | 4dcli | `skills/4dcli/SKILL.md` |
 | Tool provisioning | 4dtools | `skills/4dtools/SKILL.md` |
 
 ### 4D development topics
@@ -113,7 +113,7 @@ the group is in the name:
 | Native C/C++ plugin string ownership, text-array lifetimes, callbacks and non-release validation | 4dplugin | `skills/4dplugin/SKILL.md` |
 | Method attributes, `invisible`, Run Method dialog | 4dmethods | `skills/4dmethods/SKILL.md` |
 | `C_*` → `var` / `#DECLARE`, deprecated `_o_` commands | 4dmodernise | `skills/4dmodernise/SKILL.md` |
-| XLIFF localisation, `Localized string`, language-following attributes, following the OS language | 4dlocalise | `skills/4dlocalise/SKILL.md` |
+| XLIFF localisation and generation scripts, `Localized string`, stored enumerations (key stored, label shown), language-following attributes, following the OS language or an in-app language switch | 4dlocalise | `skills/4dlocalise/SKILL.md` |
 | Startup / first window, chaining forms, `DIALOG(...; *)` | 4dstartup | `skills/4dstartup/SKILL.md` |
 | 4D AI Kit, async callbacks and streaming | 4daikit | `skills/4daikit/SKILL.md` |
 | Local embedding models (llama.cpp component + AI Kit), Hugging Face GGUF download, embedding-model acceptance test | 4dembeddings | `skills/4dembeddings/SKILL.md` |
@@ -136,6 +136,7 @@ For demo, webinar and seminar projects shared with attendees.
 |----------|-------|-----------|
 | Make a demo cloneable and runnable by attendees; README conventions; `.agents` submodule workflows | demo-shareable-repo | `skills/demo-shareable-repo/SKILL.md` |
 | Size, package, verify and publish demo data (Git vs LFS vs release asset) | demo-data-distribution | `skills/demo-data-distribution/SKILL.md` |
+| Generate per-language demo sample data that looks plausible to the audience; regenerate button | demo-sample-data | `skills/demo-sample-data/SKILL.md` |
 | Vector-search demo: scale, real vector index, threshold calibration, indexed vs scan timing | demo-vector-search | `skills/demo-vector-search/SKILL.md` |
 | Live presentation UX, Japanese audience, UI vs data language | demo-presentation | `skills/demo-presentation/SKILL.md` |
 
@@ -157,8 +158,8 @@ repository root). Ignore them everywhere else.
 Read the applicable `SKILL.md` before making structural changes to a
 proprietary 4D artifact.
 
-Several skills carry longer material under `references/` (and `4dform`
-and `4dembeddings` scripts under `scripts/`). Do not read those files directly -- route
+Several skills carry longer material under `references/` (and some
+skills, e.g. `4dform`, `4dlocalise` and `4dcli`, scripts under `scripts/`). Do not read those files directly -- route
 to them through the route table in the owning `SKILL.md`; `4dform`'s table
 also states how many of its files a task may open.
 

@@ -25,7 +25,7 @@ attendee-shared demos, `technote-*` technote localisation only.
 | [`4dsettings`](skills/4dsettings/SKILL.md) | `.4DSettings` (placeholder) |
 | [`4dlsp`](skills/4dlsp/SKILL.md) | `.4dm` validation, syntax check and code intelligence with `tool4d-lsp-stdio` |
 | [`4dlang`](skills/4dlang/SKILL.md) | Classic command and OOP class member lookup; documentation and forum search |
-| [`4dcli`](skills/4dcli/SKILL.md) | Running tool4d / 4D from the command line: tests, compile, form rendering; obtaining tool4d and digest-pinning exact builds; non-intrusive GUI capture and helper-process cleanup on a shared desktop |
+| [`4dcli`](skills/4dcli/SKILL.md) | Running tool4d / 4D from the command line: tests, compile, form rendering; obtaining tool4d and digest-pinning exact builds; non-intrusive GUI capture (per-language, `formClass` and other-process windows) and helper-process cleanup on a shared desktop |
 | [`4dtools`](skills/4dtools/SKILL.md) | Provisioning the helper binaries the other skills use |
 
 ### 4D development topics
@@ -35,7 +35,7 @@ attendee-shared demos, `technote-*` technote localisation only.
 | [`4dplugin`](skills/4dplugin/SKILL.md) | Native C/C++ plugin string ownership, text-array lifetimes, callbacks and non-release validation |
 | [`4dmethods`](skills/4dmethods/SKILL.md) | Method attributes and which methods to hide from the Run Method dialog |
 | [`4dmodernise`](skills/4dmodernise/SKILL.md) | `C_*` → `var` / `#DECLARE`, deprecated `_o_` commands and their replacements |
-| [`4dlocalise`](skills/4dlocalise/SKILL.md) | XLIFF localisation, `Localized string`, attributes that follow the UI language, following the OS language |
+| [`4dlocalise`](skills/4dlocalise/SKILL.md) | XLIFF localisation and generation scripts, `Localized string`, stored enumerations (key stored, label shown), attributes that follow the UI language, following the OS language or an in-app language switch |
 | [`4dstartup`](skills/4dstartup/SKILL.md) | The non-blocking startup window pattern and chaining forms |
 | [`4daikit`](skills/4daikit/SKILL.md) | 4D AI Kit: chat, vision, async callbacks and streaming |
 | [`4dembeddings`](skills/4dembeddings/SKILL.md) | Local embedding models with the llama.cpp component and AI Kit, GGUF download, embedding-model acceptance test (`check_gguf.py`) |
@@ -56,6 +56,7 @@ For demo, webinar and seminar projects shared with attendees.
 |---|---|
 | [`demo-shareable-repo`](skills/demo-shareable-repo/SKILL.md) | Making a demo cloneable and runnable by attendees; README conventions; `.agents` submodule workflows |
 | [`demo-data-distribution`](skills/demo-data-distribution/SKILL.md) | Sizing, packaging, verifying and publishing demo data (Git vs LFS vs release asset) |
+| [`demo-sample-data`](skills/demo-sample-data/SKILL.md) | Per-language generated sample data that looks plausible to the audience, with a regenerate button |
 | [`demo-vector-search`](skills/demo-vector-search/SKILL.md) | Vector-search demos: scale, real vector index, threshold calibration, indexed vs scan timing |
 | [`demo-presentation`](skills/demo-presentation/SKILL.md) | Live-demo UX, Japanese audience, UI vs data language |
 

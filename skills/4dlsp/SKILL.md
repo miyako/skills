@@ -73,6 +73,9 @@ configuration is needed. Otherwise pass `--tool <path-to-tool4d>` (or set
 `TOOL4D_PATH`) explicitly -- e.g. on macOS a manually-installed 4D.app is
 common and won't be found without this, since it isn't on PATH and isn't
 in the VS Code extension storage or conventional locations list above.
+Installer folders carry the build number
+(`--tool "/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d"`);
+see "Binary Paths" in `skills/4dcli/SKILL.md`.
 
 ## Command lookup (before writing code)
 
@@ -146,6 +149,10 @@ tools/4dlsp/tool4d-lsp-stdio validate --json --workspace Project/ Sources/Method
 - **warning** -- code compiles but may have issues. Report to user but
   do not block on warnings.
 - **info** / **hint** -- informational. Ignore unless relevant to the task.
+- A bare **"Syntax error"** on a line that calls a command usually means
+  the command name does not exist (observed: `Get localized document path`;
+  the real name is `Localized document path`). Look the name up with
+  `4dlang` rather than rewriting the line.
 
 ## Check-syntax command (project-wide)
 
@@ -215,13 +222,12 @@ Exit codes follow the same convention as `validate`: `0` whether or not
 diagnostics were found (as long as the session ran cleanly), nonzero
 only for real transport/protocol failures.
 
-> **Not yet empirically verified against a live tool4d binary:** it is
-> not yet confirmed whether the response reliably includes diagnostics
-> for files that were never opened by this process. `check-syntax`
-> *should* report project-wide diagnostics regardless of the anchor
-> file, but treat that as unconfirmed until tested in practice. Do not
-> drop `validate`'s per-file chunking in favor of `check-syntax` based
-> on this alone.
+> **Verified project-wide** (tool4d-lsp-stdio 0.3.0, tool4d 21 R5 build
+> 100189, macOS): `check-syntax --workspace Project/` with no anchor files
+> reported diagnostics for every `.4dm` in a ~50-file project (all
+> "previously opened: false"), including a syntax error in a method never
+> opened by the process, in about 10 s. Keep `validate` for the files you
+> just changed and for per-file chunking on very large projects.
 
 ### `validate` vs `check-syntax`
 
