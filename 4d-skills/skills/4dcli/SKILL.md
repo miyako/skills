@@ -1446,6 +1446,25 @@ chain in the full 4D application, produced content-rich pages (100+ KB
 PNGs). When the screenshot must show data or styling, use the full 4D app
 and verify the result, do not trust the file's existence.
 
+When the agent has no image input, read the capture with macOS **Vision
+OCR** instead -- one small Swift binary verifies both the window title
+(see `references/shared-desktop.md`, the `winid` helper prints it) and the
+rendered text:
+
+```sh
+# ocr.swift -- usage: ocr <image.png>
+# VNRecognizeTextRequest, recognitionLevel .accurate,
+# recognitionLanguages ["en-US", "ja-JP"]; swiftc ocr.swift -o ocr
+/tmp/winid/ocr /tmp/capture.png
+```
+
+The text output is enough to assert the things that matter after a run:
+the localised window title, that a version gate shows its error and Close
+button, that tab captions and status lines resolved from XLIFF, and that
+no `Syntax Error` dialog is stacked in front of the form (a dialog appears
+as its own window in `winid`'s list before you even capture). Compile both
+helpers once per host; they have no dependencies beyond the OS.
+
 ## Tool Dependencies
 
 This skill needs a `tool4d` or `4D` installation on the host. Prefer an

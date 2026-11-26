@@ -234,7 +234,11 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 * **Line breaks.** 4D strings use CR (`\r`, `Char(13)`) as the line break.
   Inspect the original bytes (e.g. `xxd`) of a multi-line string before
   moving it to XLIFF. A literal CR inside XML is normalised to LF by the
-  parser, so write `&#13;` where a CR is required.
+  parser, so write `&#13;` where a CR is required. Keep a multi-line string
+  out of **window titles**: `SET WINDOW TITLE` renders the break as nothing
+  ("...Paddingin My Text Area..."), so a title needs its own single-line ID
+  (or join the lines before `SET WINDOW TITLE`) while the form body keeps
+  the two-line original.
 * **Escaping.** Escape `&`, `<` and `>` in XML text.
 * **Source text changes.** If the meaning of the data or UI changed, update
   the English `<source>` too and tell the user.
