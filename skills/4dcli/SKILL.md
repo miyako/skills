@@ -662,6 +662,24 @@ Consequences for a test harness:
 * Run the same method against a deliberately failing assertion once, and
   confirm the harness reports failure. With an exit-code gate it will not.
 
+### A harness that supplies its own inputs skips the real startup
+
+A test that starts the project with `--startup-method=<test>` and passes the
+paths, worker names or configuration the application would normally compute
+for itself never runs the code that computes them. In one demo both the
+headless and the window suites passed on every run while the first normal
+launch raised `Undefined Object` dialogs, because the production startup
+method built a status-file path that nothing under test ever executed.
+
+* Put anything the production startup derives (a data or log path, a
+  settings file, a worker's inputs) in its own method and call that method
+  from both the startup and the test. Assert on its result: the file object
+  is not Null, the parent folder exists, the path survives the round trip.
+* After a change to startup, also launch the real application once without
+  `--startup-method` (and without `--skip-onstartup`) and check for the
+  artifact it should create. A modal error dialog is invisible to a headless
+  gate: the process stays alive and the exit code is `0`.
+
 ### Waiting on another process
 
 A harness that waits for a device, a session or a worker should wait on
