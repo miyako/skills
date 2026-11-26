@@ -130,3 +130,20 @@ $sel:=ds.Document.query("embedding > :1 order by embedding desc"; $cmp)
   `$v.cosineSimilarity($q)` should match `order by <attr> desc` exactly; a
   mismatch points at the index, a match with poor results at the
   embeddings.
+
+### Creating the vector index in code
+
+```4d
+ARRAY POINTER($fields; 1)
+$fields{1}:=->[Data]IndexedVector
+CREATE INDEX([Data]; $fields; Vector cosine index; "IndexedVector_cosine")
+```
+
+* The second parameter is an **array of pointers**, not a field reference:
+  `CREATE INDEX([Data]; [Data]IndexedVector; ...)` fails at runtime with
+  `[59] 4D was expecting a table/variable` (and the analyzer only complains
+  about a type cast). Pass the table reference first, then the pointer array.
+* The index type constant is `Vector cosine index` (also `Vector dot index`,
+  `Vector euclidean index`); the last argument is the index name.
+* Headless builds can create the index after the import in the same
+  `tool4d` run; on 300k x 768-dim vectors it takes on the order of a minute.

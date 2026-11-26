@@ -230,6 +230,10 @@ Reference: https://developer.4d.com/docs/API/FunctionClass
 * Callback order: `onHeaders` once → `onData` zero or more times →
   `onResponse` or `onError` once → `onTerminate` once.
 * `.wait()` blocks the process (and its form) until the response arrives.
+* `.wait()` returns the **request** object, not the response: the HTTP status
+  is at `$request.response.status`, not `$request.status`. A health check
+  written as `$request.wait().status=200` is always false even against a
+  healthy server, and reads like it should work. Measured on 21 R5.
 
 Reference: https://developer.4d.com/docs/API/HTTPRequestClass
 
@@ -312,7 +316,8 @@ https://developer.4d.com/docs/Develop/processes
 | `String(value; format; separator)` | Not an overload: the third argument is not a decimal-separator argument, and this call fails compilation with `At least one parameter type does not match the prototype(s) of the function "String"` plus `Invalid constant type : Alphanumeric`. |
 | `String(n; "&x")` | Already returns the `0x` prefix, zero-padded to four digits: `String(81; "&x")` is `0x0051`. Prepending `"0x"` yourself prints `0x0x0051`. Measured on 21 R5 (100175). |
 | `Select document(...)` result | Returns Text (the path; empty on Cancel), not a number: `Value type($r)=Is real` is never true and silently skips the whole branch. Test `$r#""` and `Size of array($paths)>0`. Every element is a platform path (see the path section above). |
-| `Min(a; b)` / `Max(a; b)` | Array commands. With two scalars, compilation fails as `Impossible to cast Real to Array<Variant>.` / `Invalid constant type : Real` — the diagnostics never mention `Min`. Compare with `math` operators or a user helper. |
+| `Min(a; b)` / `Max(a; b)` | Array commands. With two scalars, compilation fails as `Impossible to cast Real to Array<Variant>.` / `Invalid constant type : Real` — the diagnostics never mention `Min`. Compare with `math` operators or a user helper. In an **interpreted** headless run the picture is worse: the analyzer reports 0 diagnostics, `Min(2; 4)` throws a recoverable `[59] 4D was expecting a field or a variable or a parameter` (fatal without an error handler, swallowed to a silent `0` with one), and `Min($x; $y)` returns `0` with no error at all. Compute a scalar bound with `If`/`Else` instead. Measured on tool4d 21 R5 (100189). |
+| `collection.slice(from; to)` | `to` is the **exclusive end index**, not a count (same as JavaScript): `slice(0; 128)` returns 128 items but `slice(128; 128)` returns an empty collection. Batch with `slice($start; $start+$size)` or plain index arithmetic, never `slice($start; $size)`. |
 | `4D.Folder.delete()` | Refuses a non-empty folder: `[651] Folder  not empty`. Use `DELETE FOLDER($folder.path; Delete with contents)` for scratch directories. The failure is catchable by `Try`, but `Last errors` is empty in that `Catch`. |
 | `Open document(path)` as a statement | It is a function: `This function has been called as a procedure.` Assign or discard the result (`$opened:=String(Open document($path))`). |
 | `CONFIRM(message {; okTitle {; cancelTitle}})` as a function | It is a procedure: it returns nothing and reports the choice in the `OK` system variable (`1` = OK button). Write `CONFIRM(...)` then `If (OK#1)`. The title order is OK first, then Cancel, so `CONFIRM($msg; "Cancel"; "Title")` labels the OK button "Cancel". `tool4d-lsp-stdio validate` returned 0 diagnostics for `If (Not(CONFIRM(...)))`, so the analyzer does not catch it; the dialog needs a person, so check the path by reading it, not by a headless run. |
