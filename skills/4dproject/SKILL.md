@@ -184,6 +184,9 @@ Thumbs.db
 /tools/4dlsp/
 /tools/4dlang/
 /tools/4dcli/
+
+# Staged components (fetched artifact; see references/dependencies.md)
+/Components/
 ```
 
 When the project sits in a subfolder of the repository (e.g. `demo/<Name>/`),
