@@ -58,21 +58,17 @@ searches for tool4d automatically in this order:
    - Windows: `%ProgramFiles%\4D\<version>\tool4d\`
    - Linux: `/opt/4d/`, `/opt/4D*/`, `/usr/local/bin/`
 
-Discovery takes the first hit in that order, not the newest build: with
-both a 4D Analyzer extension copy (21 R4) and a newer installed
-`/Applications/4D 21.2 LTS (100694)/tool4d.app` present, the extension copy
-was chosen. Pass `--tool` when the project needs a specific build.
+Discovery takes the first hit in that order, not the newest build, and
+gives no warning: on a 21 R5 project with 4D 21 R5 installed, it silently
+chose the 4D Analyzer extension's 21 R4 copy. An older build reports false
+errors on newer syntax (21 R4 flagged the 21 R5 fourth parameter of
+`OBJECT SET RGB COLORS`; 21 R5 reported nothing), so before fixing such a
+diagnostic, check which tool4d the run used.
 
-Use a tool4d at least as new as the project's `compatibilityVersion`. An
-older build reports false errors on newer syntax: 21 R4 flagged the 21 R5
-fourth parameter of `OBJECT SET RGB COLORS`; 21 R5 reported nothing.
-Before fixing such a diagnostic, check which tool4d the run used.
-
-**Pin the build; do not rely on discovery.** Discovery gives no warning
-when it picks an older build: on a 21 R5 project with 4D 21 R5 installed,
-step 3 silently chose the extension's 21 R4. So for every run, set
-`TOOL4D_PATH` (or `--tool`) to the tool4d of the release the project
-targets, and read the first stderr line, which names the build used:
+**Pin the build; do not rely on discovery.** Use a tool4d at least as new
+as the project's `compatibilityVersion`: for every run, set `TOOL4D_PATH`
+(or `--tool`) to the tool4d of the release the project targets, and read
+the first stderr line, which names the build used:
 
 ```sh
 export TOOL4D_PATH="/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d"

@@ -323,9 +323,8 @@ with a UTF-8 BOM. `jq` and `json.loads` on a `utf-8` read fail on it; read
 with `utf-8-sig`, or strip and restore it (both scripts keep it).
 
 **Converting form literals.** 4D-written `.4DForm` files round-trip
-byte-exactly through `json.dumps(obj, indent="\t", ensure_ascii=False)`
-with **no trailing newline** (all 15 forms of one demo). Prove it per file
-before a scripted edit:
+byte-exactly through Python (`4dform`, "Modification"; all 15 forms of one
+demo had no trailing newline). Prove it per file before a scripted edit:
 
 ```sh
 python3 skills/4dlocalise/scripts/localise_form_json.py mapping.json Project/Sources/Forms/*/form.4DForm --dry-run
@@ -367,17 +366,15 @@ take the same path. Validate the result with `4dform`.
   `.lproj`.
 * `fourdform <form> --language ja` (`4dform`) resolves `:xliff:` from
   `Resources/ja.lproj`: a quick way to spot a literal left in a form.
-* **Per-language runtime captures** are possible without anyone at the
-  screen: full 4D with `--startup-method` + `--user-param`, a method that
-  calls `SET DATABASE LOCALIZATION(<lang>)` before opening the form, and
-  the `dialog_screenshot` chain (`4dcli`, "Startup-Method Patterns").
-  tool4d alone cannot show forms. This is the recommended visual check.
-* **Width in every language, at runtime.** Japanese is wider at the same
-  font size; two truncations in one demo (a tile subtitle, list box names)
-  showed only in `ja` runtime captures. Capture each form in each language
-  (`4dcli`: `dialog_screenshot_with_data`, or the real-window capture in
-  `references/shared-desktop.md` for review images); static previews do not show
-  strings built in code. Without 4D, ask the user to check label fit.
+* **Per-language runtime captures** are the recommended visual check and
+  need no one at the screen: full 4D (tool4d cannot show forms) with
+  `4dcli`'s `dialog_screenshot_with_data`, which sets the UI language
+  before opening the form, or the real-window capture in its
+  `references/shared-desktop.md` for review images. Capture each form in
+  each language: Japanese is wider at the same font size, and two
+  truncations in one demo (a tile subtitle, list box names) showed only in
+  `ja` runtime captures. Static previews do not show strings built in
+  code. Without 4D, ask the user to check label fit.
 
 ## Checklist
 

@@ -294,9 +294,8 @@ quickly -- the rule above does not. (Later, `21 R5` also 404ed while
 `tool4d.app`: the local probe is what found it.)
 
 Among local builds, pick one **at least as new as** the project's
-`compatibilityVersion`. An older build still runs the code but rejects
-newer parameters: 21 R4 flagged the 21 R5 fourth parameter of
-`OBJECT SET RGB COLORS` as an error that 21 R5 does not report.
+`compatibilityVersion`: an older build still runs the code but reports
+false errors on newer syntax (`skills/4dlsp/SKILL.md`, "Pin the build").
 
 ### Step 2: Download
 
@@ -817,7 +816,7 @@ came out of projects that ran clean under `tool4d`:
 | `$file.parent.create()` as a statement | `This function has been called as a procedure.` | `create()` returns a Boolean; assign it (`$made:=$file.parent.create()`), do not declare it as `4D.Folder` or the next error is `Impossible to cast Boolean to 4D.Folder` |
 | `For each ($item; $collection)` in a class function or method, with no `var $item` anywhere | `The variable $ITEM has not been explicitly declared.` (reported once per use, name upper-cased). `validate` and `check-syntax` stay silent | declare it: `var $item : Object` (or add it to an existing `var` line). The loop variable is not auto-declared in compiled mode |
 | `#DECLARE($params : Object)` at the top of a form method (`Forms/<Name>/method.4dm`) | `Too many parameters have been passed to this method.` and `The parameter $1 has not been explicitly declared.`, `code.type` `formMethod`. Silent when interpreted and under `validate` | remove it; a form method receives no parameters, read `Form` (see [4dform](../4dform/SKILL.md)) |
-| `ON ERR CALL("handler"; ek local)` whose method reads `$1`, `$2`, `$3` | `The parameter $1 has not been explicitly declared.` | give the handler a prototype: `#DECLARE($mode : Variant; $code : Variant; $text : Variant)`. `var $1; $2; $3 : Variant` is rejected ("should be declared in the prototype") |
+| `ON ERR CALL("handler"; ek local)` whose method reads `$1`, `$2`, `$3` | `The parameter $1 has not been explicitly declared.` | remove the parameters: a handler is called with none (`skills/4dlang/references/pitfalls.md`), so `$1`..`$3` are never set and a `#DECLARE` only silences the compiler. Read `Last errors`, `Error method`, `Error line` and `Error formula` instead (the `dump_on_err` sample above) |
 
 `Compile project` does not choke on form-bearing projects: with the two
 forms present it still returned a normal status object with `formMethod`
@@ -1325,10 +1324,14 @@ window this way. Keep such harness methods out of the committed project.
 
 Why `FORM SCREENSHOT` PNGs come back (nearly) transparent in dark
 appearance is in `skills/4dform/references/screenshot-rendering.md`: a
-dialog can look blank or a title missing. Composite before reviewing
-(Pillow): `python3 skills/4dcli/scripts/flatten_screenshot.py dark out.png`
+dialog can look blank or a title missing. For review and README images,
+prefer the real-window capture (`references/shared-desktop.md`), which has
+an opaque background. When a `FORM SCREENSHOT` PNG is all you have,
+composite it before reviewing (Pillow):
+`python3 skills/4dcli/scripts/flatten_screenshot.py dark out.png`
 (`dark` = `#1E1E1E`, `light` = `#F6F6F6`). Do not add a form `colorScheme`
-just for captures: it changes the deliverable.
+just for captures: it changes the deliverable (pinning one is a
+deliberate design decision, `demo-presentation`, "Appearance").
 
 #### Scratch Copies
 
@@ -1346,35 +1349,28 @@ chained `CALL FORM` runs.
 
 ## Writing Output Files
 
-`tool4d` can write within the project scope, for example under
-`Get 4D folder(Database folder)`. Writing to arbitrary locations such as
-`/tmp/` may fail **silently** on macOS due to sandboxing, so do not read a
-missing output file as proof that the code did not run.
-
-```4d
-// Safe output path within project scope
-var $path : Text
-$path:=Get 4D folder(Database folder)+"output.json"
-BLOB TO DOCUMENT($path; $blob)
-```
-
-Write output next to the project, then read it back from the shell.
-
-`Get 4D folder` returns a **system** path (`:`-separated on macOS), so
-appending a POSIX fragment such as `"out/x.txt"` gives a path that does not
-exist, and `TEXT TO DOCUMENT` wrote nothing, without an error, in a real
-session. Use the filesystem object instead, with a folder that exists:
+Write output next to the project with the filesystem objects, then read it
+back from the shell:
 
 ```4d
 Folder("/PACKAGE/out").create()
 File("/PACKAGE/out/debug.json").setText(JSON Stringify($log; *))
 ```
 
-Prefer `File($path; fk posix path).setText(...)` for a POSIX path. In one
-headless 21 R5 run, `TEXT TO DOCUMENT("/tmp/x.json"; ...)` wrote nothing
-while `File("/tmp/x.json"; fk posix path).setText(...)` worked: classic
-document commands expect a platform path, which on macOS is not a POSIX
-path.
+A missing output file is not proof that the code did not run. The usual
+cause is the path syntax, and the write fails without an error:
+
+* Classic document commands (`TEXT TO DOCUMENT`, `BLOB TO DOCUMENT`) take a
+  **platform** path, which on macOS is not a POSIX path. In a headless
+  21 R5 run, `TEXT TO DOCUMENT("/tmp/x.json"; ...)` wrote nothing while
+  `File("/tmp/x.json"; fk posix path).setText(...)` worked. For a POSIX
+  path, use `File($path; fk posix path)`.
+* `Get 4D folder` returns a system path (`:`-separated on macOS). Append
+  only system-path fragments (`Get 4D folder(Database folder)+"output.json"`
+  works with `BLOB TO DOCUMENT`); a POSIX fragment such as `"out/x.txt"`
+  gives a path that does not exist.
+* Locations outside the project may also be blocked by macOS sandboxing:
+  prefer the project folder (`/PACKAGE`).
 
 The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
 `Convert path POSIX to system`) are language-level -- look them up via
@@ -1441,9 +1437,8 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   wrong: ask the user to quit 4D completely and reopen the project. Before
   saying so, prove the fix in a fresh instance of the user's exact build, old
   code against fixed code: a scratch copy of the project for each, and a
-  startup method that wraps the call in `ON ERR CALL` (handler
-  `#DECLARE($mode : Variant; $code : Variant; $text : Variant)` writing
-  `Last errors` to a file), writes a small result object to a file, then
+  startup method that wraps the call in `ON ERR CALL` (a parameterless
+  handler, like `dump_on_err` above, writing `Last errors` to a file), writes a small result object to a file, then
   `QUIT 4D`. Launch with `open -n -a "<exact build>/4D.app" --args
   --project=<copy> --dataless --skip-onstartup --startup-method=<name>`, poll
   for the file, and stop only the PID you started (`references/shared-desktop.md`).
@@ -1453,13 +1448,15 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
 
 ## Smoke Scripts: Locating tool4d and Keeping Assertions Honest
 
-Two defects found in a demo repository whose smoke script was fully green:
+Defects found in a demo repository whose smoke script was fully green:
 
 * **Do not pin one tool4d build in the script.** A hardcoded
   `.../tool4d/21R4/100224/tool4d.app/...` breaks the moment that build is
   removed. The standalone installer lays builds out as
   `/Applications/tool4d/tool4d/<release>/<build>/tool4d.app`, so resolve the
-  newest one and let `TOOL4D` override it:
+  newest one and let `TOOL4D` override it (set it to the build the project
+  targets when the newest is a beta; a 4D installer puts tool4d under
+  `/Applications/4D <version> (<build>)/` instead, see "Binary Paths"):
 
   ```sh
   if [ -z "${TOOL4D:-}" ]; then
