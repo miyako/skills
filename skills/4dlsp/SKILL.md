@@ -420,6 +420,15 @@ tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMet
   `Class` line, and assigning a mismatched type to a typed local raises
   `[15]` at runtime while the method continues with a Null. `validate` is a
   compile gate, not a type checker.
+- **An unterminated string literal is invisible to every tool.** 4D
+  closes a string at the end of the line, so
+  `$x:=$a+" · detail` (missing closing `"`) gets 0 diagnostics from
+  `validate` and `check-syntax`, and runs without error under tool4d
+  (reproduced on 21.2 LTS). Nothing fails, so a green run proves nothing
+  about it; the only symptom is the stray quote when the line is read.
+  After editing code that builds strings, check by eye or with a quick
+  scan for lines with an odd number of `"` outside comments, and fix the
+  line rather than relying on the tooling.
 - For unfamiliar commands or class members, prefer looking them up with
   the `4dlang` skill (see "Command lookup" above) before writing code
   at all -- it returns the authoritative overload signature and a
