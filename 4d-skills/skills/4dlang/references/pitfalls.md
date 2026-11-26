@@ -334,6 +334,8 @@ https://developer.4d.com/docs/Develop/processes
 | `String(time; ISO time)` | `0000-00-00T05:44:44` -- a zero date as well |
 | `String(date; ISO date; time)` | `2026-11-26T05:44:44`: the three-argument form is the one that yields an ISO timestamp |
 | `Current date` / `Current time` | **Local** date and time. A field labelled UTC (an RFC 3339 `...Z` stamp) built from `Current date` is a day off near local midnight. `Timestamp` is always UTC (`2026-11-26T05:13:17.085Z`): use `Date(Substring(Timestamp; 1; 10))` for the UTC date. Measured on 4D 21 R5 / tool4d. |
+| The command is `FORM GOTO PAGE`, not `GOTO PAGE` | `GOTO PAGE` does not exist. Inside `Formula(...)` / `CALL FORM(...; Formula(...))` the parser does not reject the unknown name -- it looks it up as a **project method** and fails with `The method cannot be executed. Project method not found. GOTO PAGE (3)`, which reads like a missing method, not a typo'd command. |
+| `OBJECT SET PADDING` right after `FORM LOAD` | On a loaded-but-never-displayed form, the **first** `OBJECT SET PADDING` on an object applies only `top` (`OBJECT Get padding` returns the other three as 0); the second call applies all four. On a displayed form the first call applies all four sides. When asserting padding headlessly, set twice or display the form. Measured on 21 R5 build 100189. |
 
 The `ISO` format constants produce full date+time strings, so a value destined
 for an API that wants `YYYY-MM-DD` or `HH:MM:SS` needs a slice
