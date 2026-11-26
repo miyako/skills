@@ -777,7 +777,39 @@ Procedure that worked:
    covered 4D window — the cursor moves, the click lands on the wrong
    window, and nothing appears to happen. Confirm the target is actually
    visible with a full-screen capture before blaming coordinates.
-4. Verify each step by re-capturing and OCR-ing: page content after a tab
+4. **`System Events` `click at {x, y}` is a silent no-op on 4D controls.** It
+   performs an accessibility press on the element under the point, which is
+   the window, so it returns `window "..." of application process 4D` without
+   an error and nothing fires (a refresh button left `observedAt` unchanged).
+   Post real mouse events instead. The permission is **Accessibility**
+   (Privacy & Security ▸ Accessibility, for the app that hosts the agent's
+   shell), not the Automation toggle for System Events; without it every
+   System Events click fails with `-25211 ... not allowed assistive access`.
+   Open the pane directly with
+   `open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"`.
+   Changes may need the host app restarted.
+5. Prefer `osascript -l JavaScript` over a compiled Swift helper: it runs under
+   the host app's grant, while a freshly compiled binary reported
+   `AXIsProcessTrusted() == false` and its events were dropped. Coordinates are
+   **points**, not screenshot pixels (divide a Retina capture by its scale, and
+   by the downscale factor if the image was shrunk for display):
+
+   ```js
+   // click.js -- osascript -l JavaScript click.js X Y
+   ObjC.import('ApplicationServices');
+   function run(a) {
+     const p = $.CGPointMake(parseFloat(a[0]), parseFloat(a[1]));
+     for (const t of [$.kCGEventMouseMoved, $.kCGEventLeftMouseDown, $.kCGEventLeftMouseUp]) {
+       $.CGEventPost($.kCGHIDEventTap, $.CGEventCreateMouseEvent($(), t, p, $.kCGMouseButtonLeft));
+       delay(0.1);
+     }
+   }
+   ```
+
+   Do this only when the user asked for a watched live test (see
+   [shared desktop](references/shared-desktop.md)); a modal `CONFIRM` dialog
+   is then reachable too, and its buttons can be clicked the same way.
+6. Verify each step by re-capturing and OCR-ing: page content after a tab
    click, the results label after a button click, the re-ordered list box
    after a search. OCR misreads glyphs (類似度 → 瀬似度); confirm wording in
    the XLIFF/HTML source before reporting a text bug.
