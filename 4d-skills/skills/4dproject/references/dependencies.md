@@ -46,7 +46,7 @@ A wrong key is not diagnosed. The file parses, the dependency stays
 declared, and nothing resolves -- which looks like a network or permission
 problem. When hand-writing the declaration, compare it against one the IDE
 itself wrote. Observed since this note was written (4D 21.2 LTS build
-100694, macOS, host project [miyako/ldap-demo](https://github.com/miyako/ldap-demo)):
+100694, macOS, a host project):
 a `"tag"` key is silently ignored -- the manager never resolves it, and the
 fix is to rename the key to `"version"`. Treat `"tag"` as unsupported.
 
