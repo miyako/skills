@@ -88,7 +88,7 @@ The tables below cross-reference all three. Not every property has a CSS name or
 |---|---|---|---|---|---|
 | `text` | Title | — | txt, grp, btn, chk, rad, lbh | `OBJECT Get title` | `OBJECT SET TITLE` |
 | `textAlign` | Horizontal Alignment | `text-align` | txt, grp, inp, btn, chk, rad, dd, cmb, lb, lbc, lbh, lbf | `OBJECT Get horizontal alignment` | `OBJECT SET HORIZONTAL ALIGNMENT` |
-| `verticalAlign` | Vertical Alignment | `vertical-align` | lb, lbc, lbh, lbf | `OBJECT Get vertical alignment` | `OBJECT SET VERTICAL ALIGNMENT` |
+| `verticalAlign` | Vertical Alignment | `vertical-align` | txt, inp (21 R5+), lb, lbc, lbh, lbf | `OBJECT Get vertical alignment` | `OBJECT SET VERTICAL ALIGNMENT` |
 | `textAngle` | Text Orientation | — | txt, inp | `OBJECT Get text orientation` | `OBJECT SET TEXT ORIENTATION` |
 | `placeholder` | Placeholder | — | inp, cmb | `OBJECT Get placeholder` | `OBJECT SET PLACEHOLDER` |
 | `fontTheme` | Font Theme | — | txt, inp | — | — |
@@ -253,6 +253,7 @@ The tables below cross-reference all three. Not every property has a CSS name or
 | `resizingMode` | Column Auto-Resizing | — | lb | — | — |
 | `horizontalPadding` | Horizontal Padding | — | lb, lbc, lbh, lbf | — | — |
 | `verticalPadding` | Vertical Padding | — | lb, lbc, lbh, lbf | — | — |
+| `paddingLeft`, `paddingRight`, `paddingTop`, `paddingBottom` | Left / Right / Top / Bottom Padding | — | txt, inp (21 R5+) | `OBJECT Get padding` | `OBJECT SET PADDING` |
 | `selectionName` | Selection Name | — | lb | — | — |
 | `currentItemSource` | Current Item | — | lb | — | — |
 | `currentItemPositionSource` | Current Item Position | — | lb | — | — |

@@ -25,7 +25,7 @@ change behaviour in the same commit.
 | 2a | Real controls: fake buttons (hidden button over a rectangle and a label) become real buttons; remove per-object `fontFamily` (no Lucida Grande, no CJK glyphs) | `4dform` (`scripts/fake_buttons.py`), `4dcss` ("Fonts") |
 | 3 | Stylesheet split: brand and typography in `styleSheets.css`; control heights per theme in `styleSheets_mac.css` / `styleSheets_windows.css` | `4dcss` |
 | 4 | Header band and background: full-bleed, `rightMargin: 0` when a band spans the form | `4dform` (`references/form-concepts.md`) |
-| 5 | Dark mode: every custom colour has a `prefers-color-scheme: dark` pair; remove JSON `fill`/`stroke` that override the classes; strip colours from styled-text spans | `4dcss` (`references/dark-mode.md`) |
+| 5 | Dark mode: every custom colour has a `prefers-color-scheme: dark` pair, unless every form pins `colorScheme` (demos: `demo-presentation`, "Appearance"); remove JSON `fill`/`stroke` that override the classes; strip colours from styled-text spans | `4dcss` (`references/dark-mode.md`) |
 | 6 | Control heights: buttons and dropdowns ≥ 27 px under Liquid Glass; Fluent UI opt-in (`"fluentUI": true` on shared forms) and not verified (say so). Heights set in code must hold after every theme switch (best-size inputs shrank to ~18 px) | `4dcss` (`references/form-themes.md`) |
 | 7 | Layout: alignment grid, spacing, no overlaps | `4dform` (`references/layout.md`) |
 | 8 | List boxes: defaults, or the fitted exception for a fixed window | `4dform` (`references/objects/listbox.md`) |
@@ -54,6 +54,14 @@ change behaviour in the same commit.
   button previews the result. Coloured buttons need `style` and
   `borderStyle` both `custom` (`4dform`, `references/objects/button.md`).
 
+## Japanese Label Fit
+
+Each Japanese glyph is about one font size wide, whatever the word. Budget
+`width ≥ characters × fontSize + horizontal padding` for a Japanese label,
+button or tab, and check the English width separately. Do not set
+`fontFamily` for Japanese text: the system font (Hiragino Sans on macOS)
+is the fallback and matches the platform. Measure in a runtime capture.
+
 ## Exemption: colours that are the feature
 
 "No hard-coded colours" is for the product's own chrome. When a demo
@@ -70,7 +78,7 @@ form JSON and code, and move only the surrounding chrome to CSS.
    or path: the user may have their own 4D open.
 3. For each UI language (en, ja): no truncated labels, no clipped
    buttons, no horizontal list-box scroll bar.
-4. Light and dark appearance.
+4. Light and dark appearance (only the pinned one when forms pin `colorScheme`).
 5. Write down what you could not verify (Windows / Fluent UI; light mode
    if the machine is dark; `Common*` strings on a Japanese OS) in the PR.
    Do not claim it.

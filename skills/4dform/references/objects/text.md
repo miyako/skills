@@ -54,7 +54,9 @@ The text object's properties come from five sources in the schema:
 | `fontTheme` | `"normal"`, `"main"`, `"additional"` | Platform-adaptive font theme (see below) |
 | `textAlign` | `"automatic"`, `"right"`, `"center"`, `"justify"`, `"left"` | Horizontal text alignment |
 | `textAngle` | `0`, `90`, `180`, `270` | Rotation angle in degrees (see Rotation below) |
-| `borderRadius` | integer (≥ 0) | Corner radius for rounded borders |
+| `borderRadius` | integer (≥ 0) | Corner radius for rounded borders. With a `fill`, paints `r` px outside the left and right edges (`../layout.md`) |
+| `verticalAlign` | `"automatic"`, `"top"`, `"middle"`, `"bottom"` | 21 R5 for this object type. `automatic` = bottom for text |
+| `paddingLeft`, `paddingRight`, `paddingTop`, `paddingBottom` | integer (≥ 0) | 21 R5. Space between the edge and the text; replaces a rectangle drawn behind a borderless object |
 
 ### From `objectCommon`
 

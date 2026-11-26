@@ -22,6 +22,10 @@ when a project already follows a different house style.
   untranslated (`inBytesPerMin`, `WEB Server().quotas`, `4D.Vector`); keep
   4D terms Japanese users know in katakana (ベクトルインデックス,
   セッション, エンティティセット).
+* In fixed-width chrome (brand, buttons, tabs, single-line headers) prefer
+  a short native word over a katakana transliteration: "トラベル
+  エージェンシー" wrapped or clipped where "旅行会社" fitted. Katakana
+  loanwords are often *longer* than the English.
 * Do not translate a product or series brand the owner keeps in English
   (e.g. "How do I..." for HDI demos); ask.
 * Translate meaning, not word order: word order changes around

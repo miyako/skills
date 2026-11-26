@@ -68,6 +68,21 @@ older build reports false errors on newer syntax: 21 R4 flagged the 21 R5
 fourth parameter of `OBJECT SET RGB COLORS`; 21 R5 reported nothing.
 Before fixing such a diagnostic, check which tool4d the run used.
 
+**Pin the build; do not rely on discovery.** Discovery gives no warning
+when it picks an older build: on a 21 R5 project with 4D 21 R5 installed,
+step 3 silently chose the extension's 21 R4. So for every run, set
+`TOOL4D_PATH` (or `--tool`) to the tool4d of the release the project
+targets, and read the first stderr line, which names the build used:
+
+```sh
+export TOOL4D_PATH="/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d"
+tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project
+# tool4d-lsp-stdio: using ... tool4d at <path>   <- check the version in this path
+```
+
+A clean result proves nothing until the checker has reported a deliberate
+error once (negative control) on the same build.
+
 If tool4d is installed via the 4D Analyzer VS Code extension, no
 configuration is needed. Otherwise pass `--tool <path-to-tool4d>` (or set
 `TOOL4D_PATH`) explicitly -- e.g. on macOS a manually-installed 4D.app is

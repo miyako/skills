@@ -380,6 +380,30 @@
 					"borderRadius": {
 						"type": "integer",
 						"minimum": 0
+					},
+					"verticalAlign": {
+						"enum": [ "automatic", "top", "middle", "bottom" ],
+						"$comment": "4D 21 R5"
+					},
+					"paddingLeft": {
+						"type": "integer",
+						"minimum": 0,
+						"$comment": "4D 21 R5"
+					},
+					"paddingRight": {
+						"type": "integer",
+						"minimum": 0,
+						"$comment": "4D 21 R5"
+					},
+					"paddingTop": {
+						"type": "integer",
+						"minimum": 0,
+						"$comment": "4D 21 R5"
+					},
+					"paddingBottom": {
+						"type": "integer",
+						"minimum": 0,
+						"$comment": "4D 21 R5"
 					}
 				}
 			}, {
@@ -675,6 +699,30 @@
 					"borderRadius": {
 						"type": "integer",
 						"minimum": 0
+					},
+					"verticalAlign": {
+						"enum": [ "automatic", "top", "middle", "bottom" ],
+						"$comment": "4D 21 R5"
+					},
+					"paddingLeft": {
+						"type": "integer",
+						"minimum": 0,
+						"$comment": "4D 21 R5"
+					},
+					"paddingRight": {
+						"type": "integer",
+						"minimum": 0,
+						"$comment": "4D 21 R5"
+					},
+					"paddingTop": {
+						"type": "integer",
+						"minimum": 0,
+						"$comment": "4D 21 R5"
+					},
+					"paddingBottom": {
+						"type": "integer",
+						"minimum": 0,
+						"$comment": "4D 21 R5"
 					}
 				}
 			}, {

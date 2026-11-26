@@ -138,4 +138,7 @@ Some agent hosts reject shell forms they cannot attribute:
   could not be completed") -- use absolute paths, or write a script file and
   run it;
 * `kill $(...)` / `kill $pid` -- list the PIDs first, then
-  `kill <literal PIDs>`.
+  `kill <literal PIDs>`;
+* any heredoc whose body contains the 4D command `KILL WORKER` (parsed as a
+  `kill`): write `.4dm` files with the agent's file-editing tool, never
+  with `cat <<EOF`.

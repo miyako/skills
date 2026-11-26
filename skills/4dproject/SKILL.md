@@ -98,6 +98,9 @@ four-character code `MMRL`:
 | `2101` | 21.1 (LTS) |
 | `2120` | 21 R2 |
 | `2130` | 21 R3 |
+| `2140` | 21 R4 |
+| `2150` | 21 R5 |
+| `2160` | 21 R6 |
 
 **Comparing versions.** Decode to the tuple `(major, R, L)` and compare
 tuples; do not compare the raw value as a number (`20A0` is not numeric) or
@@ -112,6 +115,7 @@ Feature gates used by other skills:
 | `C_*` declarations deprecated; simplified command names such as `Localized string` | >= 20 R7 (`2070`) |
 | Fluent UI form theme | >= 21 R2 |
 | Liquid Glass form theme | >= 21 R3 |
+| `verticalAlign` and `padding*` on input and text objects; `OBJECT SET RGB COLORS` 4th parameter; coloured custom buttons | >= 21 R5 (`2150`) |
 | Any project in `.4DProject` form | >= v17 (version checks against older releases are dead code) |
 
 A newer 4D or `tool4d` can run a project with an older
