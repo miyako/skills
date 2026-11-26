@@ -95,6 +95,25 @@ Observed:
 | bge-m3 | -- | 58/60 | top ≈ 0.7, median ≈ 0.45; 1024 dims, 2× slower |
 | multilingual-e5-base | -- | 56/60 | top ≈ 0.88, median ≈ 0.80 |
 
+## Testing an OpenAI-provider demo without a key
+
+The component bundles a platform llama-server
+(`Components/llama-cpp.4dbase/Resources/bin/macOS/llama-server`), which runs
+standalone as an OpenAI-compatible `/v1/embeddings` endpoint. A demo whose
+provider is OpenAI can be exercised end to end with zero API cost: point the
+provider `baseURL` in `AIProviders.json` at
+`http://127.0.0.1:<port>/v1/` and the model at the GGUF file stem, run the
+demo's real generate/search code, then **restore the config and the data
+file** — vectors built by the local model must not ship next to an OpenAI
+provider declaration. Observed on HDI_Embeddings: `GenerateVectors(True)`
+embedded 8 entities in one API call (45 ms, 445 "tokens"), save-time
+auto-invalidation set the dirty flag and `GenerateVectors(False)` re-embedded
+only that entity, and four bio-keyword queries each ranked the correct
+student first. Missing model prefixes cost ranking on paraphrased or
+cross-lingual queries — a vague query ranking the right student second or
+third is a model/prefix artefact, not a demo bug; verify ranking with
+queries that quote the bio.
+
 ## Lifecycle
 
 * Start in the main form's `On Load`; show download/loading/ready in the
