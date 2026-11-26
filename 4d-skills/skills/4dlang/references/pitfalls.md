@@ -38,7 +38,8 @@ later accesses cascade into `[-10716] Object or Collection Expected` /
 `[55] A Boolean argument was expected` (the first error is the real one).
 
 * Pass `fk platform path` when the string came from `Get 4D folder`,
-  `.platformPath` or `Select folder`; or convert first:
+  `.platformPath`, `Select folder` or `Select document` (both its return
+  value and every element of the selected-documents array); or convert first:
   `File(Convert path system to POSIX($systemPath))`. On Windows the value is
   already a platform path, so branch on `Is Windows` rather than converting
   unconditionally.
