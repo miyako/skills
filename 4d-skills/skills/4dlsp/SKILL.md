@@ -84,10 +84,13 @@ Use the `validate` subcommand to check `.4dm` files in a single call:
 tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMethod.4dm
 ```
 
-Or point directly at the `.4DProject` file:
+Or point directly at the `.4DProject` file. A relative `--project` needs
+`--workspace` as well (otherwise: `a relative --project path requires
+--workspace`); file arguments are relative to the workspace:
 
 ```sh
 tools/4dlsp/tool4d-lsp-stdio validate \
+  --workspace Project/ \
   --project Project/MyApp.4DProject \
   Sources/Methods/myMethod.4dm
 ```
