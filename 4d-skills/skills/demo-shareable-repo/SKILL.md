@@ -26,6 +26,8 @@ automatically, or one documented download from Releases.
 | Local embedding models | `4dembeddings` |
 | Vector-search demo specifics | `demo-vector-search` |
 | Live presentation, Japanese audience | `demo-presentation` |
+| Localising the demo end to end | `demo-localise` |
+| HDI ("How do I") repositories: splash form, README intro and branch table | `demo-hdi` |
 | Localisation | `4dlocalise` |
 | Visual polish | `polish-ui-pass` |
 
@@ -52,7 +54,8 @@ baseline only: confirm current choices with the owner.
 4. **Components** through `dependencies.json` only, pinned to released
    versions; never commit `Components/` builds.
 5. **Opens into the demo.** `On Startup` opens the main form directly; no
-   splash, no menu hunt. Show progress and readiness **in the form**
+   splash, no menu hunt (HDI demos keep their branded splash as the
+   start form: `demo-hdi`). Show progress and readiness **in the form**
    (status line, disabled actions until ready), not in alerts. Use the
    `4dstartup` pattern (worker, reuse an open window, menu bar, `DIALOG(*)`,
    localised window title).

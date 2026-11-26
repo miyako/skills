@@ -1324,6 +1324,12 @@ BLOB TO DOCUMENT($path; $blob)
 
 Write output next to the project, then read it back from the shell.
 
+Prefer `File($path; fk posix path).setText(...)` for a POSIX path. In one
+headless 21 R5 run, `TEXT TO DOCUMENT("/tmp/x.json"; ...)` wrote nothing
+while `File("/tmp/x.json"; fk posix path).setText(...)` worked: classic
+document commands expect a platform path, which on macOS is not a POSIX
+path.
+
 The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
 `Convert path POSIX to system`) are language-level -- look them up via
 `skills/4dlang/SKILL.md`.

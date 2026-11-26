@@ -139,6 +139,8 @@ For demo, webinar and seminar projects shared with attendees.
 | Generate per-language demo sample data that looks plausible to the audience; regenerate button | demo-sample-data | `skills/demo-sample-data/SKILL.md` |
 | Vector-search demo: scale, real vector index, threshold calibration, indexed vs scan timing | demo-vector-search | `skills/demo-vector-search/SKILL.md` |
 | Live presentation UX, Japanese audience, UI vs data language | demo-presentation | `skills/demo-presentation/SKILL.md` |
+| Localise a demo end to end: decisions to ask, strings and data text to XLIFF, language switch, served pages, Japanese review | demo-localise | `skills/demo-localise/SKILL.md` |
+| HDI ("How do I") repositories: splash form, version/license check, splash XLIFF keys, HDI README intro and branch table | demo-hdi | `skills/demo-hdi/SKILL.md` |
 
 ### Technote-localisation repositories only
 
