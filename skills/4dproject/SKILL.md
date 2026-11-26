@@ -189,6 +189,12 @@ Rules:
 * **Ignore only the provisioned per-skill tool directories**, never the
   whole `tools/` folder: some repositories commit their own scripts under
   `tools/` (the technote-localisation template does).
+* **Ignoring does not untrack.** A `.gitignore` entry has no effect on files
+  already committed. If a repository committed provisioned binaries before the
+  entries were added, run `git rm -r --cached tools/<skill>` for each per-skill
+  directory (the files stay on disk) and commit that removal with the
+  `.gitignore` change. Leave any tracked scripts of the repository's own
+  (e.g. `tools/assets/`) alone.
 * **`Documentation/` is source.** It holds developer-written `.md` files
   attached to methods, classes and forms -- track it.
 * **`Settings/` is a per-repository decision.** It holds *user settings*
