@@ -249,7 +249,7 @@
 			"borderStyle": {
 				"properties": {
 					"borderStyle": {
-						"enum": ["system", "none", "solid", "dotted", "raised", "sunken", "double"]
+						"enum": ["system", "none", "solid", "dotted", "raised", "sunken", "double", "custom"]
 					}
 				}
 			},
