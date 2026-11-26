@@ -210,6 +210,14 @@ tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project/ \
 - If omitted, the tool automatically picks the first `.4dm` file found
   under `Sources/` (falling back to the project root if no `Sources/`
   directory exists) and opens that as the anchor document.
+  > **Anchor failure mode** (tool4d 21.2 LTS build 100694, macOS, host
+  > project [miyako/ldap-demo](https://github.com/miyako/ldap-demo)):
+  > when `--workspace` points at a repository root that has no `Sources/`
+  > directory of its own, the fallback can anchor on an unrelated `.4dm`
+  > file -- in that project, a skill asset inside the `.agents` submodule
+  > -- and the session fails with `failed to fill whole buffer`. Point
+  > `--workspace` at the `Project/` folder, or pass an explicit file, in
+  > such layouts.
 - Exactly **one** `experimental/checkSyntax` request is sent (not one
   per file), anchored at the first opened document. Per the 4D Analyzer
   VS Code extension's own usage of this request, the anchor document is
@@ -398,6 +406,17 @@ invocation, no per-file breakdown:
 Unlike `validate`/`check-syntax`, there is no diagnostics-found/
 diagnostics-not-found duality here -- `install-components` either
 confirms the install completed or fails outright.
+
+> **Observed failure, exit code 0 anyway** (tool4d-lsp-stdio 0.3.0,
+> tool4d 21.2 LTS build 100694, macOS ARM64, host project
+> [miyako/ldap-demo](https://github.com/miyako/ldap-demo)): the run
+> aborted with `waiting for dependency/installComponents/done: failed to
+> read LSP header: Resource temporarily unavailable (os error 35)` and
+> the process still exited `0`. A zero exit is therefore not proof of an
+> install; check the success line (or `--json` `installed: true`) and,
+> when the notification never arrives, stage the component manually
+> instead -- unpack the release ZIP and map it through
+> `environment4d.json`, which `tool4d` honours and the IDE ignores.
 
 ## Workflow
 
