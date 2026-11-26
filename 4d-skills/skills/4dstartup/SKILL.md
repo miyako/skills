@@ -95,12 +95,13 @@ DIALOG("Main"; $params; *)
 | `SET MENU BAR(1)` | Keeps the menu bar installed after the window closes. |
 | `Plain form window` | A normal movable window. Never `Pop up form window` for a window with controls: pop-ups close when the user clicks outside and are not movable. It is also the default when the type is omitted. |
 | `SET WINDOW TITLE` | The title is what the reuse loop matches on. |
-| `DIALOG(form; data; *)` | `*` makes the dialog non-blocking in the worker; the window lives as long as the form. No `CLOSE WINDOW`. It needs the window opened just before by `Open form window` (without one: error -9909). The data object becomes `Form` inside the form. The form method is never called with a parameter, so do not copy the start method's `#DECLARE($params : Object)` into it (`$params` stays `Null`, silently) -- see `skills/4dform/SKILL.md` (form methods receive no parameters). |
+| `DIALOG(form; data; *)` | `*` makes the dialog non-blocking in the worker; the window lives as long as the form. No `CLOSE WINDOW`. It needs the window opened just before by `Open form window` (without one: error -9909). The data object becomes `Form` inside the form. The form method is never called with a parameter, so do not copy the start method's `#DECLARE($params : Object)` into it (`$params` stays `Null`, silently) -- see `skills/4dform/SKILL.md` "The form method". |
 
 Rules:
 
-* **Declare each local once, above the `If`.** Declaring `$window` inside
-  the `If` and again after it triggers "Redefinition of variable".
+* **Declare each local once, above the `If`** (declaring `$window` again
+  triggers "Redefinition of variable"; scoping rules in
+  `skills/4dmodernise/references/declarations.md`).
 * `GET WINDOW RECT` / `SET WINDOW RECT` take `left; top; right; bottom`
   in that order -- name the variables accordingly.
 * Arrays are still declared with `ARRAY LONGINT`, not `var`.
