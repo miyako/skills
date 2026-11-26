@@ -315,6 +315,11 @@ The 4D Form schema is:
 schemas/4dform/formsSchema.json
 ```
 
+The path is relative to the skillset root (the folder holding `AGENTS.md`),
+not to this skill: `.agents/schemas/4dform/formsSchema.json` in a consumer
+repository, `4d-skills/schemas/4dform/formsSchema.json` in the
+`miyako/skills` source checkout.
+
 Use this schema when validating a `.4DForm` file.
 
 Do not modify the schema to make an invalid Form pass validation.
@@ -357,6 +362,12 @@ When modifying a `.4DForm`:
 * Do not arbitrarily reorder properties.
 * Avoid unrelated formatting changes.
 * Do not introduce properties based solely on assumptions about 4D.
+
+For scripted edits, Python round-trips a `.4DForm` byte-identically
+(verified on 4D 21 R5 forms): `json.load`, then write
+`json.dumps(obj, indent="\t", ensure_ascii=False)` and add a trailing
+newline only if the original had one. Diff an unmodified round-trip first;
+any change there is the script's, not yours.
 
 After modification, validate the resulting file against the 4D Form schema.
 

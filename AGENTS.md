@@ -103,7 +103,7 @@ the group is in the name:
 | `.4DSettings` (settings) | 4dsettings | `skills/4dsettings/SKILL.md` |
 | `.4dm` validation / syntax check / LSP / MCP | 4dlsp | `skills/4dlsp/SKILL.md` |
 | 4D command / OOP class member lookup, doc and forum search | 4dlang | `skills/4dlang/SKILL.md` |
-| Running tool4d / 4D from the command line (tests, compile, render); obtaining tool4d and digest-pinning exact builds; background launch, window-ID capture and helper-process cleanup on a shared desktop | 4dcli | `skills/4dcli/SKILL.md` |
+| Running tool4d / 4D from the command line (tests, compile, render); obtaining tool4d and digest-pinning exact builds; background launch, PID-scoped window capture (never quit 4D by name or path) and helper-process cleanup on a shared desktop | 4dcli | `skills/4dcli/SKILL.md` |
 | Tool provisioning | 4dtools | `skills/4dtools/SKILL.md` |
 
 ### 4D development topics
@@ -317,6 +317,12 @@ applicable skill explicitly requires it.
 
 When a tool may not be available on the host, follow the fallback mechanism
 defined by the applicable skill.
+
+For reference repositories (other demos, templates, the skills source),
+`git clone` them into a dot-folder inside the workspace (e.g.
+`.ref/<name>`) and add it to `.git/info/exclude`. This works when web
+fetches or paths outside the workspace are denied, and keeps the clones
+out of commits. Delete them when done.
 
 ## Schemas
 

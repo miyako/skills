@@ -70,7 +70,9 @@ boxes are approximate; popups display the object name, not runtime values.
 The preview does not run the form, execute `.4dm` methods, evaluate runtime
 data bindings, or verify every 4D stylesheet property. Report unsupported
 features and rendering errors rather than presenting an approximation as
-runtime evidence.
+runtime evidence. Observed gaps: it shows built-in `:xliff:Common*` IDs
+unresolved, and does not draw 21 R5 coloured buttons
+(`borderStyle: "custom"`).
 
 ## Deterministic Output
 
@@ -126,6 +128,12 @@ before committing a capture to a README. There is no per-form switch:
 scheme. Set `FORM SCREENSHOT` expectations, or compare two runs, on the
 same appearance setting -- and say which appearance a published image
 came from.
+
+Text inside an input whose border is `Border System Rounded` (set with
+`OBJECT SET BORDER STYLE`) is not drawn by `FORM SCREENSHOT` (4D 21 R5).
+For review or README images, capture the real window instead
+(`skills/4dcli/references/shared-desktop.md`): it has an opaque background
+and draws what the user sees. Keep `FORM SCREENSHOT` for layout checks.
 
 `project_form_to_image` and `print_form_to_file` are project-specific
 helper methods, not built-in 4D commands. A project that does not define
