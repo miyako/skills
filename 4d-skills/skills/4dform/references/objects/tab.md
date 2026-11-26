@@ -125,6 +125,8 @@ Remember to `CLEAR LIST` when the list is no longer needed (`On Unload`), same l
 
 When set, 4D automatically displays the form page matching the number of the selected tab (e.g. selecting the 3rd tab shows page 3) -- no method code is required. This works with any of the data source kinds above, including the dataSource-less static `labels` list.
 
+**`gotoPage` owns the page while it is set.** Programmatic `FORM GOTO PAGE(n)` on a form whose tab carries the `gotoPage` action snaps straight back to the tab's own page: the tab re-asserts its selected index right after the call, so automated navigation (test captures, "open the form on page N") silently shows the wrong page. Pre-aligning the tab's data source (`Form.objTabs.index:=n-1`) does **not** help -- the control does not re-read the object before re-asserting. User *clicks* are unaffected (the click sets the index and the action follows it). For scripted captures, temporarily remove `"action": "gotoPage"` from the form JSON, navigate, and restore it afterwards. Measured on 21 R5 with an object data source; a form-level `On Page Change` handler does not intercept the reversion either.
+
 ### `FORM GOTO PAGE` (manual)
 
 Without a standard action, the tab object's `action` property is left **empty** -- there is no built-in behavior for 4D to run on click, so the object method must call `FORM GOTO PAGE` explicitly on `On Clicked`, passing the tab control's own data source (array or object), then clean up on `On Unload`:
