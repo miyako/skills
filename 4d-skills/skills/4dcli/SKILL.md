@@ -1290,16 +1290,18 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   `.4dbase` is already present in `Components/` still loads: the
   `PackageManager ... cannot be found` lines are diagnostics, so prove the
   load by calling something (`cs.Ns.Class.new().version()`) and logging it.
-* No SVG rasterizer: `SVG EXPORT TO PICTURE` fails headless with
-  `-9926 The referenced element is invalid` /
-  `action_description: "The XML command cannot be executed"` and leaves
-  `Picture size` at 0 even for a well-formed, Quick Look-renderable document.
-  Report SVG/picture rasterisation as `not_run` and verify it in a GUI run,
-  not by editing the SVG. Keep such known-failing XML/SVG calls out of the
-  same startup method as component or `SystemWorker` calls: an observed
-  run mixed them and the later component call aborted with no catchable
-  error (no `ON ERR CALL` hit, exit code 0); isolating the component checks
-  in their own `--startup-method` succeeded repeatedly.
+* `SVG EXPORT TO PICTURE` needs an XML tree reference, not SVG text. Passing
+  the source text compiles (a reference is a Text) and fails, in the GUI as
+  well as headless, with `-9926 The referenced element is invalid` /
+  `action_description: "The XML command cannot be executed"`, leaving
+  `Picture size` at 0 even for a well-formed document. This was once
+  misdiagnosed as a missing rasterizer in `tool4d`. Parse first:
+  `$dom:=DOM Parse XML variable($svg)`, then
+  `SVG EXPORT TO PICTURE($dom; $picture)`, then `DOM CLOSE XML($dom)`; the
+  export then works headless and `Picture size` is greater than 0. An
+  unhandled failure like the one above may also abort later calls in the same
+  startup method with no catchable error; keeping component or `SystemWorker`
+  checks in their own `--startup-method` remains cheap insurance.
 * Where `FORM LOAD` stops: an unknown form name raises
   `[81] The form was not found`, which is what makes a load a real assertion
   rather than a no-op. The name-taking object-level calls do not work
