@@ -32,7 +32,7 @@ string. Different from `language-attributes.md`, which keeps per-language
 
    ```4d
    Infos:=[]
-   For ($i; 1; 8)
+   For ($i; 1; $pageCount)  // the number of rows extracted
    	Infos.push({PageNumber: $i; TabTitle: Localized string("Step_Tab"+String($i)); Description: Localized string("Step_Info"+String($i))})
    End for 
    ```

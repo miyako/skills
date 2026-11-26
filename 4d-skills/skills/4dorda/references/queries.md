@@ -130,9 +130,8 @@ $sel:=ds.Document.query("embedding > :1 order by embedding desc"; $cmp)
 * **Low thresholds also slow the indexed query.** The vector index earns its
   keep only above the noise floor: on 300k x 768-dim vectors, threshold 0.85
   answered in ≈ 320 ms while 0.55-0.75 (returning nearly every record) took
-  6-10 s — close to the ≈ 11 s full scan. Pick the demo threshold above the
-  model's unrelated-text floor, or the indexed-vs-scan comparison flattens.
-  Measured on 21 R5 with ruri-v3-310m.
+  6-10 s — close to the ≈ 11 s full scan. Keep the threshold above the
+  model's unrelated-text floor. Measured on 21 R5 with ruri-v3-310m.
 * **Sanity check:** ordering `ds.T.all().toCollection(...)` by
   `$v.cosineSimilarity($q)` should match `order by <attr> desc` exactly; a
   mismatch points at the index, a match with poor results at the

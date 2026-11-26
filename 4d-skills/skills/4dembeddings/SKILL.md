@@ -105,14 +105,12 @@ provider `baseURL` in `AIProviders.json` at
 `http://127.0.0.1:<port>/v1/` and the model at the GGUF file stem, run the
 demo's real generate/search code, then **restore the config and the data
 file** — vectors built by the local model must not ship next to an OpenAI
-provider declaration. Observed on HDI_Embeddings: `GenerateVectors(True)`
-embedded 8 entities in one API call (45 ms, 445 "tokens"), save-time
-auto-invalidation set the dirty flag and `GenerateVectors(False)` re-embedded
-only that entity, and four bio-keyword queries each ranked the correct
-student first. Missing model prefixes cost ranking on paraphrased or
-cross-lingual queries — a vague query ranking the right student second or
-third is a model/prefix artefact, not a demo bug; verify ranking with
-queries that quote the bio.
+provider declaration. Verified on a 21 R5 demo: full generation, save-time
+invalidation with partial regeneration, and keyword queries ranking the
+expected record first. Without the model's prefixes (above), a paraphrased
+or cross-lingual query ranking the right record second or third is a
+model/prefix artefact, not a demo bug; verify ranking with queries that
+quote the corpus text.
 
 ## Lifecycle
 
