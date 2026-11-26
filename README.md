@@ -54,7 +54,7 @@ For demo, webinar and seminar projects shared with attendees.
 
 | Skill | Scope |
 |---|---|
-| [`demo-shareable-repo`](skills/demo-shareable-repo/SKILL.md) | Making a demo cloneable and runnable by attendees; README conventions; optional `.agents` submodule workflows; earlier template baseline |
+| [`demo-shareable-repo`](skills/demo-shareable-repo/SKILL.md) | Making a demo cloneable and runnable by attendees; README conventions; companion WebFolder pages and live browser verification; optional `.agents` submodule workflows; earlier template baseline |
 | [`demo-data-distribution`](skills/demo-data-distribution/SKILL.md) | Sizing, packaging, verifying and publishing demo data (Git vs LFS vs release asset) |
 | [`demo-sample-data`](skills/demo-sample-data/SKILL.md) | Per-language generated sample data that looks plausible to the audience, with a regenerate button |
 | [`demo-vector-search`](skills/demo-vector-search/SKILL.md) | Vector-search demos: scale, real vector index, threshold calibration, indexed vs scan timing |
