@@ -64,7 +64,7 @@ The tables below cross-reference all three. The **CSS Name** column lists the we
 | JSON Key | Doc Name | CSS Name | Applicable Types | Getter | Setter |
 |---|---|---|---|---|---|
 | `borderStyle` | Border Style | `border-style` | txt, inp, btn, web, vp, wp, sub, plug, spl, bg, prog, rul, spin, step, lst, pbtn, ppop, lb | `OBJECT Get border style` | `OBJECT SET BORDER STYLE` |
-| `borderRadius` | Corner Radius | — | txt, rect, inp | — | `OBJECT SET CORNER RADIUS` |
+| `borderRadius` | Corner Radius | — | txt, rect, inp, btn (21 R5 custom style) | — | `OBJECT SET CORNER RADIUS` |
 | `fill` | Background Color | `background-color` | txt, rect, ovl, inp, lst, lb, lbc, lbf | — | `OBJECT SET RGB COLORS` |
 | `stroke` | Font/Line Color | `color` | txt, ln, rect, ovl, grp, inp, btn, chk, rad, dd, cmb, spl, prog, rul, lst, lb, lbc, lbh, lbf | — | `OBJECT SET COLOR` / `OBJECT SET RGB COLORS` |
 | `visibility` | Visibility | — | all | `OBJECT Get visible` | `OBJECT SET VISIBLE` |
@@ -183,7 +183,7 @@ The tables below cross-reference all three. The **CSS Name** column lists the we
 
 | JSON Key | Doc Name | CSS Name | Applicable Types | Getter | Setter |
 |---|---|---|---|---|---|
-| `style` | Button Style | — | btn, chk, rad | — | — |
+| `style` | Button Style | — | btn, chk, rad (enums differ: chk/rad add `disclosure`, `roundedDisclosure` and lack `help`, `circular`) | — | — |
 | `defaultButton` | Default Button | — | btn | — | — |
 | `display` | Display | — | btn, dd | — | — |
 | `textPlacement` | Title/Picture Position | — | btn, chk, rad | — | — |

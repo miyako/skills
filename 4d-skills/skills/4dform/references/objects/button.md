@@ -347,7 +347,7 @@ and a capture: a label that was not inside its button is left alone.
 
 ### Sizing Behavior on Non-Visible Pages
 
-Objects on hidden pages and subform containers: `../form-concepts.md`, "Sizing on Non-Visible Pages".
+Objects on hidden pages and subform containers: `references/form-concepts.md`, "Sizing on Non-Visible Pages".
 In **nested subforms**: regular objects on page 2+ of a subform still receive resize events when the parent container is resized.
 
 ## Keyboard Shortcut
@@ -382,11 +382,11 @@ The most important event for a button is **`onClick`** (On Clicked).
 
 - `onClick` fires on **mouse up** (while the cursor is still hovering over the button).
 - If the user presses and drags away before releasing, the event does **not** fire.
-- The object's own method receives `onClick` without the form subscribing to it; the **form method** receives it only if the form's `events` also list `onClick` (`../form-concepts.md`, "Special Events").
+- The object's own method receives `onClick` without the form subscribing to it; the **form method** receives it only if the form's `events` also list `onClick` (`references/form-concepts.md`, "Special Events").
 
 ### Event Execution Order
 
-Object method, then form method, then standard action: `../form-concepts.md`, "Event Execution Order".
+Object method, then form method, then standard action: `references/form-concepts.md`, "Event Execution Order".
 
 ### Click Events in Detail
 

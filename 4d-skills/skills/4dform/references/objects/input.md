@@ -8,11 +8,11 @@ summary: "Input object: general-purpose field/expression display and entry, all 
 # 4D Input Object
 
 Reference: https://developer.4d.com/docs/FormObjects/inputOverview
-Also: https://developer.4d.com/docs/FormObjects/properties_Entry (Enterable, Multiline, Placeholder, Entry Filter, Context Menu, Auto Spellcheck, Selection always visible, Writing Tools)
-Also: https://developer.4d.com/docs/FormObjects/properties_Display (Alpha/Date/Number/Time/Picture/Boolean Format, Wordwrap, Visibility)
-Also: https://developer.4d.com/docs/FormObjects/properties_Object.md#variable-or-expression, properties_Object.md#expression-type
-Also: https://developer.4d.com/docs/FormObjects/properties_RangeOfValues (Default value, Choice List, Excluded List, Required List)
-Also: https://developer.4d.com/docs/Concepts/quick-tour.md#assignable-vs-non-assignable-expressions
+Also: https://developer.4d.com/docs/FormObjects/propertiesEntry (Enterable, Multiline, Placeholder, Entry Filter, Context Menu, Auto Spellcheck, Selection always visible, Writing Tools)
+Also: https://developer.4d.com/docs/FormObjects/propertiesDisplay (Alpha/Date/Number/Time/Picture/Boolean Format, Wordwrap, Visibility)
+Also: https://developer.4d.com/docs/FormObjects/propertiesObject#variable-or-expression, https://developer.4d.com/docs/FormObjects/propertiesObject#expression-type
+Also: https://developer.4d.com/docs/FormObjects/propertiesRangeOfValues (Default value, Choice List, Excluded List, Required List)
+Also: https://developer.4d.com/docs/Concepts/quick-tour#assignable-vs-non-assignable-expressions
 
 ## Basic Definition
 
@@ -53,7 +53,7 @@ Also: https://developer.4d.com/docs/commands/object-set-focus-rectangle-invisibl
 
 When a focusable input receives focus, the OS draws a focus rectangle around it. On a non-enterable-but-focusable (copy-only) input this can give the wrong impression that the input is editable. **Best practice**: set `hideFocusRing: true` on non-enterable, focusable inputs so the focus state is communicated only by the caret/selection, not by a misleading focus rectangle.
 
-See the "Inputs" form for examples: both `Input` and `Input1` use `enterable: false` + `hideFocusRing: true` + `borderStyle: "none"` for clean, read-only date displays that still allow text selection and copying.
+Combined with `borderStyle: "none"`, this gives a clean read-only display (e.g. a date) that still allows text selection and copying.
 
 That same recipe is the right shape for **text that runtime code updates**: bind
 the input to an assignable property (`"dataSource": "Form.noteText"`) and assign
@@ -141,7 +141,7 @@ Reference: https://developer.4d.com/docs/FormObjects/propertiesEntry#auto-spellc
 
 `spellcheck` (Auto Spellcheck, Text type only) performs a spell-check automatically during data entry, using a **platform-dependent spelling engine**: Hunspell on Windows, the system spell-checking service on macOS (also invocable per-object via the `SPELL CHECKING` language command, and configured via `SPELL SET CURRENT DICTIONARY` for the active dictionary/language).
 
-`writingTools` is a separate, newer property (added **21 R4**) that exposes Apple Intelligence Writing Tools (proofread, rewrite, summarize, change tone) inside a multiline input's context menu, and through the `writingTools` standard action assignable to a button/menu item. It is **macOS-only** and additionally requires Apple Intelligence & Siri to be enabled in System Settings on a compatible Mac; on Windows, or on a Mac without Apple Intelligence enabled, the property remains visible/settable in the Property List but the feature and its standard action are both inert at runtime (invoking the action does nothing). Where Auto Spellcheck is a basic, cross-platform, always-available dictionary check, Writing Tools is an AI-assisted, system-dependent, opt-in enhancement layered on top for macOS users specifically.
+`writingTools` is a separate, newer property (added **21 R4**; not yet in the bundled JSON schema) that exposes Apple Intelligence Writing Tools (proofread, rewrite, summarize, change tone) inside a multiline input's context menu, and through the `writingTools` standard action assignable to a button/menu item. It is **macOS-only** and additionally requires Apple Intelligence & Siri to be enabled in System Settings on a compatible Mac; on Windows, or on a Mac without Apple Intelligence enabled, the property remains visible/settable in the Property List but the feature and its standard action are both inert at runtime (invoking the action does nothing). Where Auto Spellcheck is a basic, cross-platform, always-available dictionary check, Writing Tools is an AI-assisted, system-dependent, opt-in enhancement layered on top for macOS users specifically.
 
 ## Placeholder
 
@@ -158,7 +158,7 @@ Watermark text shown when the object's value is empty (string types), or for dat
 { "choiceList": ["Red", "Green", "Blue"] }
 ```
 
-An input can carry the same `choiceList` property used by drop-down list/combo box/hierarchical list (inline array/collection, or a named list from the toolbox). This turns the input into a value-constrained pop-up at runtime while keeping the object type `"input"` rather than `"combo"`. See Default value/Excluded List/Required List (https://developer.4d.com/docs/FormObjects/properties_RangeOfValues) for the related "list of acceptable values" properties that also apply to inputs.
+An input can carry the same `choiceList` property used by drop-down list/combo box/hierarchical list (inline array/collection, or a named list from the toolbox). This turns the input into a value-constrained pop-up at runtime while keeping the object type `"input"` rather than `"combo"`. See Default value/Excluded List/Required List (https://developer.4d.com/docs/FormObjects/propertiesRangeOfValues) for the related "list of acceptable values" properties that also apply to inputs.
 
 ## Display Formats by Expression Type
 
@@ -191,16 +191,7 @@ Manually testing each format at runtime (not just the static `FORM SCREENSHOT` t
 - **`booleanFormat` and `dateFormat` apply correctly and unconditionally** -- a `booleanFormat: "Assigned;Unassigned"` input holding `True` displays `"Assigned"`; a `dateFormat: "systemLong"` input holding `!2024-03-25!` displays `"Monday, March 25, 2024"`, both regardless of whether the object currently has keyboard focus.
 - **`numberFormat` only applies while the object does *not* have keyboard focus.** A `numberFormat: "###,##0.00"` input holding `1234.5` displayed the raw, unformatted `"1234.5"` -- not because the format doesn't work, but because the object had **automatically received keyboard focus** (it was the only/first enterable object on its page, and 4D auto-focuses the first object in entry order whenever a page loads or becomes active). While focused, a number-type input shows its raw editable value; the formatted display only appears once it loses focus. This is unlike Date, which displays formatted even while focused.
 
-**Practical fix for pages that must display already-formatted values without user interaction**: handle `On Page Change` in the form method and call `GOTO OBJECT(*; "")` (empty object name) to clear the current focus/selection immediately after a page switch:
-
-```4d
-Case of
-	: ($event.code=On Page Change)
-		GOTO OBJECT(*; "")
-End case
-```
-
-This defocuses whatever object auto-received focus from the page change, so number-type inputs (and similar focus-sensitive displays) immediately show their formatted value instead of the raw editable one. See https://developer.4d.com/docs/commands/goto-object.
+**Practical fix for pages that must display already-formatted values without user interaction**: clear the focus in `On Page Change` with `GOTO OBJECT(*; "")` -- see `tab.md`, "Defocusing After a Page Change", for the code and the form-level `onPageChange` requirement.
 
 ### Date Entry Parsing Is Lenient, But Re-Entering the Formatted Display Can Produce a Null Date
 
@@ -210,7 +201,7 @@ Typing `1999.1.1` into a `dateFormat: "systemLong"` input and validating it prod
 
 This is also the object to use for any picture held in `Form`, an object property or a runtime variable: `type: "picture"` ignores `dataSource` (see `picture.md`). Set `enterable: false` for a display-only preview.
 
-A picture-type input (`dataSourceTypeHint: "picture"`) is the only input variant that displays and accepts image data (pasted from the Clipboard or dragged in) rather than character data. Its context menu (unless disabled) adds **Import...** and **Save as...** commands, plus temporary, non-persistent overrides of the display format (Truncated non-centered / Scaled to fit / Scaled to fit centered proportional). Per `properties_Object.md#expression-type`, a picture variable used as a process variable has a stricter typing requirement than other expression types: it must already be declared (`var varName : Picture`) and initialized *before* the form loads (in the method that calls `DIALOG`, not the form's own `On Load`) for correct display in interpreted mode -- otherwise the picture variable will not render correctly.
+A picture-type input (`dataSourceTypeHint: "picture"`) is the only input variant that displays and accepts image data (pasted from the Clipboard or dragged in) rather than character data. Its context menu (unless disabled) adds **Import...** and **Save as...** commands, plus temporary, non-persistent overrides of the display format (Truncated non-centered / Scaled to fit / Scaled to fit centered proportional). Per the Expression Type documentation (https://developer.4d.com/docs/FormObjects/propertiesObject#expression-type), a picture variable used as a process variable has a stricter typing requirement than other expression types: it must already be declared (`var varName : Picture`) and initialized *before* the form loads (in the method that calls `DIALOG`, not the form's own `On Load`) for correct display in interpreted mode -- otherwise the picture variable will not render correctly.
 
 ## Supported Properties (per JSON Schema)
 
@@ -256,14 +247,14 @@ All properties from the schema's `input` definition, with exact JSON keys and va
 | `scrollbarVertical` | `"visible"`, `"hidden"`, `"automatic"` | |
 | `dragging` | `"none"`, `"automatic"`, `"custom"` | |
 | `dropping` | `"none"`, `"automatic"`, `"custom"` | |
-| `borderRadius` | integer (≥ 0) | Added 19 R7; **not** `cornerRadius` — that key is silently ignored. Paints `r` px outside the left and right edges (`../layout.md`) |
+| `borderRadius` | integer (≥ 0) | Added 19 R7; **not** `cornerRadius` — that key is silently ignored. Paints `r` px outside the left and right edges (`references/layout.md`) |
 | `verticalAlign` | `"automatic"`, `"top"`, `"middle"`, `"bottom"` | 21 R5 for this object type. `automatic` = bottom for text |
 | `paddingLeft`, `paddingRight`, `paddingTop`, `paddingBottom` | integer (≥ 0) | 21 R5. Space between the edge and the text; replaces a rectangle drawn behind a borderless object |
 | `tooltip` | string | |
 
 Plus inherited from `objectCommon`: `top` (required), `left` (required), `width`, `height`, `bottom`, `right`, `sizingX` (`"move"`, `"grow"`, `"fixed"`), `sizingY` (`"move"`, `"grow"`, `"fixed"`), `class`, `visibility` (`"visible"`, `"hidden"`, `"selectedRows"`, `"unselectedRows"`).
 
-Plus inherited from `borderStyle`: `borderStyle` (`"system"`, `"none"`, `"solid"`, `"dotted"`, `"raised"`, `"sunken"`, `"double"`).
+Plus inherited from `borderStyle`: `borderStyle` (`"system"`, `"none"`, `"solid"`, `"dotted"`, `"raised"`, `"sunken"`, `"double"`, `"custom"` (21 R5)).
 
 Plus inherited from `drawingSpec`: `stroke` (color), `fill` (color).
 
@@ -294,7 +285,7 @@ In 4D code, compare against the runtime constant (e.g. `$event.code=On Clicked`)
 
 Reference: https://developer.4d.com/docs/Events/onDataChange
 
-`On Data Change` is the general-purpose event for reacting to a **validated** value change on an input. Two rules govern when it fires:
+`On Data Change` is the general-purpose event for reacting to a **validated** value change on an input. These rules govern when it fires:
 
 - It fires when the edit is **validated** -- the user tabs out, presses Return, or clicks outside the object -- ending the edit session for that object. It is not a per-keystroke or per-edit-action event; it fires once the object's content is committed, not while it is still being actively edited.
 - **Important**: clicking outside the object only validates if there is somewhere for focus to go. If the current input is the **only focusable object** on the form, `On Data Change` will never fire via click-out — the input remains perpetually in edit mode. This is a form design issue (ensure at least two focusable objects, or rely on Return/Enter for validation).
@@ -683,9 +674,7 @@ This also means that `Length` returns code units, not visible characters. A stri
 
 ### Comparison: Built-in vs. Custom
 
-The "Inputs" form demonstrates both approaches side by side:
-
-| | `Input` (custom) | `Input1` (built-in) |
+| | Custom menu | Built-in menu |
 |---|---|---|
 | `contextMenu` | `"none"` | `"automatic"` (default) |
 | `method` | `"ObjectMethods/Input.4dm"` | not needed |
@@ -759,8 +748,6 @@ can only be closed via the close box or Esc — `OK` is always 1 regardless.
 ## Drag and Drop
 
 Reference: https://developer.4d.com/docs/Desktop/drag-and-drop
-
-See form "Inputs" for a working example of custom picture drag and drop.
 
 ### Automatic vs. Custom
 
@@ -930,11 +917,9 @@ The overview page notes several cases where a different object type is a better 
 
 Reference: https://developer.4d.com/docs/FormObjects/propertiesBackgroundAndBorder, https://developer.4d.com/docs/FormObjects/propertiesAppearance
 
-See form "InputStyles" for a comprehensive showcase.
-
 ### Border Style (`borderStyle`)
 
-All seven values render correctly in both the Form Editor and `FORM SCREENSHOT`:
+The seven classic values render correctly in both the Form Editor and `FORM SCREENSHOT`:
 
 | Value | Visual effect |
 |-------|--------------|
@@ -948,7 +933,7 @@ All seven values render correctly in both the Form Editor and `FORM SCREENSHOT`:
 
 ### Corner Radius (`borderRadius`)
 
-Rounds the corners of the input's border **and** background fill. Only meaningful when `borderStyle` is `"solid"` (other styles ignore or clip oddly). Setting the radius to half the object height creates a "pill" shape — e.g. `height: 22` + `borderRadius: 11`.
+Rounds the corners of the input's border **and** background fill. Applies with `borderStyle` `"none"`, `"solid"` or `"dotted"` (other styles ignore it or clip oddly; `skills/4dcss/SKILL.md`, "Limits"). Setting the radius to half the object height creates a "pill" shape — e.g. `height: 22` + `borderRadius: 11`.
 
 **Important:** The JSON key is `borderRadius`, not `cornerRadius`. Using `cornerRadius` is silently ignored (unrecognized key).
 

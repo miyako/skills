@@ -318,7 +318,7 @@ When no `fontFamily`, `fontSize`, or `fontTheme` is explicitly set, the default 
 | Theme | Internal Name | Description |
 |-------|---------------|-------------|
 | `normal` | `__automatic__` | System default font. Adapts size to object height. |
-| `main` | `__system__` | System main font (typically larger). |
+| `main` | `__system__` | System main font (sizes per platform: `objects/text.md` "Font Theme"). |
 | `additional` | `__systemMini__` | Smaller system font. |
 
 The `"normal"` theme has a special behavior: **the system automatically reduces the font size** when the object height is too small for the normal font size. This is decided by the OS and applies to native controls like buttons, checkboxes, and radio buttons.

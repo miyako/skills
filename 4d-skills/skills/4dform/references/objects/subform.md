@@ -55,7 +55,7 @@ a table form of any table). Its coordinates are local to the container.
 
 ## Synchronising a Single Value
 
-For a scalar binding (e.g. `Form.parisTime`), exchange the value explicitly:
+For a scalar binding (e.g. `Form.clock`), exchange the value explicitly:
 
 | Direction | Code |
 |---|---|

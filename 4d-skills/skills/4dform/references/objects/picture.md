@@ -151,8 +151,8 @@ Static pictures have **no data source** and no configurable event set of their o
 | Multi-frame grid (`rowCount`/`columnCount`) | No -- single image only | Yes | Yes |
 | `pictureFormat` (scaled/tiled/truncated) | Yes | No (uses frame grid instead) | No |
 | Typical use | Decoration, background, logos | Buttons with custom art | Icon-driven popup selection |
-| Data source | None | 0-based frame index | Selection value |
+| Data source | None | 0-based frame index | 1-based position (0 = none) |
 
 ## CLI Verification Note
 
-See `../screenshot-rendering.md` for static template rendering rules, and `skills/4dcli/SKILL.md` for version requirements. `FORM SCREENSHOT` works in `tool4d` 21 R3+ and in the full 4D application.
+See `references/screenshot-rendering.md` for static template rendering rules, and `skills/4dcli/SKILL.md` for version requirements. `FORM SCREENSHOT` works in `tool4d` 21 R3+ and in the full 4D application.

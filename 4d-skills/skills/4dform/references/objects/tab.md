@@ -10,7 +10,7 @@ summary: "Tab control object: object/array/hierarchical/static-labels data-sourc
 Reference: https://developer.4d.com/docs/FormObjects/tabControl
 Also: https://developer.4d.com/docs/FormObjects/dropdownListOverview (shared data source shapes and conventions)
 Also: https://developer.4d.com/docs/FormObjects/propertiesDataSource (JSON grammar for `labels`, `choiceList`)
-Also: https://developer.4d.com/docs/FormObjects/properties_Object.md#expression-type (`dataSourceTypeHint` semantics)
+Also: https://developer.4d.com/docs/FormObjects/propertiesObject#expression-type (`dataSourceTypeHint` semantics)
 Also: https://developer.4d.com/docs/Project/compiler, https://developer.4d.com/docs/Concepts/data-types, https://developer.4d.com/docs/Concepts/variables (typed/process variable and compilation background for the note below)
 Also: https://blog.4d.com/use-collections-and-lists-within-forms-objects/ (object as the modern, recommended data source shape)
 
@@ -145,13 +145,13 @@ Case of
 End case
 ```
 
-Because `action` is empty, nothing wires the click to `FORM GOTO PAGE` except the developer's own `On Clicked` handler -- and that handler only runs if the tab object itself declares interest in the event:
+Because `action` is empty, nothing wires the click to `FORM GOTO PAGE` except the developer's own `On Clicked` handler -- and that handler only runs if the tab object itself declares the events it handles:
 
 ```json
-{ "events": ["onClicked"] }
+{ "events": ["onLoad", "onClick", "onUnload"] }
 ```
 
-Form-level lifecycle events (`On Load`, `On Unload`) are declared once in the *form's* top-level `events` array and apply regardless of which object last had focus. Per-object events such as `On Clicked` are different: the shared form method only receives `On Clicked` for a *specific* object if that object's own JSON declares `"events": ["onClicked"]`. Omitting it on the tab control means the `On Clicked` branch of the method above is simply never reached for that object -- no error, the click is just silently not reported to the method. This is unrelated to the `gotoPage` standard action, which is handled internally by 4D without any method code or `events` declaration at all.
+Omitting `onClick` means the `On Clicked` branch above is never reached -- no error, the click is silently not reported. If the handler is in the form method instead, the form's own `events` must also list `onClick` (and `onLoad`/`onUnload`): `references/form-concepts.md`, "Special Events". This is unrelated to the `gotoPage` standard action, which is handled internally by 4D without any method code or `events` declaration at all.
 
 Manual navigation is the natural choice when the tab control does something other than plain page navigation -- e.g. driving a subform's displayed data (the official example: an alphabet-letter Rolodex tab control that reloads a subform's data set instead of switching form pages).
 
@@ -176,12 +176,12 @@ In particular, if the data source is a **process variable** (see https://develop
 | Choice List (static list) | `labels` | Inline list/collection of label strings; no `dataSource` needed |
 | Standard action | `action` | e.g. `"gotoPage"` |
 | Tab Control Direction | `labelsPlacement` | `"top"` (default) / `"bottom"` -- macOS only |
-| Bold / Underline / Italic | `bold` / `underline` / `italic` | Text style of the tab labels |
-| Font / Font Size | `font` / `fontSize` | |
-| Save value | `saveValue` | Persists the selection across sessions if the form's Save Geometry option is enabled |
+| Bold / Underline / Italic | `fontWeight` / `textDecoration` / `fontStyle` | Text style of the tab labels |
+| Font / Font Size | `fontFamily` / `fontSize` | |
+| Save value | `memorizeValue` | Persists the selection across sessions if the form's Save Geometry option is enabled |
 | Border Line Style | -- | Not listed as supported (unlike Picture Button/Picture Pop-up Menu) |
 | Top/Left/Right/Bottom/Width/Height | `top`, `left`, `right`, `bottom`, `width`, `height` | Standard coordinates/sizing |
-| Horizontal/Vertical Sizing | `horizontalSizing` / `verticalSizing` | Resizing behavior |
+| Horizontal/Vertical Sizing | `sizingX` / `sizingY` | Resizing behavior |
 | Visibility | `visibility` | `"visible"` / `"hidden"` |
 | CSS Class | `class` | CSS class hook |
 | Help Tip | `tooltip` | |
@@ -208,7 +208,7 @@ A static `labels` tab is rendered as a native macOS `NSTabView`, which means it 
 
 ## Always-Visible Navigation Tab (Page 0 Pattern)
 
-Placing a `gotoPage` static-`labels` tab on **page 0** (index 0 in the `pages` array) turns it into a persistent navigation bar: objects on page 0 are always visible regardless of which page is currently displayed (see `../form-concepts.md`), so the tab strip stays on screen and keeps highlighting the current page's tab while the rest of the form's content switches underneath it. Because `gotoPage` swaps the *entire* form page rather than nesting per-page content inside the tab's own bounding box, the object's `width`/`height` do not need to match the tab's true "content frame" for the mechanism to work -- but sizing the tab's rectangle to enclose the widest/tallest extent of every other page's objects (i.e., `width`/`height` at least as large as the maximum `left + width` / `top + height` found across all pages) gives the visual impression of a single framed container whose interior content changes per tab, which is the conventional tabbed-dialog look. With `N` pages of real content plus a dedicated page 0 for the tab itself, the tab's `labels` array should have exactly `N` entries (one per content page, page 1 through page N) since `gotoPage` maps the *K*-th tab to page *K*.
+Placing a `gotoPage` static-`labels` tab on **page 0** (index 0 in the `pages` array) turns it into a persistent navigation bar: objects on page 0 are always visible regardless of which page is currently displayed (see `references/form-concepts.md`), so the tab strip stays on screen and keeps highlighting the current page's tab while the rest of the form's content switches underneath it. Because `gotoPage` swaps the *entire* form page rather than nesting per-page content inside the tab's own bounding box, the object's `width`/`height` do not need to match the tab's true "content frame" for the mechanism to work -- but sizing the tab's rectangle to enclose the widest/tallest extent of every other page's objects (i.e., `width`/`height` at least as large as the maximum `left + width` / `top + height` found across all pages) gives the visual impression of a single framed container whose interior content changes per tab, which is the conventional tabbed-dialog look. With `N` pages of real content plus a dedicated page 0 for the tab itself, the tab's `labels` array should have exactly `N` entries (one per content page, page 1 through page N) since `gotoPage` maps the *K*-th tab to page *K*.
 
 This page-0 pattern is not specific to tab control -- it applies identically to **every** `gotoPage`-capable multi-value object: drop-down list (`dropdown.md`), button grid (`button-grid.md`), and picture pop-up menu (`picture-popup.md`) all auto-populate one submenu entry per form page the same way a tab auto-populates one tab per page, and placing any of them on page 0 makes that object an always-visible navigation control by the same page-0-is-always-visible mechanism, independent of which object type is providing the clickable surface.
 
@@ -227,13 +227,14 @@ Whenever a page becomes active (via a nav tab, `FORM GOTO PAGE`, or `INVOKE ACTI
 The fix is to handle `On Page Change` in the form method and clear the focus immediately with `GOTO OBJECT(*; "")` (empty object name):
 
 ```4d
+var $event:=FORM Event
 Case of
 	: ($event.code=On Page Change)
 		GOTO OBJECT(*; "")
 End case
 ```
 
-This requires `"onPageChange"` to be declared in the form's own top-level `events` array (see `../form-concepts.md`'s per-object/per-form event-wiring rule) as well as the `"method"` property pointing at the file that handles it. See https://developer.4d.com/docs/commands/goto-object.
+This requires `"onPageChange"` to be declared in the form's own top-level `events` array (see `references/form-concepts.md`'s per-object/per-form event-wiring rule) as well as the `"method"` property pointing at the file that handles it. See https://developer.4d.com/docs/commands/goto-object.
 
 ## Comparison with Drop-down List
 
