@@ -98,7 +98,7 @@ End if
 | `SET MENU BAR(1)` | Keeps the menu bar installed after the window closes. |
 | `Plain form window` | A normal movable window. Never `Pop up form window` for a window with controls: pop-ups close when the user clicks outside and are not movable. It is also the default when the type is omitted. |
 | `SET WINDOW TITLE` | The title is what the reuse loop matches on. |
-| `DIALOG(form; data; *)` | `*` makes the dialog non-blocking in the worker; the window lives as long as the form. No `CLOSE WINDOW`. It needs the window opened just before by `Open form window` (without one: error -9909). |
+| `DIALOG(form; data; *)` | `*` makes the dialog non-blocking in the worker; the window lives as long as the form. No `CLOSE WINDOW`. It needs the window opened just before by `Open form window` (without one: error -9909). The data object becomes `Form` inside the form. The form method is never called with a parameter, so do not copy the start method's `#DECLARE($params : Object)` into it (`$params` stays `Null`, silently) -- see "The form method" in `skills/4dform/SKILL.md`. |
 
 Rules:
 
@@ -155,7 +155,7 @@ second window fails visibly:
 
 Opening the second window directly, in the process that handled the click,
 works: it is a nested `DIALOG` and the outer dialog resumes when it is
-closed. Use a parameter, not `Storage`, to hand data to it.
+closed. Use a parameter, not `Storage`, to hand data to it; inside the second form that data is `Form` (e.g. `Form.filter`), not a method parameter.
 
 ```4d
 Demo_OpenLab(New object("filter"; "failures"))
