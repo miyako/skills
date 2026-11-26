@@ -80,6 +80,17 @@ Use (Storage)
 End use
 ```
 
+A property of `Storage` can only hold a shared object, a shared collection or
+null, even inside `Use`: `Storage.flag:=True` fails at runtime with `A property
+of Storage can only be a shared object, a shared collection or null` (the
+analyzer does not catch it). Keep scalars in one shared object:
+
+```4d
+Use (Storage)
+	Storage.tour:=New shared object("open"; True; "window"; Current form window)
+End use
+```
+
 The same `Use` rule applies to shared objects returned by `New shared object`
 and to reading properties inside a preemptive process.
 
@@ -303,6 +314,7 @@ https://developer.4d.com/docs/Develop/processes
 | `4D.Folder.delete()` | Refuses a non-empty folder: `[651] Folder  not empty`. Use `DELETE FOLDER($folder.path; Delete with contents)` for scratch directories. The failure is catchable by `Try`, but `Last errors` is empty in that `Catch`. |
 | `Open document(path)` as a statement | It is a function: `This function has been called as a procedure.` Assign or discard the result (`$opened:=String(Open document($path))`). |
 | `CONFIRM(message {; okTitle {; cancelTitle}})` as a function | It is a procedure: it returns nothing and reports the choice in the `OK` system variable (`1` = OK button). Write `CONFIRM(...)` then `If (OK#1)`. The title order is OK first, then Cancel, so `CONFIRM($msg; "Cancel"; "Title")` labels the OK button "Cancel". `tool4d-lsp-stdio validate` returned 0 diagnostics for `If (Not(CONFIRM(...)))`, so the analyzer does not catch it; the dialog needs a person, so check the path by reading it, not by a headless run. |
+| `For each ($v; $array)` | `For each` accepts a collection or an object only; an array from `ARRAY TEXT` / `OB GET PROPERTY NAMES` fails at runtime with `"For each" statement expects a collection or an object`. Use `OB Keys($object)` for property names. |
 | Restoring an error handler | `ON ERR CALL($previous; ek local)` restores nothing if `$previous` was never assigned: an empty text removes the handler. Capture it first, `$previous:=Method called on error(ek local)`, then install yours. The analyzer reports no diagnostic for an unassigned `$previous`. Found by code review, not a measured run. |
 | `var` placement | A `var` inside an `If` or `For each` block compiles and is block-scoped; the "declarations must be at the top" rule forbids a redeclaration, not a block-local declaration. Keep declarations at the top by convention, and do not diagnose block-local `var` as a syntax error. |
 
