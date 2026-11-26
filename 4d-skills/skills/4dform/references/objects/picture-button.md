@@ -115,7 +115,7 @@ These properties control when and how the picture button switches between frames
 | Switch when roll over | `switchWhenRollover` | boolean | Shows the **last available frame** when the mouse cursor hovers over the button. The initial frame is restored when the cursor leaves. |
 | Switch continuously on clicks | `switchContinuously` | boolean | Holding down the mouse button cycles through frames continuously (animation). |
 | Loop back to first frame | `loopBackToFirstFrame` | boolean | After reaching the last available frame, cycles back to frame 0. Without this, stops at the last frame. |
-| Switch every x seconds | `frameDelay` | integer | Auto-cycles through ALL frames at the specified interval (in seconds). Ignores all other animation options. Only animates while the window is active. |
+| Switch every x seconds | `frameDelay` | number | Auto-cycles through ALL frames at the specified interval (in seconds). Ignores all other animation options. Only animates while the window is active. |
 | Use last frame as disabled | `useLastFrameAsDisabled` | boolean | The last frame is reserved for the disabled state. It is excluded from all sequences (rollover, continuous, loop) and only shown when the button is disabled. |
 
 ### Frame Assignment Rules
@@ -193,15 +193,16 @@ The data source is an integer variable or expression.
 | Property | Type | Description |
 |----------|------|-------------|
 | `borderStyle` | string | Border line style |
-| `focusable` | boolean | Whether the button can receive keyboard focus |
 | `tooltip` | string | Help tip text |
 | `action` | string | Standard action |
 | `shortcutKey` | string | Keyboard shortcut key |
 | `shortcutAccel` | boolean | Cmd (Mac) / Ctrl (Win) modifier |
-| `text` | string | Title text (rarely used with picture buttons) |
-| `fontStyle` | string | Italic support (for title text) |
 | `visibility` | string | `"visible"` or `"hidden"` |
 | `class` | string | CSS class |
+
+The 4D documentation also lists Focusable, Title and font style for picture
+buttons, but the JSON schema defines no `focusable`, `text` or font keys for
+`pictureButton`.
 
 ## Events
 

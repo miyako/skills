@@ -10,7 +10,7 @@ summary: "Picture pop-up menu object: button-grid-style frame grid rendered as a
 Reference: https://developer.4d.com/docs/FormObjects/picturePopupMenuOverview
 Also: https://developer.4d.com/docs/FormObjects/pictureButtonOverview (shared frame-grid mechanics)
 Also: https://developer.4d.com/docs/FormObjects/dropdownListOverview (shared pop-up/standard-action concepts)
-Also: https://developer.4d.com/docs/FormObjects/properties_Crop.md (`rowCount`/`columnCount` JSON grammar)
+Also: https://developer.4d.com/docs/FormObjects/propertiesCrop (`rowCount`/`columnCount` JSON grammar)
 
 ## Basic Definition
 
@@ -30,7 +30,7 @@ Also: https://developer.4d.com/docs/FormObjects/properties_Crop.md (`rowCount`/`
 }
 ```
 
-**The JSON `type` value is `"picturePopup"`**, not `"picturePopupMenu"` (the doc page title and object name use "Picture Pop-up Menu", but the `type` enum value in `properties_Object.md#type` is the shorter `picturePopup`).
+**The JSON `type` value is `"picturePopup"`**, not `"picturePopupMenu"` (the doc page title and object name use "Picture Pop-up Menu", but the `type` enum value (https://developer.4d.com/docs/FormObjects/propertiesObject#type) is the shorter `picturePopup`).
 
 A picture pop-up menu is conceptually a **Button Grid rendered as a pop-up menu** instead of a static overlay: the same source picture, sliced into a `rowCount` x `columnCount` grid of frames, but presented to the user as a clickable pop-up (native OS menu chrome) rather than a fixed set of clickable regions. Clicking the object opens a menu; each menu entry corresponds to one frame of the source picture, and choosing an entry assigns that frame's 1-based position to the data source.
 
@@ -91,7 +91,7 @@ Placed on **page 0**, a `gotoPage` picture pop-up menu becomes a persistent, ico
 | Standard action | `action` | e.g. `"gotoPage"` |
 | Border Line Style | `borderStyle` | |
 | Top/Left/Right/Bottom/Width/Height | `top`, `left`, `right`, `bottom`, `width`, `height` | Standard coordinates/sizing |
-| Horizontal/Vertical Sizing | `horizontalSizing` / `verticalSizing` | Resizing behavior |
+| Horizontal/Vertical Sizing | `sizingX` / `sizingY` | Resizing behavior |
 | Visibility | `visibility` | `"visible"` / `"hidden"` |
 | CSS Class | `class` | CSS class hook |
 | Help Tip | `tooltip` | |

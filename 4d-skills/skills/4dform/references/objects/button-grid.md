@@ -165,7 +165,7 @@ The grid always displays internal cell borders. The `borderStyle` property contr
 |---------|--------|----------|-------|-------------|
 | Purpose | Action trigger | Toggle state | Mutually exclusive selection | Positional click on graphic |
 | Text/Icon | Yes | Yes | Yes | No |
-| Styles | 11 | 12 | 12 | None |
+| Styles | 11 | 11 | 11 | None |
 | Data value | Momentary (1/0) | Toggle (0/1/2) | Group (1/0) | Cell number (1..N) |
 | Visual | Self-rendering | Self-rendering | Self-rendering | Transparent overlay |
 

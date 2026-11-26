@@ -295,11 +295,11 @@ At runtime: `OBJECT SET BORDER STYLE(*; "btn@"; Border Custom)`,
 `OBJECT SET RGB COLORS(*; "btn@"; $font; $fill; ""; $border)` (the fourth
 parameter is new in 21 R5) and `OBJECT SET CORNER RADIUS`.
 
+### Visibility vs Display (Active State)
+
 A `custom` button with `"display": false` creates an **invisible but active clickable area**. This is useful for defining clickable regions over a graphic element or background image.
 
 Reference: https://developer.4d.com/docs/FormObjects/propertiesDisplay#not-rendered
-
-### Visibility vs Display (Active State)
 
 | State | Visible | Active (responds to clicks) |
 |-------|---------|----------------------------|
@@ -326,7 +326,7 @@ localise. Replace each trio with one real button:
   (`skills/4dcss/references/form-themes.md`), and `top` is moved so the
   button stays centred on the old face.
 
-`scripts/fake_buttons.py form.4DForm --dry-run` lists the trios it found
+`skills/4dform/scripts/fake_buttons.py form.4DForm --dry-run` lists the trios it found
 (button bounds within `--tolerance` px of a rectangle, label top-left
 inside the button) and writes nothing; without `--dry-run` it rewrites
 the file, keeping a BOM if present. Check the result in the Form Editor
@@ -347,9 +347,8 @@ and a capture: a label that was not inside its button is left alone.
 
 ### Sizing Behavior on Non-Visible Pages
 
-- **Regular objects** (buttons, inputs, etc.) on page 2+ still receive window resize events and grow/move accordingly, even when the page is not visible. When the user switches to that page, objects are already in the correct position.
-- **Subform containers (widgets)** on page 2+ are **not instantiated** until the page is shown, so they do **not** receive resize events while hidden. This can cause widgets to appear out of sync with regular objects after a window resize.
-- In **nested subforms**: regular objects on page 2+ of a subform still receive resize events when the parent container is resized.
+Objects on hidden pages and subform containers: `../form-concepts.md`, "Sizing on Non-Visible Pages".
+In **nested subforms**: regular objects on page 2+ of a subform still receive resize events when the parent container is resized.
 
 ## Keyboard Shortcut
 
@@ -383,15 +382,11 @@ The most important event for a button is **`onClick`** (On Clicked).
 
 - `onClick` fires on **mouse up** (while the cursor is still hovering over the button).
 - If the user presses and drags away before releasing, the event does **not** fire.
-- The `onClick` event does **not** require the form to also subscribe to `onClick` — it works independently at the object level (unlike `onLoad`/`onUnload`).
+- The object's own method receives `onClick` without the form subscribing to it; the **form method** receives it only if the form's `events` also list `onClick` (`../form-concepts.md`, "Special Events").
 
 ### Event Execution Order
 
-When a button is clicked:
-
-1. **Object method** runs first
-2. **Form method** runs second
-3. **Standard action** runs last
+Object method, then form method, then standard action: `../form-concepts.md`, "Event Execution Order".
 
 ### Click Events in Detail
 
@@ -534,7 +529,7 @@ This makes a button on **page 0** (always visible, see `tab.md`'s page-0 navigat
 
 The same parameterized action string can be triggered from code instead of a click, via `INVOKE ACTION` (https://developer.4d.com/docs/commands/invoke-action): `INVOKE ACTION("gotoPage?value=3")` runs the identical standard action programmatically in the current form (pass `ak main form` as the second parameter to target the frontmost document/dialog form instead). This is the recommended way to drive standard-action-based navigation from a form method while keeping any bound multi-value object's displayed selection in sync (see the one-directional-binding caveat in `dropdown.md`), rather than calling `FORM GOTO PAGE` directly.
 
-
+## CSS Styling
 
 Button properties can be set via CSS stylesheets.
 
@@ -566,36 +561,19 @@ button {
 }
 ```
 
-CSS property names match the JSON property names. Specificity follows the standard cascade: type < class < name/ID < JSON < `!important`.
-
-CSS values can use `:xliff:` references for localization:
-
-```css
-button {
-  text: ":xliff:ButtonClick";
-}
-```
-
-Reference: https://developer.4d.com/docs/FormEditor/stylesheets
+Property names, syntax and specificity (a value in the form JSON beats CSS):
+`skills/4dcss/SKILL.md`.
 
 ## Localization
 
-Button labels can be localized using XLIFF. Set the `text` property (in JSON or CSS) to a `:xliff:` reference:
+Set `text` (in JSON or CSS) to a `:xliff:` reference:
 
 ```json
 { "text": ":xliff:ButtonClick" }
 ```
 
-Then create XLIFF files in `Resources/{lang}.lproj/`:
-
-```xml
-<trans-unit id="ButtonClick" resname="ButtonClick">
-  <source>Click</source>
-  <target>クリック</target>
-</trans-unit>
-```
-
-4D resolves the reference at runtime based on the application language.
+XLIFF files, `.lproj` folders and how the display language is chosen:
+`skills/4dlocalise/SKILL.md`.
 
 ## Runtime Commands
 
@@ -624,7 +602,7 @@ References:
 | Command | Reason |
 |---------|--------|
 | `OBJECT SET ENTERABLE` | Buttons are not enterable |
-| `OBJECT SET CORNER RADIUS` | Not supported for buttons |
+| `OBJECT SET CORNER RADIUS` | Not supported for buttons, except a 21 R5 coloured `custom` button (see "Coloured buttons (21 R5)") |
 | `OBJECT SET FILTER` | Buttons have no input filter |
 
 References:
