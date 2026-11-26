@@ -471,6 +471,18 @@ repositories ship their own wrapper for that (e.g. `tools/tool4d.py` in a
 technote-localisation repository); use it for running tests there, and
 still use this skill for syntax checks.
 
+**A clean `check-syntax` is not a clean IDE compile.** Observed on 21 R5 in a
+host project: `check-syntax` reported nothing beyond the component-class
+unknowns, while the 4D IDE Compiler's *Check Syntax* failed on (a) a string
+literal that contained unescaped double quotes inside a class constructor
+(`"... Click "Render" ..."`, which 4D reads as a variable named after the
+quoted words) and (b) a function called as a procedure
+(`Get database parameter(User param value; $path)` without assigning the
+result: "This function has been called as a procedure."). Before reporting
+that a project compiles, open it in the IDE (or run a `Compile project` pass
+through `4dcli`) and read the Compiler window; do not infer it from
+`check-syntax` alone.
+
 ## MCP server
 
 The `mcp` subcommand starts a persistent server that keeps a tool4d LSP
