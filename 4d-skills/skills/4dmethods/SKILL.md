@@ -33,7 +33,7 @@ visibility at the same time, and vice versa.
 | `menus.json` method vs standard action | `4dproject` (`references/menus.md`) |
 | Checking `.4dm` syntax | `4dlsp` |
 | Class functions (`Function`, `shared`/`singleton` keywords) | `4dlang` |
-| Arithmetic: 4D has **no operator precedence** (`2+3*4` = 20); parenthesise every mixed expression | `4dlang` (`references/pitfalls.md`) |
+| Language pitfalls (e.g. operator precedence) | `4dlang` (`references/pitfalls.md`) |
 
 References:
 - Project method properties: https://developer.4d.com/docs/Project/project-method-properties
@@ -154,8 +154,7 @@ Attributes can also be read and set at runtime:
 var $attr : Object
 METHOD GET ATTRIBUTES("MyMethod"; $attr)
 
-// Setting attributes
-var $attr : Object
+// Setting attributes (same $attr; a second var line would be a redefinition)
 $attr:=New object("invisible"; True)
 METHOD SET ATTRIBUTES("MyMethod"; $attr)
 ```
@@ -191,7 +190,7 @@ For each visible method, scan the body for indicators that it requires a calling
 |-------------------|---------|
 | `Form` used as a command | Requires form context |
 | `Form.` (property access on Form object) | Requires form context |
-| `FORM Event` or `FORM Event` | Requires form event cycle |
+| `FORM Event` or `Form event code` | Requires form event cycle |
 | `OBJECT SET ` / `OBJECT GET ` with `*` | Requires displayed form |
 | `#DECLARE(` with required parameters | Subroutine (needs caller) |
 | `Current form window` | Requires form context |

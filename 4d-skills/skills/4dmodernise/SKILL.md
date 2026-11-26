@@ -23,9 +23,8 @@ that it matches what current 4D expects:
 
 Every modernisation starts by reading the project's `compatibilityVersion`
 ("4D Version Detection" in `skills/4dproject/SKILL.md`): a replacement can
-only be used if it exists in the version the project targets. Any project in
-`.4DProject` form is v17 or later, so version checks against older releases
-are dead code.
+only be used if it exists in the version the project targets (the same
+section lists the feature gates).
 
 ### Not in this skill
 

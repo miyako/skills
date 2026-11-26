@@ -14,8 +14,8 @@ button ("text"), removes the button's display/height/bottom/borderStyle/
 fontSize/fontWeight, adds the CSS class (default "default"; the height comes
 from the theme rules in 4dcss) and recentres "top" for --height.
 
-Each file is first round-tripped (BOM kept, tab indent, ensure_ascii=False,
-no trailing newline); a file whose bytes differ is SKIPPED. A button with no
+Each file is first round-tripped (BOM and trailing newline kept as found,
+tab indent, ensure_ascii=False); a file whose bytes differ is SKIPPED. A button with no
 label, or with several, is reported and left alone. Use --dry-run first.
 """
 import argparse
@@ -79,8 +79,9 @@ def main():
         with open(path, encoding="utf-8", newline="") as f:
             raw = f.read()
         bom = BOM if raw.startswith(BOM) else ""
+        eol = "\n" if raw.endswith("\n") else ""
         obj = json.loads(raw[len(bom):])
-        if bom + dump(obj) != raw:
+        if bom + dump(obj) + eol != raw:
             print(f"SKIP {path}: not byte-exact on round-trip")
             continue
         report, changed = [], 0
@@ -92,7 +93,7 @@ def main():
             print(line)
         if changed and not args.dry_run:
             with open(path, "w", encoding="utf-8", newline="") as f:
-                f.write(bom + dump(obj))
+                f.write(bom + dump(obj) + eol)
 
 
 if __name__ == "__main__":

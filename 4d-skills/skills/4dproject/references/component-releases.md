@@ -15,7 +15,7 @@ This shared reference defines the tag convention, not permission to publish.
 
 ## Default component convention: prefix-free major.minor.patch
 
-For this user's component distribution convention, a new release Git tag
+By this skillset's component distribution convention, a new release Git tag
 **must be exactly `major.minor.patch` (`x.y.z`), e.g. `0.1.0`, never
 `v0.1.0` or `vX.Y.Z`**. All three fields are non-negative decimal integers
 without leading zeroes. Do not omit a field, add a prefix, or append
@@ -23,7 +23,7 @@ prerelease/build labels to these distribution tags.
 
 Use [SemVer](https://semver.org/spec/v2.0.0.html) for the component's own API
 version and major/minor/patch increments. SemVer itself allows prerelease
-and build labels; the plain three-number distribution tag is this user's
+and build labels; the plain three-number distribution tag is this skillset's
 stricter convention for Dependency manager compatibility.
 
 Keep the following surfaces distinct:
@@ -82,7 +82,7 @@ R-release tags merely because this reference documents them.
 
 The article documents the strict formats for **Follow 4D version**; it does
 **not** establish that every other dependency rule rejects every prefixed
-tag. The broader no-leading-`v` rule above is the user's component convention,
+tag. The broader no-leading-`v` rule above is this skillset's component convention,
 not a claim about all 4D dependency resolution.
 
 ## Before an authorized publication

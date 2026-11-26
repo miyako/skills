@@ -66,24 +66,28 @@ errors on newer syntax (21 R4 flagged the 21 R5 fourth parameter of
 diagnostic, check which tool4d the run used.
 
 **Pin the build; do not rely on discovery.** Use a tool4d at least as new
-as the project's `compatibilityVersion`: for every run, set `TOOL4D_PATH`
-(or `--tool`) to the tool4d of the release the project targets, and read
-the first stderr line, which names the build used:
+as the project's `compatibilityVersion`: for every run, pass `--tool` (or
+set `TOOL4D_PATH` in the same shell command) with the tool4d of the release
+the project targets, and read the first stderr line, which names the build
+used:
 
 ```sh
-export TOOL4D_PATH="/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d"
-tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project
+tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project \
+  --tool "/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d"
 # tool4d-lsp-stdio: using ... tool4d at <path>   <- check the version in this path
 ```
+
+An `export TOOL4D_PATH=...` does not survive into the next command when each
+command runs in a fresh shell; see "Pointing `4dlsp` at it" in
+`skills/4dcli/SKILL.md`.
 
 A clean result proves nothing until the checker has reported a deliberate
 error once (negative control) on the same build.
 
-If tool4d is installed via the 4D Analyzer VS Code extension, no
-configuration is needed. Otherwise pass `--tool <path-to-tool4d>` (or set
-`TOOL4D_PATH`) explicitly -- e.g. on macOS a manually-installed 4D.app is
-common and won't be found without this, since it isn't on PATH and isn't
-in the VS Code extension storage or conventional locations list above.
+Discovery finds a tool4d installed by the 4D Analyzer VS Code extension
+without configuration, but that copy may be older than the project (see
+above). A tool4d inside an installer folder is not matched by the
+`/Applications/4D*.app` pattern and won't be found without `--tool`.
 Installer folders carry the build number
 (`--tool "/Applications/4D 21 R5 (100189)/tool4d.app/Contents/MacOS/tool4d"`);
 see "Binary Paths" in `skills/4dcli/SKILL.md`. On macOS the path is the
@@ -153,8 +157,10 @@ tools/4dlsp/tool4d-lsp-stdio validate --json --workspace Project/ Sources/Method
 
 ### Exit codes
 
-- `0` -- no errors (warnings are allowed)
-- `1` -- one or more errors (severity: error)
+Documented: `0` for no errors (warnings allowed), `1` for one or more
+errors. Observed: `validate` and `check-syntax` exit `0` with errors
+present, so gate on the parsed output, not the exit code (see "Important
+notes").
 
 ### Interpreting results
 
@@ -210,11 +216,10 @@ tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project/ \
 - If omitted, the tool automatically picks the first `.4dm` file found
   under `Sources/` (falling back to the project root if no `Sources/`
   directory exists) and opens that as the anchor document.
-  > **Anchor failure mode** (tool4d 21.2 LTS build 100694, macOS, host
-  > project [miyako/ldap-demo](https://github.com/miyako/ldap-demo)):
+  > **Anchor failure mode** (tool4d 21.2 LTS build 100694, macOS):
   > when `--workspace` points at a repository root that has no `Sources/`
   > directory of its own, the fallback can anchor on an unrelated `.4dm`
-  > file -- in that project, a skill asset inside the `.agents` submodule
+  > file -- for example a skill asset inside an `.agents` submodule
   > -- and the session fails with `failed to fill whole buffer`. Point
   > `--workspace` at the `Project/` folder, or pass an explicit file, in
   > such layouts.
@@ -408,8 +413,7 @@ diagnostics-not-found duality here -- `install-components` either
 confirms the install completed or fails outright.
 
 > **Observed failure, exit code 0 anyway** (tool4d-lsp-stdio 0.3.0,
-> tool4d 21.2 LTS build 100694, macOS ARM64, host project
-> [miyako/ldap-demo](https://github.com/miyako/ldap-demo)): the run
+> tool4d 21.2 LTS build 100694, macOS ARM64): the run
 > aborted with `waiting for dependency/installComponents/done: failed to
 > read LSP header: Resource temporarily unavailable (os error 35)` and
 > the process still exited `0`. A zero exit is therefore not proof of an
@@ -426,7 +430,8 @@ confirms the install completed or fails outright.
 3. Run `validate` on all modified files (or `check-syntax` for a
    project-wide pass -- see above)
 4. If errors: fix the code based on error messages, re-validate
-5. Repeat until exit code 0
+5. Repeat until no `error` diagnostics remain (not until exit code 0;
+   see "Exit codes")
 6. Report success to user
 
 ## Windows
@@ -455,13 +460,14 @@ tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMet
 - Gate on the parsed output (`--json`: every `diagnostics` array empty),
   never on the exit code: `validate` and `check-syntax` exit `0` with
   errors present.
-- Validate only the files you created or modified, not the entire project.
+- With `validate`, pass only the files you created or modified; use
+  `check-syntax` when a project-wide pass is wanted.
 - **`validate` reporting 0 errors does not guarantee every command is
   current.** Some obsolete/renamed commands (e.g. old commands replaced by
   a newer equivalent) may not surface as a compile error. If you are
   unsure whether a specific command is real or current -- especially one
   from training data, an older 4D version, or unfamiliar code -- confirm
-  it with the MCP `hover` tool (see below) rather than relying on
+  it with `hover` (one-shot subcommand or MCP tool, see below) rather than relying on
   `validate` alone. `hover` returning "No hover information available"
   for a command-shaped token is a strong signal it is not recognized.
 - **Component classes can be unresolvable.** `check-syntax` may report
@@ -518,9 +524,8 @@ startup method or launch a 4D session just to check syntax.
 Running code is a different job, owned by the `4dcli` skill: executing a
 test method, rendering a form, or a full `Compile project` pass (which also
 reports typing errors across the whole project) needs `tool4d` or 4D. Some
-repositories ship their own wrapper for that (e.g. `tools/tool4d.py` in a
-technote-localisation repository); use it for running tests there, and
-still use this skill for syntax checks.
+repositories ship their own wrapper script for that; use it for running
+tests there, and still use this skill for syntax checks.
 
 ## MCP server
 
@@ -624,8 +629,8 @@ one session) to pay the tool4d startup cost once instead of per call.
 ### Starting a persistent server for a task
 
 Running `mcp --project ...` (or `--workspace ...`) directly daemonizes:
-it forks into the background, binds the discoverable socket used by (2),
-and prints the PID (and socket path) to stdout, then returns control.
+it forks into the background, binds the discoverable socket that attached
+calls use (see "Reusing a running server"), and prints the PID (and socket path) to stdout, then returns control.
 
 ```sh
 tools/4dlsp/tool4d-lsp-stdio mcp --project Project/MyApp.4DProject
@@ -637,9 +642,8 @@ tools/4dlsp/tool4d-lsp-stdio mcp --project Project/MyApp.4DProject
 > https://github.com/miyako/language-4dm-nova/issues/42 -- daemonize
 > always failed to start, and attached one-shot calls returned no
 > hover/completion/etc info even for valid commands). A fix has been
-> merged upstream (PR #43) and `tools/4dlsp/tool4d-lsp-stdio` in this
-> workspace has been rebuilt from that fix, so the daemonize/attach
-> pattern below now works reliably here. If you're working from a
+> merged upstream (PR #43); builds that include it run the
+> daemonize/attach pattern below reliably. If you're working from a
 > `tool4d-lsp-stdio` build that predates that fix, fall back to running
 > one-shot subcommands directly with `--project`/`--workspace` on every
 > call, or `mcp --foreground`.
@@ -691,11 +695,11 @@ tools/4dlsp/tool4d-lsp-stdio mcp --foreground --workspace Project/
   use the one-shot subcommands directly with `--project`/`--workspace`;
   the per-call startup cost is fine for a handful of calls.
 - **Many LSP checks across one task** (e.g. reviewing every command in a
-  file) -- use the one-shot subcommands directly with
-  `--project`/`--workspace` for now (see known issue above); once fixed,
-  start a persistent server once (`mcp --project ...`), then call
+  file) -- start a persistent server once (`mcp --project ...`), then call
   one-shot subcommands without `--project`/`--workspace` for the rest of
-  the task, and stop the server (`mcp --stop`) when done.
+  the task, and stop the server (`mcp --stop`) when done. On a build that
+  predates the daemonize fix (see the 0.3.0 note above), keep passing
+  `--project`/`--workspace` on every call instead.
 - **Host has a native MCP client already configured** for this server --
   use its MCP tools directly instead of shelling out to any of the
   above; do not spawn a duplicate `tools/4dlsp/tool4d-lsp-stdio mcp` process

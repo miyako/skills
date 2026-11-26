@@ -773,12 +773,11 @@ first error is the real one, and the ones after it are its consequences.
 4D form objects are **not exposed to accessibility**: System Events sees only
 window chrome (close/zoom/minimize buttons), so UI-scripted clicks cannot
 reach form controls. Drive real interactions with synthetic CGEvents instead
-(a ~40-line Swift tool posting `CGEvent` mouse down/up with
-`mouseEventClickState = 1`, and keyboard events with
-`keyboardSetUnicodeString` for typing). Verified live on HDI_Embeddings:
-tab controls (built-in `gotoPage` action), buttons, text inputs and
-drop-down selections all react to synthetic clicks, and a full
-generate-then-search flow can be driven without a human.
+(mouse down/up, and keyboard events with `keyboardSetUnicodeString` for
+typing), posted from `osascript -l JavaScript` (step 5). Verified live: tab
+controls (built-in `gotoPage` action), buttons, text inputs and drop-down
+selections all react to synthetic clicks, and a multi-step flow can be
+driven without a human.
 
 Procedure that worked:
 
@@ -806,8 +805,8 @@ Procedure that worked:
    Open the pane directly with
    `open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"`.
    Changes may need the host app restarted.
-5. Prefer `osascript -l JavaScript` over a compiled Swift helper: it runs under
-   the host app's grant, while a freshly compiled binary reported
+5. Post the events from `osascript -l JavaScript`, not a compiled Swift
+   helper: it runs under the host app's grant, while a freshly compiled binary reported
    `AXIsProcessTrusted() == false` and its events were dropped. Coordinates are
    **points**, not screenshot pixels (divide a Retina capture by its scale, and
    by the downscale factor if the image was shrunk for display):
@@ -908,17 +907,17 @@ came out of projects that ran clean under `tool4d`:
 | `#DECLARE($params : Object)` at the top of a form method (`Forms/<Name>/method.4dm`) | `Too many parameters have been passed to this method.` and `The parameter $1 has not been explicitly declared.`, `code.type` `formMethod`. Silent when interpreted and under `validate` | remove it; a form method receives no parameters, read `Form` (see [4dform](../4dform/SKILL.md)) |
 | `ON ERR CALL("handler"; ek local)` whose method reads `$1`, `$2`, `$3` | `The parameter $1 has not been explicitly declared.` | remove the parameters: a handler is called with none (`skills/4dlang/references/pitfalls.md`), so `$1`..`$3` are never set and a `#DECLARE` only silences the compiler. Read `Last errors`, `Error method`, `Error line` and `Error formula` instead (the `dump_on_err` sample above) |
 
-`Compile project` does not choke on form-bearing projects: with the two
-forms present it still returned a normal status object with `formMethod`
+`Compile project` does not choke on form-bearing projects: with forms
+present it still returned a normal status object with `formMethod`
 errors, and with the form methods fixed it returned `success:true`. Do not
 attribute a failed compile to the `Forms/` folder before reading `errors`;
 if a form-load crash (`VFormList_json::_LoadFolder`) is ever seen, bisect by
 removing one `Forms/<name>/` at a time in a scratch copy.
 
 Fix these rather than dismissing every diagnostic as the dependency's
-fault. After the fixes the same project reported exactly one error (the
-class store) and three warnings (`convert`, `convertBatch`, `version`),
-which is a useful baseline: anything beyond that list is the host's own
+fault. Once fixed, what remains is the useful baseline: one error per
+unresolved component class (the class store) plus one warning per member
+the host uses beyond `new()`. Anything beyond that list is the host's own
 code.
 
 ## Definition of Done
@@ -927,9 +926,9 @@ A CLI task is complete when all three hold. Each is a shell check, not a
 judgement. Report each explicitly.
 
 1. **The process exited with the expected code.** For a run that is meant
-   to succeed that is `0`; "Exit Behavior" above defines the test-suite
-   case, where a non-zero code and the absence of `PASS` on stdout are
-   the failure signal.
+   to succeed that is `0`. A `0` is necessary but not sufficient: a failed
+   `ASSERT` or a runtime error still exits `0` ("Exit Behavior" above), so
+   for a test suite the absence of `PASS` on stdout is the failure signal.
 
 2. **The expected artifact exists and is non-empty** -- and was written
    by *this* run. Delete it before invoking, so a stale file from an
@@ -945,10 +944,10 @@ Putting the three together:
 
 ```sh
 BIN="/Applications/4D 21 R3/tool4d.app/Contents/MacOS/tool4d"
-OUT="<project>/Project/output.png"
+OUT="<project>/output.png"                     # /PACKAGE = the folder that contains Project/
 
 rm -f "$OUT"                                   # gate 2: no stale artifact
-"$BIN" --project "<project>/x.4DProject" \
+"$BIN" --project "<project>/Project/x.4DProject" \
        --startup-method project_form_to_image \
        --user-param "MyForm:1:/PACKAGE/output.png" \
        --dataless
@@ -973,7 +972,7 @@ binary.
 For a test-suite run, gate 2 is the `PASS` marker rather than a file:
 
 ```sh
-"$BIN" --dataless --startup-method=test_all --project=<project>.4DProject \
+"$BIN" --dataless --startup-method=test_all --project=<project>/Project/<name>.4DProject \
   | tee /tmp/run.log
 rc=${PIPESTATUS[0]}
 test "$rc" -eq 0 && grep -q PASS /tmp/run.log && echo "DONE"
@@ -1062,10 +1061,11 @@ is complete.
 
 All four entry points that take a path share the same `--user-param`
 shape, `FormName:Page:Path` (`dialog_screenshot_with_data` inserts
-`lang:factory` before the path; the rest applies to it too):
+`lang:factory` before the path, so it needs five segments; the rest
+applies to it too):
 
 * The value is split on `:`, and fewer than three segments is a silent
-  no-op return. The **path may itself contain colons**: everything from
+  no-op return (the `dialog_screenshot` pair quits instead). The **path may itself contain colons**: everything from
   the third segment onward is rejoined, so a Windows drive-letter path
   such as `MyForm:1:C:\out.png` resolves correctly to `C:\out.png`. The
   form name and the page number must not contain a colon.
@@ -1074,14 +1074,16 @@ shape, `FormName:Page:Path` (`dialog_screenshot_with_data` inserts
 * A page number below 1 is clamped to 1.
 * The parent directory of the output path is created if missing.
 
-The three tool4d entry points -- `project_form_to_image`,
-`print_form_to_file` and `run_project_form` -- additionally:
+The other three entry points -- `project_form_to_image`,
+`print_form_to_file` and `run_project_form` (which needs `4D`, see the
+table) -- additionally:
 
 * return without doing anything if the path is empty;
 * clamp a page beyond the form's page count to the last page, via
   `FORM GET PROPERTIES`;
 * log the output path to standard output and quit when
-  `Application info.headless` is true.
+  `Application info.headless` is true (`run_project_form` quits in every
+  mode).
 
 `dialog_screenshot` does none of those three: it cannot call
 `FORM GET PROPERTIES` before the form is open, and an empty path makes
@@ -1293,7 +1295,9 @@ $file.setText(JSON Stringify($form; *))
 QUIT 4D
 ```
 
-This pattern requires `4D`, not `tool4d`, because it uses `DIALOG`:
+This pattern requires `4D`, not `tool4d`, because it uses `DIALOG`. The
+bundled `run_project_form` is this pattern parameterised with
+`--user-param` (Pattern 3):
 
 ```bash
 /Applications/4D\ 21\ R3/4D.app/Contents/MacOS/4D \
@@ -1484,7 +1488,6 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
 
 ## Tips
 
-* `--dataless`: always pass when the project may be open elsewhere.
 * `QUIT 4D`: always include, or 4D stays open indefinitely in GUI mode.
 * `Application info.headless`: branch behavior on it, for example logging
   to stdout when headless and showing UI otherwise.
@@ -1492,7 +1495,7 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   for pretty-printing.
 * `LOG EVENT(Into system standard outputs; $message)` prints to stdout,
   the simplest way to get short results out of a headless run.
- * Omit `--dataless` only when a test must read or write records, and run
+* Omit `--dataless` (see "Flags") only when a test must read or write records, and run
   it on a copy of the data file.
 * A run that opens the data file can rewrite it even when the method only
   reads: the engine builds indexes on first use (`IndexManager ... built
@@ -1502,12 +1505,11 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
 * Runtime error line numbers count from the start of the **method or
   function** (the `Function` line is line 1), not from the start of the
   class file.
-* tool4d may fail to resolve a project's dependencies (components): expect
-  an error when opening the project or when code calls a component. Test
-  component-free code paths, or use full 4D. A declared dependency whose
-  `.4dbase` is already present in `Components/` still loads: the
-  `PackageManager ... cannot be found` lines are diagnostics, so prove the
-  load by calling something (`cs.Ns.Class.new().version()`) and logging it.
+* tool4d has no Dependency manager: stage components yourself and prove
+  the load by calling one, since the `PackageManager ... cannot be found`
+  lines print even when it works -- see "Compiling with a Component
+  Dependency" and
+  [4dproject: dependencies](../4dproject/references/dependencies.md#headless-tool4d).
 * `SVG EXPORT TO PICTURE` needs an XML tree reference, not SVG text. Passing
   the source text compiles (a reference is a Text) and fails, in the GUI as
   well as headless, with `-9926 The referenced element is invalid` /
@@ -1559,7 +1561,7 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
 
 ## Smoke Scripts: Locating tool4d and Keeping Assertions Honest
 
-Defects found in a demo repository whose smoke script was fully green:
+Defects that a fully green smoke script did not catch:
 
 * **Do not pin one tool4d build in the script.** A hardcoded
   `.../tool4d/21R4/100224/tool4d.app/...` breaks the moment that build is
@@ -1576,13 +1578,13 @@ Defects found in a demo repository whose smoke script was fully green:
   ```
 
 * **An assertion must be able to fail.** `Position("px"; $table)>0` passed
-  because the row label itself contained "px"; the check named "unit ladder
-  answers for all four units" could not have caught a missing unit. Have the
+  because the row label itself contained "px", so a check meant to prove
+  every unit was answered could not have caught a missing one. Have the
   model return data (`rows`, `identical`) and assert on that, not on a
   substring of text built for display.
-* **Prose is a claim too.** Notes, preset captions and README sentences
-  ("6 characters, 4 glyphs", "invalid_font") drifted from the behaviour the
-  self test verified, and a green run said nothing about them. When a caption
+* **Prose is a claim too.** Notes, captions and README sentences that state
+  a count or an error code drifted from the behaviour the self test
+  verified, and a green run said nothing about them. When a caption
   states a count, a code or a dimension, assert the same value in the self
   test, or phrase it so it cannot be wrong.
 * **Committed artifacts need a comparison.** If a script regenerates files that
@@ -1610,7 +1612,7 @@ rendered text:
 # ocr.swift -- usage: ocr <image.png>
 # VNRecognizeTextRequest, recognitionLevel .accurate,
 # recognitionLanguages ["en-US", "ja-JP"]; swiftc ocr.swift -o ocr
-/tmp/winid/ocr /tmp/capture.png
+./ocr /tmp/capture.png
 ```
 
 The text output is enough to assert the things that matter after a run:
@@ -1624,6 +1626,7 @@ helpers once per host; they have no dependencies beyond the OS.
 
 This skill needs a `tool4d` or `4D` installation on the host. Prefer an
 existing one; otherwise download and install it as described under
-"Obtaining tool4d" above, and set `TOOL4D_PATH` so `4dlsp` can find it.
+"Obtaining tool4d" above, and point `4dlsp` at it with `--tool` (see
+"Pointing `4dlsp` at it").
 Report the detected version before relying on any behavior that is
 version-dependent.
