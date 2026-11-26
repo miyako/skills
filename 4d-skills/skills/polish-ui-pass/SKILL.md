@@ -22,10 +22,11 @@ change behaviour in the same commit.
 |---|---|---|
 | 1 | Survey: form list, existing stylesheets, hard-coded colours and heights, window sizing; which colours are the demo's subject (exempt) | `4dform`, `4dcss` |
 | 2 | Localise first (strings to XLIFF), so later layout is checked with real label lengths | `4dlocalise` |
+| 2a | Real controls: fake buttons (hidden button over a rectangle and a label) become real buttons; remove per-object `fontFamily` (no Lucida Grande, no CJK glyphs) | `4dform` (`scripts/fake_buttons.py`), `4dcss` ("Fonts") |
 | 3 | Stylesheet split: brand and typography in `styleSheets.css`; control heights per theme in `styleSheets_mac.css` / `styleSheets_windows.css` | `4dcss` |
 | 4 | Header band and background: full-bleed, `rightMargin: 0` when a band spans the form | `4dform` (`references/form-concepts.md`) |
-| 5 | Dark mode: every custom colour has a `prefers-color-scheme: dark` pair, unless every form pins `colorScheme` (demos: `demo-presentation`, "Appearance") | `4dcss` (`references/dark-mode.md`) |
-| 6 | Control heights: buttons and dropdowns ≥ 27 px under Liquid Glass; Fluent UI not verified (say so). Heights set in code must hold after every theme switch (best-size inputs shrank to ~18 px) | `4dcss` (`references/form-themes.md`) |
+| 5 | Dark mode: every custom colour has a `prefers-color-scheme: dark` pair, unless every form pins `colorScheme` (demos: `demo-presentation`, "Appearance"); remove JSON `fill`/`stroke` that override the classes; strip colours from styled-text spans | `4dcss` (`references/dark-mode.md`) |
+| 6 | Control heights: buttons and dropdowns ≥ 27 px under Liquid Glass; Fluent UI opt-in (`"fluentUI": true` on shared forms) and not verified (say so). Heights set in code must hold after every theme switch (best-size inputs shrank to ~18 px) | `4dcss` (`references/form-themes.md`) |
 | 7 | Layout: alignment grid, spacing, no overlaps | `4dform` (`references/layout.md`) |
 | 8 | List boxes: defaults, or the fitted exception for a fixed window | `4dform` (`references/objects/listbox.md`) |
 | 9 | Status and feedback: callback-fed status lines, disabled actions until ready | `4dform` (`references/async-ui.md`) |
@@ -41,8 +42,13 @@ change behaviour in the same commit.
   `prefers-color-scheme` blocks.
 * List box class: `alternateFill: automaticAlternate`, transparent grid
   lines, `verticalAlign: middle`.
-* Button height: 27 px for `liquid-glass`, 23 px for `mac-classic`
-  (the Windows sheet mirrored this unverified).
+* Button height: 27 px for `liquid-glass`, 23 px for `mac-classic`; one
+  later demo used 32 px `fluent-ui` / 23 px `win-classic` (unverified on
+  Windows).
+* Semantic colour classes in `styleSheets.css` with dark overrides
+  (`brand`, `muted`, `panel`); platform sheets hold only fonts and
+  heights. A brand blue `#289FE8` became `#5CB8FF` in dark mode for
+  contrast.
 * Theme swatch buttons (a button that switches to a theme) mirror that
   theme: same fill, border and corner radius (e.g. 8 / 4 / 14 px), so the
   button previews the result. Coloured buttons need `style` and
@@ -82,5 +88,6 @@ form JSON and code, and move only the surrounding chrome to CSS.
 - [ ] Behaviour unchanged; polish in separate commits
 - [ ] No hard-coded colours or button heights left in form JSON, except colours the demo is about
 - [ ] Every custom colour has a dark-mode value
+- [ ] No fake buttons, no Latin-only fonts on localised text
 - [ ] Every form captured in each UI language, light and dark
 - [ ] Unverified platforms listed in the PR

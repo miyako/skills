@@ -39,6 +39,7 @@ downloads and the model load are already done.
 1. **UI language**: follows the OS; ship en + ja XLIFF (`4dlocalise`).
    Add an in-app switch when the presenter shows both languages or
    attendees run a 4D in another language (`4dlocalise`).
+   Localising a whole demo end to end: `demo-localise`.
 2. **Data language**: the corpus and the sample inputs may stay Japanese
    in both UI languages. Say so in the English README ("Japanese
    questions work best").
@@ -46,16 +47,16 @@ downloads and the model load are already done.
 
 ## Japanese Wording
 
-* UI labels: short noun phrases (検索, 類似度 ≥, ベクトルインデックスを使う);
-  status messages in です/ます form only where they are sentences.
-* Keep 4D and API terms that Japanese 4D users know in katakana or as-is
-  (ベクトルインデックス, `4D.Vector`); do not translate method names.
-* In fixed-width chrome (brand, buttons, tabs, single-line headers) prefer
-  a short native word over a katakana transliteration: "トラベル
-  エージェンシー" wrapped or clipped where "旅行会社" fitted. Katakana
-  loanwords are often *longer* than the English.
-* Japanese labels are often shorter but taller in some fonts: re-check
-  label fit in both languages (`polish-ui-pass`).
+Typography and wording rules (spacing around Latin words, full-width
+colons, API names kept in Latin script, quoted button names matching the
+labels) are in `skills/4dlocalise/references/japanese.md`. For a demo,
+also:
+
+* Sample inputs read naturally to a Japanese audience (類似度 ≥,
+  ベクトルインデックスを使う); no machine-translated phrasing on screen.
+* Keep the series or product brand the owner keeps in English (the HDI
+  "How do I..." title); ask.
+* Re-check label fit in both languages (`polish-ui-pass`).
 
 ## Appearance
 

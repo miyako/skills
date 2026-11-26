@@ -150,8 +150,16 @@ End if
 ```
 
 * Accepting closes the current form; the new window replaces it.
-* Passing `Form` hands the current form data to the next form.
+* Passing `Form` hands the current form data to the next form. **If the
+  next form declares a `formClass`, call `DIALOG("Next"; *)` without
+  data** (or pass a real instance): an object passed to `DIALOG` replaces
+  the class instance, and its functions (`Form.apply()`) are gone. See
+  "Forms with a `formClass`" above. Observed on 21 R5.
 * Copying the window title keeps the start method's reuse loop working.
+  A splash card may use the empty title `""` (a `Plain form window` with
+  no visible title): the loop still matches `""` in worker 1 and the next
+  window copies it. Keep only one untitled window in worker 1, or the loop
+  brings the wrong one to the front.
 * The object method only runs if the object in `form.4DForm` has
   `"method": "ObjectMethods/<name>.4dm"` and `"events": ["onClick"]`.
 

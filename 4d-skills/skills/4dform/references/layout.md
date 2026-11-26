@@ -136,5 +136,6 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 - [ ] Editor vs live: measuring the Form Editor? editor offsets. Measuring a screenshot? live offsets.
 - [ ] The focus ring never appears in the Form Editor: a button's editor offset is 0, not 5.
 - [ ] Check every adjacent pair after moving objects, not only the one you moved.
+- [ ] Leave at least 8 px between a text box and the next framed object (input, list box, rectangle): Japanese glyphs are taller and were clipped at 2-4 px gaps.
 - [ ] `borderRadius` on text and input grows the object outward horizontally (not vertically, and not on rectangles): inset it by `r` to line up with a square neighbour.
 - [ ] Moving styling to CSS must not move structural properties out of the JSON -- see "What stays in JSON" in `skills/4dcss/SKILL.md`.

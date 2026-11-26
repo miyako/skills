@@ -144,6 +144,16 @@ Visual properties are safe in CSS: `fill`, `stroke`, `alternateFill`,
   (`class: "tile tileBlue"`) holding `borderFillColor`, `stroke`,
   `fontSize: 15px` and `borderRadius: 12`. Verified on macOS 21 R5.
 
+## Fonts
+
+* Leave `fontFamily` unset (or remove it) for UI text: the system font
+  follows the OS, the theme and the UI language.
+* Do not use Lucida Grande or other Latin-only fonts for text that may be
+  localised: it has no CJK glyphs, so Japanese falls back to a mismatched
+  font. Several older demos set it on every object.
+* Size and weight go in classes (`fontSize`, `fontWeight`), not per
+  object.
+
 ## Limits
 
 | Limit | Rule |

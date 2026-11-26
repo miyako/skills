@@ -7,8 +7,10 @@ description: >
   <group> rules, 4D's built-in Common* IDs, placeholders for counts and word
   order, line breaks, entity attributes that follow the UI language
   (computed get/orderBy), stored enumerations (key in data, label in UI),
-  an in-app language switch, and scripts that generate paired XLIFF files
-  and convert form literals. Use when adding a language or replacing
+  an in-app language switch, styled text in XLIFF, moving UI text out of
+  the data file, pages served by the 4D web server, Japanese UI text
+  conventions, and scripts that generate paired XLIFF files, convert form
+  literals and cross-check IDs. Use when adding a language or replacing
   hardcoded user-visible strings.
 ---
 
@@ -24,8 +26,13 @@ description: >
   `name`) -- `references/language-attributes.md`
 * enumerations stored as keys and shown as labels (status, category) --
   `references/stored-enumerations.md`
-* generating paired XLIFF files and converting form literals with scripts
-  (`scripts/`)
+* UI text stored in the data file (styled-text rows, help pages) moved to
+  XLIFF -- `references/data-text-migration.md`
+* HTML pages served by the project's web server -- `references/web-pages.md`
+* Japanese UI text: spacing, punctuation, what stays Latin --
+  `references/japanese.md`
+* generating paired XLIFF files, converting form literals and
+  cross-checking IDs with scripts (`scripts/`)
 
 ### Not in this skill
 
@@ -44,6 +51,9 @@ description: >
 | Finding the strings to replace in `menus.json`, forms, `.4dm` | `references/what-to-localise.md` |
 | Names/labels stored per language in the data | `references/language-attributes.md` |
 | Status/category values stored as text and shown in lists, drop-downs, searches | `references/stored-enumerations.md` |
+| UI text (descriptions, help, styled text) read from a table instead of the project | `references/data-text-migration.md` |
+| An HTML page served by the project (`WEB FOLDER`, `/RESOURCES/`) that the demo opens in a browser | `references/web-pages.md` |
+| Writing or reviewing Japanese strings | `references/japanese.md` |
 | XLIFF files, IDs, groups, Common IDs, line breaks, runtime language switch, generating XLIFF | this file |
 
 References:
@@ -195,6 +205,9 @@ data source becomes such an object. The same works for parallel lists
   rebuilt after the switch; keep the selected `index` and restore it.
 * Language codes use a dash (`"fr-ca"`), `.lproj` folders an underscore
   (`fr_ca.lproj`).
+* **Scope.** Without `*` the call applies to the host project **and every
+  component**, in all processes; with `*` only to the project that called
+  it. An in-app switch passes no `*` so components follow the UI.
 * Built-in `Common*` IDs do **not** follow the switch (see "XLIFF Rules").
   4D's own design-mode windows do (the Explorer title turned Japanese);
   only `Common*` lookups from project code stay in the app language.
@@ -294,6 +307,21 @@ as `&#13;`. It overwrites the generated files: keep the table as the only
 source, outside `Project/` (commit it under a `tools/` subfolder the
 repository owns, or not at all).
 
+**Styled text.** A multistyle string is stored as `<span style=...>`
+markup, which must be XML-escaped **once** inside `<source>`/`<target>`.
+Write the markup raw in `strings.json`; `xliff_pair.py` escapes it on
+write. When many paragraphs share fragments (bold terms, coloured API
+names), generate the table with small helpers (`b(t)`, `api(t)` returning
+`<span style="font-weight:bold">t</span>`, ...) instead of typing spans:
+hand-escaped `&lt;span ...&gt;` in XLIFF was the error-prone step in one
+demo. Do not put `color:#000000` in spans: it stays black in dark mode
+(`4dcss`, `references/dark-mode.md`). Show it in an input with
+`"styledText": true`.
+
+**Byte order mark.** 4D writes some JSON files (`menus.json`, some forms)
+with a UTF-8 BOM. `jq` and `json.loads` on a `utf-8` read fail on it; read
+with `utf-8-sig`, or strip and restore it (both scripts keep it).
+
 **Converting form literals.** 4D-written `.4DForm` files round-trip
 byte-exactly through `json.dumps(obj, indent="\t", ensure_ascii=False)`
 with **no trailing newline** (all 15 forms of one demo). Prove it per file
@@ -312,22 +340,31 @@ take the same path. Validate the result with `4dform`.
 ## Verification
 
 * Every ID referenced by `:xliff:` or `Localized string` exists in every
-  language's files (grep the IDs on both sides).
+  language's files, and every defined ID is used:
+
+  ```sh
+  python3 skills/4dlocalise/scripts/xliff_check.py .
+  ```
+
+  It reports `MISSING` and `PARTIAL` IDs (exit 1) and `UNUSED` ones.
+  `Localized string("Step_Tab"+String($i))` is detected as a dynamic
+  prefix; pass `--dynamic PREFIX` for IDs built in other ways.
 * Each `.xlf` is well-formed XML (e.g. `python3 -c "import
   xml.dom.minidom,sys; xml.dom.minidom.parse(sys.argv[1])" file.xlf`).
 * Changed `.4dm` files pass `4dlsp`.
 * When 4D or tool4d is available (`4dcli`), run a test method that calls
   `SET DATABASE LOCALIZATION("ja")` then `Localized string` for several IDs,
-  and again for the source language. Built-in `Common*` IDs were observed
+  and again for the source language. On a temporary copy of the project, a
+  throw-away startup method can loop over the languages, call the real
+  init code and write the results with
+  `File($path; fk posix path).setText(JSON Stringify($results; *))`; the
+  JSON proves the XLIFF resolves without a GUI. Built-in `Common*` IDs were observed
   to stay English in tool4d (`CommonMenuItemQuit` → "Quit" under `ja`)
   and in the 4D GUI after a runtime switch (above). On a Japanese OS they
   have not been checked.
-* Cross-check IDs both ways: every referenced ID is defined, and every
-  defined ID is referenced (remove unused ones). A grep-based check reports
-  IDs built by concatenation (`"Window_Title"+"R4"`) as missing: keep an
-  allow-list for such prefixes. It cannot see the `Common*` problem above,
-  so flag every `:xliff:Common*` as a warning when the project has more
-  than one `.lproj`.
+* `xliff_check.py` cannot see the `Common*` problem above: treat every
+  `:xliff:Common*` as a warning when the project has more than one
+  `.lproj`.
 * `fourdform <form> --language ja` (`4dform`) resolves `:xliff:` from
   `Resources/ja.lproj`: a quick way to spot a literal left in a form.
 * **Per-language runtime captures** are possible without anyone at the
@@ -352,6 +389,8 @@ take the same path. Validate the result with `4dform`.
 - [ ] No `Common*` ID redefined; none used where the language is switched at runtime
 - [ ] Multi-line strings keep CR line breaks (`&#13;`)
 - [ ] IDs match `^[A-Za-z][A-Za-z0-9_]*$`
+- [ ] `xliff_check.py` reports no `MISSING` / `PARTIAL`; `UNUSED` reviewed
+- [ ] No user-visible text left in the data file or in served HTML (`references/data-text-migration.md`, `references/web-pages.md`)
 - [ ] Stored enumerations displayed through labels, never the stored key
 - [ ] Every form captured at runtime in every language; no truncation
 - [ ] `<source>` is English; `<target>` translated (identical in the English file)
