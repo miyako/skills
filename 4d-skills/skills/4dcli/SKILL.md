@@ -1274,6 +1274,36 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   `--startup-method` run dies that way, bisect the constants
   (`fk home folder`, `fk system folder`, ...) before suspecting paths.
 
+## Smoke Scripts: Locating tool4d and Keeping Assertions Honest
+
+Two defects found in a demo repository whose smoke script was fully green:
+
+* **Do not pin one tool4d build in the script.** A hardcoded
+  `.../tool4d/21R4/100224/tool4d.app/...` breaks the moment that build is
+  removed. The standalone installer lays builds out as
+  `/Applications/tool4d/tool4d/<release>/<build>/tool4d.app`, so resolve the
+  newest one and let `TOOL4D` override it:
+
+  ```sh
+  if [ -z "${TOOL4D:-}" ]; then
+    TOOL4D="$(ls -d /Applications/tool4d/tool4d/*/*/tool4d.app/Contents/MacOS/tool4d 2>/dev/null | sort -V | tail -1)"
+  fi
+  ```
+
+* **An assertion must be able to fail.** `Position("px"; $table)>0` passed
+  because the row label itself contained "px"; the check named "unit ladder
+  answers for all four units" could not have caught a missing unit. Have the
+  model return data (`rows`, `identical`) and assert on that, not on a
+  substring of text built for display.
+* **Prose is a claim too.** Notes, preset captions and README sentences
+  ("6 characters, 4 glyphs", "invalid_font") drifted from the behaviour the
+  self test verified, and a green run said nothing about them. When a caption
+  states a count, a code or a dimension, assert the same value in the self
+  test, or phrase it so it cannot be wrong.
+* **Committed artifacts need a comparison.** If a script regenerates files that
+  are also committed (example SVGs, previews), diff them and report drift;
+  "byte-identical to the committed files" is otherwise an unchecked sentence.
+
 ## Screenshot Sanity Check
 
 A written PNG is not proof of a useful capture. Before reporting a
