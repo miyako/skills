@@ -21,6 +21,7 @@ automatically, or one documented download from Releases.
 | Topic | Skill |
 |---|---|
 | Inherited-project survey (compatibilityVersion, hidden config, scratch methods, trash) | `4dproject` ("Surveying an Inherited Project") |
+| Companion pages served from project/component WebFolders, live route verification, attendee network/security requirements | `references/web-companions.md` |
 | Large data files: Git, LFS or release ZIP | `demo-data-distribution` |
 | Generated per-language sample data, regenerate button | `demo-sample-data` |
 | Local embedding models | `4dembeddings` |
