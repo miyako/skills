@@ -83,6 +83,16 @@ Use the most specific applicable skill. Each skill is a `SKILL.md` file
 in the `skills/` directory relative to this file. Every topic has exactly
 one owning skill; other skills link to it instead of restating it.
 
+Skill folders are flat (`skills/<name>/`) so agent hosts discover them;
+the group is in the name:
+
+| Prefix | Group | Applies to |
+|---|---|---|
+| `4d*` | General 4D (artifacts, tooling, development topics) | any 4D project |
+| `polish-*` (+ `4dcss`) | UI polish | improving the look of existing forms |
+| `demo-*` | Demo repositories | demos shared with attendees |
+| `technote-*` | Technote localisation | technote-localisation repositories only |
+
 ### 4D artifacts and tooling
 
 | Task / artifact | Skill | File path |
@@ -93,7 +103,7 @@ one owning skill; other skills link to it instead of restating it.
 | `.4DSettings` (settings) | 4dsettings | `skills/4dsettings/SKILL.md` |
 | `.4dm` validation / syntax check / LSP / MCP | 4dlsp | `skills/4dlsp/SKILL.md` |
 | 4D command / OOP class member lookup, doc and forum search | 4dlang | `skills/4dlang/SKILL.md` |
-| Running tool4d / 4D from the command line (tests, compile, render); obtaining tool4d and digest-pinning exact builds | 4dcli | `skills/4dcli/SKILL.md` |
+| Running tool4d / 4D from the command line (tests, compile, render); obtaining tool4d and digest-pinning exact builds; background launch, window-ID capture and helper-process cleanup on a shared desktop | 4dcli | `skills/4dcli/SKILL.md` |
 | Tool provisioning | 4dtools | `skills/4dtools/SKILL.md` |
 
 ### 4D development topics
@@ -103,11 +113,31 @@ one owning skill; other skills link to it instead of restating it.
 | Native C/C++ plugin string ownership, text-array lifetimes, callbacks and non-release validation | 4dplugin | `skills/4dplugin/SKILL.md` |
 | Method attributes, `invisible`, Run Method dialog | 4dmethods | `skills/4dmethods/SKILL.md` |
 | `C_*` → `var` / `#DECLARE`, deprecated `_o_` commands | 4dmodernise | `skills/4dmodernise/SKILL.md` |
-| Stylesheets, dark mode, Liquid Glass / Fluent UI form themes | 4dcss | `skills/4dcss/SKILL.md` |
-| XLIFF localisation, `Localized string`, language-following attributes | 4dlocalise | `skills/4dlocalise/SKILL.md` |
+| XLIFF localisation, `Localized string`, language-following attributes, following the OS language | 4dlocalise | `skills/4dlocalise/SKILL.md` |
 | Startup / first window, chaining forms, `DIALOG(...; *)` | 4dstartup | `skills/4dstartup/SKILL.md` |
 | 4D AI Kit, async callbacks and streaming | 4daikit | `skills/4daikit/SKILL.md` |
+| Local embedding models (llama.cpp component + AI Kit), Hugging Face GGUF download, embedding-model acceptance test | 4dembeddings | `skills/4dembeddings/SKILL.md` |
 | ORDA: queries, entity selections, null handling, saving and locking, `fromCollection`, vector queries | 4dorda | `skills/4dorda/SKILL.md` |
+
+### UI polish
+
+| Task | Skill | File path |
+|----------|-------|-----------|
+| Stylesheets, dark mode, Liquid Glass / Fluent UI form themes | 4dcss | `skills/4dcss/SKILL.md` |
+| Ordered polish pass over existing forms (routes to 4dcss, 4dform, 4dlocalise, 4dcli) | polish-ui-pass | `skills/polish-ui-pass/SKILL.md` |
+
+Form layout, list boxes and status lines are owned by `4dform`.
+
+### Demo repositories
+
+For demo, webinar and seminar projects shared with attendees.
+
+| Task | Skill | File path |
+|----------|-------|-----------|
+| Make a demo cloneable and runnable by attendees; README conventions; `.agents` submodule workflows | demo-shareable-repo | `skills/demo-shareable-repo/SKILL.md` |
+| Size, package, verify and publish demo data (Git vs LFS vs release asset) | demo-data-distribution | `skills/demo-data-distribution/SKILL.md` |
+| Vector-search demo: scale, real vector index, threshold calibration, indexed vs scan timing | demo-vector-search | `skills/demo-vector-search/SKILL.md` |
+| Live presentation UX, Japanese audience, UI vs data language | demo-presentation | `skills/demo-presentation/SKILL.md` |
 
 ### Technote-localisation repositories only
 
@@ -128,7 +158,7 @@ Read the applicable `SKILL.md` before making structural changes to a
 proprietary 4D artifact.
 
 Several skills carry longer material under `references/` (and `4dform`
-a calculator under `scripts/`). Do not read those files directly -- route
+and `4dembeddings` scripts under `scripts/`). Do not read those files directly -- route
 to them through the route table in the owning `SKILL.md`; `4dform`'s table
 also states how many of its files a task may open.
 

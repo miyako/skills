@@ -9,6 +9,10 @@ per skill under [`4d-skills/skills/`](skills) (each with a
 [`4d-skills/schemas/`](schemas). Every topic has exactly one
 owning skill; the others link to it.
 
+Skill folders are flat so agent hosts discover them; the group is in the
+name: `4d*` general (any 4D project), `polish-*` UI polish, `demo-*`
+attendee-shared demos, `technote-*` technote localisation only.
+
 ## Skills
 
 ### 4D artifacts and tooling
@@ -21,7 +25,7 @@ owning skill; the others link to it.
 | [`4dsettings`](skills/4dsettings/SKILL.md) | `.4DSettings` (placeholder) |
 | [`4dlsp`](skills/4dlsp/SKILL.md) | `.4dm` validation, syntax check and code intelligence with `tool4d-lsp-stdio` |
 | [`4dlang`](skills/4dlang/SKILL.md) | Classic command and OOP class member lookup; documentation and forum search |
-| [`4dcli`](skills/4dcli/SKILL.md) | Running tool4d / 4D from the command line: tests, compile, form rendering; obtaining tool4d and digest-pinning exact builds |
+| [`4dcli`](skills/4dcli/SKILL.md) | Running tool4d / 4D from the command line: tests, compile, form rendering; obtaining tool4d and digest-pinning exact builds; non-intrusive GUI capture and helper-process cleanup on a shared desktop |
 | [`4dtools`](skills/4dtools/SKILL.md) | Provisioning the helper binaries the other skills use |
 
 ### 4D development topics
@@ -31,11 +35,29 @@ owning skill; the others link to it.
 | [`4dplugin`](skills/4dplugin/SKILL.md) | Native C/C++ plugin string ownership, text-array lifetimes, callbacks and non-release validation |
 | [`4dmethods`](skills/4dmethods/SKILL.md) | Method attributes and which methods to hide from the Run Method dialog |
 | [`4dmodernise`](skills/4dmodernise/SKILL.md) | `C_*` → `var` / `#DECLARE`, deprecated `_o_` commands and their replacements |
-| [`4dcss`](skills/4dcss/SKILL.md) | Form stylesheets, dark mode, Liquid Glass / Fluent UI form themes |
-| [`4dlocalise`](skills/4dlocalise/SKILL.md) | XLIFF localisation, `Localized string`, attributes that follow the UI language |
+| [`4dlocalise`](skills/4dlocalise/SKILL.md) | XLIFF localisation, `Localized string`, attributes that follow the UI language, following the OS language |
 | [`4dstartup`](skills/4dstartup/SKILL.md) | The non-blocking startup window pattern and chaining forms |
 | [`4daikit`](skills/4daikit/SKILL.md) | 4D AI Kit: chat, vision, async callbacks and streaming |
+| [`4dembeddings`](skills/4dembeddings/SKILL.md) | Local embedding models with the llama.cpp component and AI Kit, GGUF download, embedding-model acceptance test (`check_gguf.py`) |
 | [`4dorda`](skills/4dorda/SKILL.md) | ORDA queries and placeholders, null handling, saving and locking, `fromCollection`, vector similarity |
+
+### UI polish
+
+| Skill | Scope |
+|---|---|
+| [`4dcss`](skills/4dcss/SKILL.md) | Form stylesheets, dark mode, Liquid Glass / Fluent UI form themes |
+| [`polish-ui-pass`](skills/polish-ui-pass/SKILL.md) | Ordered polish pass over existing forms, routing to `4dcss`, `4dform`, `4dlocalise` and `4dcli` |
+
+### Demo repositories
+
+For demo, webinar and seminar projects shared with attendees.
+
+| Skill | Scope |
+|---|---|
+| [`demo-shareable-repo`](skills/demo-shareable-repo/SKILL.md) | Making a demo cloneable and runnable by attendees; README conventions; `.agents` submodule workflows |
+| [`demo-data-distribution`](skills/demo-data-distribution/SKILL.md) | Sizing, packaging, verifying and publishing demo data (Git vs LFS vs release asset) |
+| [`demo-vector-search`](skills/demo-vector-search/SKILL.md) | Vector-search demos: scale, real vector index, threshold calibration, indexed vs scan timing |
+| [`demo-presentation`](skills/demo-presentation/SKILL.md) | Live-demo UX, Japanese audience, UI vs data language |
 
 ### Technote-localisation repositories only
 
@@ -213,6 +235,6 @@ its new home (`instructions.<file>.status`: `skill`, `instruction` or
 | `startup` | `4dstartup` (generic pattern); HDI splash specifics stay as `.github/instructions/hdi.startup.instructions.md` |
 | `4d-docs`, `4d-form-layout` skills | `4dform` (doc index, layout, `form_layout_calc.py`); search fallback in `4dlang` |
 | `apply-glossary`, `review-figures`, `localise-demo-data`, `release-technote`, `localise-4d-project` skills | `technote-*` skills (generic 4D parts of `localise-4d-project` → `4dlocalise` and the other 4D skills) |
-| `readme.structure`, `readme.branches`, `technote-translation` | Stay in their repositories under `.github/instructions/` |
+| `readme.structure`, `readme.branches`, `technote-translation` | Stay in their repositories under `.github/instructions/`; generic demo-README conventions are in `demo-shareable-repo` |
 | `copilot-instructions.md` | The repository's root `AGENTS.md` |
 | `readme.usage.guidance`, `readme.hdi` | Deleted |

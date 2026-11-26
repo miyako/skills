@@ -18,6 +18,7 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 | Exact text comparison | Compare `Character code` of each character; test a literal `@` with `Character code(At sign)`. |
 | No implicit number-to-text conversion | `"count: "+$count` fails (*These operators cannot be used together*, or a compile error on the analyzer): wrap every number, `"count: "+String($count)`. The same applies to `Real`, `Integer` and object/collection `.length` values. |
 | `~=` is not a regex or "matches" operator | Use `Match regex("^/"; $path)`; `$path~=^/` raises *These operators cannot be used together* [50]. 4D has no bare regex comparison operator. |
+| Ternary in an inferred declaration | `var $label:=$ok ? "Ready" : String($n)+" left"` was inferred as Variant (`check-syntax` 550.11). When the branches are expressions rather than literals, declare the type: `var $label : Text:=...`. |
 
 Reference: https://developer.4d.com/docs/Concepts/operators,
 https://developer.4d.com/docs/Concepts/string

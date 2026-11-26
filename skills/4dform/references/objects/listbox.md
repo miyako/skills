@@ -83,6 +83,22 @@ With `"rightToLeft"`, column widths were observed to drift after repeated
 window resizes. If that mode is required, subscribe the form to `onResize`
 and restore the intended widths there with `LISTBOX SET COLUMN WIDTH`.
 
+### Exception: fitted list box in a fixed-size window
+
+The demo results list in a fixed-size window must never show a
+horizontal scroll bar. It showed one whenever the column widths summed to
+more than the list box width, which happened after localisation or a
+scroll-bar width change. The deliberate, documented exception:
+
+| Property | Value |
+|---|---|
+| column `width`s | sum = list box width − vertical scroll bar (≈ 15 px) |
+| `resizingMode` | `"rightToLeft"` |
+| `scrollbarHorizontal` | `"hidden"` |
+| long-text column `truncateMode` | `"withEllipsis"` (the full text is shown elsewhere, e.g. a detail pane) |
+
+Record the reason in the PR. Keep the defaults for every other list box.
+
 ## Other Properties Often Written Wrong
 
 | Property | Rule |
