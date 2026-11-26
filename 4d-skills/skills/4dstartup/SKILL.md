@@ -122,8 +122,7 @@ object passed to `DIALOG` **takes precedence over the form's `formClass`**
 (see `skills/4dform/references/form-concepts.md`, "Precedence Rules"). The
 start method's `{}` therefore replaces the class instance: `Form.init()` in
 `On Load` then fails with an error dialog quoting the form method. When the
-form declares a `formClass`, call `DIALOG("Main"; *)`-style without data --
-`DIALOG("Main")` -- or pass a real instance (`cs.MainForm.new()`), never the
+form declares a `formClass`, call `DIALOG("Main")` without data, or pass a real instance (`cs.MainForm.new()`), never the
 `{}` marker. Observed on 21 R5 with a form-class form opened from this start
 method.
 
