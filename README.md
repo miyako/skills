@@ -245,3 +245,14 @@ its new home (`instructions.<file>.status`: `skill`, `instruction` or
 | `copilot-instructions.md` | The repository's root `AGENTS.md` |
 | `readme.usage.guidance`, `readme.hdi` | Deleted |
 | `4d-project-instructions`, `tool4d-cli`, `plugin-dev` | Not migrated yet; left in their repositories |
+
+## Checks
+
+Every pull request and push that touches the skillset runs the **Skills
+integrity** workflow: `.github/scripts/validate_skills.py` (front matter,
+links, paths, `MIGRATION.json`) and `.github/scripts/check_skill_integrity.py`
+(section references and anchors, duplicate headings, the skill tables here
+and in `AGENTS.md`, the canonical `.gitignore`, form-example keys against
+`formsSchema.json`, and no project-specific names in skills). Run both
+locally before pushing. When a review generalises a note taken from one
+project, add that project's name to `DENYLIST` in the integrity script.
