@@ -56,6 +56,17 @@ baseline only: confirm current choices with the owner.
    (status line, disabled actions until ready), not in alerts. Use the
    `4dstartup` pattern (worker, reuse an open window, menu bar, `DIALOG(*)`,
    localised window title).
+
+   An inherited HDI-template splash still has value as the **version
+   gate**: it shows the required version and turns its button into
+   "Close" when `Application version` is too old. Keep the form for that
+   case only -- open the demo directly when the version is new enough,
+   and show the splash when it is not. Then delete the splash code the
+   demo does not use (for example a ViewPro/WritePro licence block this
+   demo never triggers), and make the demo form's `On Close Box` return
+   to design mode unconditionally: the `CANCEL` that kept the window open
+   belonged to the splash-first chaining, and with straight entry it
+   would leave attendees unable to close the demo.
 6. **First-launch downloads** (models, data) show size and progress, go
    to a stable per-user cache (e.g. `~/.GGUF/<repo>`), and are reused on
    later launches.
@@ -72,7 +83,10 @@ baseline only: confirm current choices with the owner.
    `menus.json`/`folders.json`, and vendored `.agents/skills` copies.
    Also sweep: default names (`Barre #1`, `Button`), typos in object names
    (`bPrrint`), headers and comments copied from another demo, duplicate
-   sample names, and latent bugs a live demo will hit (cancel paths that
+   sample names, placeholder modal `ALERT`s wired to buttons whose real
+   purpose is visual (an icon inside an input needs visible in-form
+   feedback, not a dialog with hardcoded English), and latent bugs a live
+   demo will hit (cancel paths that
    dereference null). List each fix: attendees read the code.
    Shareability greps (expect no hits; provisioned `tools/` ignored):
 

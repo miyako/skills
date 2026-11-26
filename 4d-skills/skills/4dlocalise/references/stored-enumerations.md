@@ -26,3 +26,24 @@ per language (`nameEN` / `nameJA`).
 - [ ] `choiceList` / static `values` on status inputs removed (they would show and write labels)
 - [ ] Search by label works in each language
 - [ ] Rebuild drop-down `values` after a language switch (SKILL.md, "Switching Language at Runtime")
+
+## Variant: a numeric key whose label lives only in the data
+
+When the stored key is a number and the shipped data already carries a
+label (an HDI `INFO` table with `PageNumber` and `TabTitle`), keep the
+column as the **fallback** and prefer the XLIFF lookup, so the data file
+stays language-free:
+
+```4d
+$id:="HDI2_Tab"+String($page)
+$title:=Localized string($id)
+If ($title="")
+	$title:=$storedTabTitle  // the ID is not in the XLIFF files
+End if
+```
+
+`Localized string` returns `""` for a missing ID (verified on 21 R5
+build 100189), not the ID itself, so the empty-string test is the
+fallback trigger. The shipped data then needs no rebuild when a language
+is added: the `.lproj` files carry every label, and the stored labels
+only matter for IDs that were never translated.

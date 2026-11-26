@@ -1338,8 +1338,13 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   for pretty-printing.
 * `LOG EVENT(Into system standard outputs; $message)` prints to stdout,
   the simplest way to get short results out of a headless run.
-* Omit `--dataless` only when a test must read or write records, and run
+ * Omit `--dataless` only when a test must read or write records, and run
   it on a copy of the data file.
+* A run that opens the data file can rewrite it even when the method only
+  reads: the engine builds indexes on first use (`IndexManager ... built
+  ...` in the log) and the bytes of a committed `Data.4DD` change. In a
+  repo where `Data/` is committed on purpose, `git checkout` the data
+  files before committing, or the verification run ships binary churn.
 * Runtime error line numbers count from the start of the **method or
   function** (the `Function` line is line 1), not from the start of the
   class file.
