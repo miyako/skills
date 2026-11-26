@@ -113,7 +113,7 @@ Every form must have:
 | `windowSizingX/Y` | `"fixed"` or `"variable"` |
 | `windowMinWidth/Height` | Minimum window dimensions |
 | `windowMaxWidth/Height` | Maximum window dimensions (32767 = effectively unlimited) |
-| `rightMargin` / `bottomMargin` | Define form size relative to rightmost/bottommost object |
+| `rightMargin` / `bottomMargin` | Define form size relative to rightmost/bottommost object. The margin is part of the window: a full-bleed background rectangle does not cover it, so a fixed 1180x860 page with margins of 20 leaves an unpainted strip (observed at the bottom of a capture). Use `0` when a background rectangle spans the form. |
 | `width` / `height` | Explicit form size (alternative to margins) |
 | `destination` | `"detailScreen"`, `"listScreen"`, `"detailPrinter"`, `"listPrinter"` |
 | `geometryStamp` | Incremented by the form editor on each save |
