@@ -179,9 +179,14 @@ Each of these is a real failure if omitted:
 The form method is not an ordinary project method: **it receives no
 parameters.** Data reaches it as `Form`, which `DIALOG` sets from its second
 argument (`DIALOG("Form"; $data; *)`). A `#DECLARE($params : Object)` at the
-top of a form method therefore compiles, and `$params` is always `Null`, so a
-`$params.seed`-style handoff does nothing and reports nothing. Read the key
-off `Form` instead:
+top of a form method is therefore wrong. Interpreted, and under `validate` /
+`check-syntax`, it is silent: `$params` is always `Null`, so a
+`$params.seed`-style handoff does nothing and reports nothing. `Compile
+project` rejects it (tool4d 21.2 LTS and 21 R4) with two errors on the
+`#DECLARE` line, `Too many parameters have been passed to this method.` and
+`The parameter $1 has not been explicitly declared.`, reported with
+`code.type` `formMethod`. Delete the `#DECLARE`; read the key off `Form`
+instead:
 
 ```4d
 : (FORM Event.code=On Load)
