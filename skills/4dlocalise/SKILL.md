@@ -87,11 +87,18 @@ SET DATABASE LOCALIZATION(($language="ja@") ? "ja" : "en")
 ## Files
 
 ```
-Resources/
-  en.lproj/  menuEN.xlf  messagesEN.xlf  {FormName}EN.xlf
-  ja.lproj/  menuJA.xlf  messagesJA.xlf  {FormName}JA.xlf
+<database folder>/
+  Project/
+  Resources/
+    en.lproj/  menuEN.xlf  messagesEN.xlf  {FormName}EN.xlf
+    ja.lproj/  menuJA.xlf  messagesJA.xlf  {FormName}JA.xlf
 ```
 
+* `Resources/` is the **database-folder-level** folder, a sibling of
+  `Project/` -- not `Project/Resources/`. XLIFF placed under
+  `Project/Resources/` is silently ignored: `Localized string` returns
+  `""`, `:xliff:` references render as raw tokens, and
+  `SET DATABASE LOCALIZATION` fails silently.
 * One `Resources/{lang}.lproj/` folder per language, **including the source
   language**. A language without its `.lproj` folder cannot be selected
   with `SET DATABASE LOCALIZATION` -- the call fails silently.
