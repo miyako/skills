@@ -72,7 +72,11 @@ data bindings, or verify every 4D stylesheet property. Report unsupported
 features and rendering errors rather than presenting an approximation as
 runtime evidence. Observed gaps: it shows built-in `:xliff:Common*` IDs
 unresolved, and does not draw 21 R5 coloured buttons
-(`borderStyle: "custom"`).
+(`borderStyle: "custom"`), so a start screen made of coloured tiles
+previews empty. It shows data sources (`Form.name`), not values: use it for
+layout, and `4dcli` runtime captures for content. Project `:xliff:` IDs do
+resolve with `--language ja` (from `Resources/ja.lproj`), a quick check for
+literals left in a form.
 
 ## Deterministic Output
 
@@ -123,7 +127,8 @@ window renders in **dark appearance**: the form background comes back
 only ~9 % opaque, so opening the raw PNG over white looks washed out and
 the header can read as mid-grey. Composite over the colour you want to
 present (`#1E1E1E` reproduces what the dark window actually looks like)
-before committing a capture to a README. There is no per-form switch:
+before committing a capture to a README
+(`skills/4dcli/scripts/flatten_screenshot.py`). There is no per-form switch:
 `FORM theme` is a getter, so the capture inherits the machine's colour
 scheme. Set `FORM SCREENSHOT` expectations, or compare two runs, on the
 same appearance setting -- and say which appearance a published image

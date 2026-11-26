@@ -5,8 +5,10 @@ description: >
   :xliff: references in menus.json and .4DForm JSON, Localized string in
   .4dm code (Get localized string before 20 R7), ID-based vs object-name
   <group> rules, 4D's built-in Common* IDs, placeholders for counts and word
-  order, line breaks, and entity attributes that follow the UI language
-  (computed get/orderBy). Use when adding a language or replacing
+  order, line breaks, entity attributes that follow the UI language
+  (computed get/orderBy), stored enumerations (key in data, label in UI),
+  an in-app language switch, and scripts that generate paired XLIFF files
+  and convert form literals. Use when adding a language or replacing
   hardcoded user-visible strings.
 ---
 
@@ -20,6 +22,10 @@ description: >
 * what to localise in menus, forms and methods -- `references/what-to-localise.md`
 * data that follows the UI language (`nameEN` / `nameJA` → computed
   `name`) -- `references/language-attributes.md`
+* enumerations stored as keys and shown as labels (status, category) --
+  `references/stored-enumerations.md`
+* generating paired XLIFF files and converting form literals with scripts
+  (`scripts/`)
 
 ### Not in this skill
 
@@ -37,7 +43,8 @@ description: >
 |---|---|
 | Finding the strings to replace in `menus.json`, forms, `.4dm` | `references/what-to-localise.md` |
 | Names/labels stored per language in the data | `references/language-attributes.md` |
-| XLIFF files, IDs, groups, Common IDs, line breaks, runtime language switch | this file |
+| Status/category values stored as text and shown in lists, drop-downs, searches | `references/stored-enumerations.md` |
+| XLIFF files, IDs, groups, Common IDs, line breaks, runtime language switch, generating XLIFF | this file |
 
 References:
 - `:xliff:` references in form object titles: https://developer.4d.com/docs/FormObjects/propertiesObject#title
@@ -81,8 +88,17 @@ Resources/
 * File names carry a capitalised language suffix: `{name}{LANG}.xlf`
   (`menuEN.xlf`, never `menu.xlf`). Use the `.xlf` extension (files named
   `.xliff` were observed to be ignored).
-* Group strings by purpose (menus, messages, one file per form) rather than
-  in one monolithic file.
+* Group strings by purpose rather than in one monolithic file. A split
+  that scales: `menu`, `messages` (alerts, window titles, formats),
+  `fields` (labels shared by project forms, table input/output forms and
+  print forms), `toolbar` (tooltips), plus one file per form only for
+  form-only strings. One file per form duplicated ~30 shared field labels
+  across 12 forms in one demo.
+* Per-language documents other than XLIFF (sample-data JSON, help files)
+  can sit in the same `.lproj` folders. `Localized document path("x.json")`
+  returns the platform path of the file for the current language (verified
+  en/ja); open it with `File($path; fk platform path)`. The command is not
+  `Get localized document path` (look commands up with `4dlang`).
 
 XLIFF 1.2, English in `<source>`, translation in `<target>` (identical to
 the source in the English file):
@@ -124,6 +140,30 @@ $text:=Replace string(Localized string("Welcome_SiteCount"); "{n}"; String($coun
 
 with `{n} sites` in English and `観光名所 {n} 件` in Japanese.
 
+**Several values.** Use numbered placeholders and one invisible helper so
+each language can reorder them (`{1} of {2} projects` /
+`プロジェクト {2} 件中 {1} 件`). It also works in list box footer and
+column expressions:
+
+```4d
+//%attributes = {"invisible":true}
+// LocalizedFormat
+#DECLARE($id : Text; $values : Collection) : Text
+var $text:=Localized string($id)
+If ($text="")
+	$text:=$id  // a missing entry stays visible instead of blank
+End if 
+var $i : Integer
+For ($i; 1; ($values=Null) ? 0 : $values.length)
+	$text:=Replace string($text; "{"+String($i)+"}"; String($values[$i-1]))
+End for 
+return $text
+```
+
+**Window titles set in code** (`Open form window`, `SET WINDOW TITLE`) are
+user-visible strings too. A "find my window by title" reuse loop
+(`4dstartup`) must compare with the *localised* title.
+
 **Where `:xliff:` resolves.** Only in static JSON properties. A value
 built in code -- a drop-down or tab `values` collection, a label set with
 `OBJECT SET TITLE` -- must use `Localized string`. An input `placeholder`
@@ -143,6 +183,25 @@ missing; fall back to a default rather than displaying an empty label.
 * Language codes use a dash (`"fr-ca"`), `.lproj` folders an underscore
   (`fr_ca.lproj`).
 * Built-in `Common*` IDs do **not** follow the switch (see "XLIFF Rules").
+  4D's own design-mode windows do (the Explorer title turned Japanese);
+  only `Common*` lookups from project code stay in the app language.
+* **In-app language switch (verified, 4D 21 R5).** A language drop-down
+  on the start screen calls an invisible `SwitchLanguage($code)`:
+
+  ```4d
+  If ($code=Get database localization(Current localization))
+  	return 
+  End if 
+  SET DATABASE LOCALIZATION($code)
+  CANCEL  // closes the current DIALOG(...; *)
+  CALL WORKER(1; "<start method>"; {})  // 4dstartup: reopens it
+  ```
+
+  The start method's `SET MENU BAR(1)` re-localises `:xliff:` menu titles.
+  Name the languages in their own language ("English", "日本語") and do
+  not localise those names. Child windows already open keep their
+  language until reopened. Stored data is not touched
+  (`references/stored-enumerations.md`).
 * Dates and numbers in list boxes and inputs follow the **OS** format
   ("Nov 25, 2026" on an English OS), not the database localisation. List
   it as a known gap rather than calling the UI fully localised.
@@ -199,6 +258,39 @@ IDs match `^[A-Za-z][A-Za-z0-9_]*$`: no dots or dashes (rename
 `model.ready` to `Model_Ready`). Lint every `id`/`resname` and every
 `:xliff:`/`Localized string` reference against it.
 
+## Generating XLIFF
+
+Keep one table of strings and generate the paired files instead of
+editing languages × files XML by hand. In one demo, 12 files stayed in
+sync through five rounds of string changes:
+
+```sh
+python3 skills/4dlocalise/scripts/xliff_pair.py strings.json Resources/
+```
+
+`strings.json` holds `"_languages": ["en", "ja"]` (first = source) and one
+key per file name, each a list of `[id, text per language...]` rows. The
+script fails on duplicate IDs, wrong column counts and redefined `Common*`
+IDs, writes ID-based units directly under `<body>`, and writes line breaks
+as `&#13;`. It overwrites the generated files: keep the table as the only
+source, outside `Project/` (commit it under a `tools/` subfolder the
+repository owns, or not at all).
+
+**Converting form literals.** 4D-written `.4DForm` files round-trip
+byte-exactly through `json.dumps(obj, indent="\t", ensure_ascii=False)`
+with **no trailing newline** (all 15 forms of one demo). Prove it per file
+before a scripted edit:
+
+```sh
+python3 skills/4dlocalise/scripts/localise_form_json.py mapping.json Project/Sources/Forms/*/form.4DForm --dry-run
+```
+
+`mapping.json` maps exact literals to IDs. The script skips any file that
+does not round-trip, replaces whole-value `text`, `windowTitle`,
+`tooltip`, `placeholder` and `labels` items with `:xliff:` IDs, and lists
+the literals it did not map. Table forms (`Project/Sources/TableForms/`)
+take the same path. Validate the result with `4dform`.
+
 ## Verification
 
 * Every ID referenced by `:xliff:` or `Localized string` exists in every
@@ -212,8 +304,16 @@ IDs match `^[A-Za-z][A-Za-z0-9_]*$`: no dots or dashes (rename
   to stay English in tool4d (`CommonMenuItemQuit` → "Quit" under `ja`)
   and in the 4D GUI after a runtime switch (above). On a Japanese OS they
   have not been checked.
-* Forms cannot be checked headlessly: ask the user to open them and check
-  label fit (translations can be much longer or shorter).
+* Cross-check IDs both ways: every referenced ID is defined, and every
+  defined ID is referenced (remove unused ones).
+* `fourdform <form> --language ja` (`4dform`) resolves `:xliff:` from
+  `Resources/ja.lproj`: a quick way to spot a literal left in a form.
+* **Width in every language, at runtime.** Japanese is wider at the same
+  font size; two truncations in one demo (a tile subtitle, list box names)
+  showed only in `ja` runtime captures. Capture each form in each language
+  (`4dcli`: `dialog_screenshot_with_data`, or the real-window capture in
+  `references/shared-desktop.md` for review images); static previews do not show
+  strings built in code. Without 4D, ask the user to check label fit.
 
 ## Checklist
 
@@ -225,4 +325,6 @@ IDs match `^[A-Za-z][A-Za-z0-9_]*$`: no dots or dashes (rename
 - [ ] No `Common*` ID redefined; none used where the language is switched at runtime
 - [ ] Multi-line strings keep CR line breaks (`&#13;`)
 - [ ] IDs match `^[A-Za-z][A-Za-z0-9_]*$`
+- [ ] Stored enumerations displayed through labels, never the stored key
+- [ ] Every form captured at runtime in every language; no truncation
 - [ ] `<source>` is English; `<target>` translated (identical in the English file)

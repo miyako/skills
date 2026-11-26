@@ -5,7 +5,7 @@ description: >
   application: the invocation protocol to follow, a task router, version
   requirements, binary paths, flags, startup-method patterns, automated
   testing, and the DIALOG + CALL FORM render cycle.
-  Ships installable source for six ready-made startup methods that
+  Ships installable source for eight ready-made startup methods that
   capture or execute a form. Use when executing 4D code headlessly,
   capturing form output, or wiring 4D into CI.
 ---
@@ -18,7 +18,7 @@ This skill covers **invoking** a 4D project from a shell -- the `tool4d`
 and `4D` binaries, their flags, and the startup-method patterns that make
 a headless run produce observable output.
 
-It also ships the source of six ready-made startup methods in `assets/`,
+It also ships the source of eight ready-made startup methods in `assets/`,
 which a project must contain before it can be driven this way. See
 "Bundled Startup Methods".
 
@@ -47,6 +47,8 @@ Engine".
 | Capture a form to PNG as the Form Editor draws it | "Contracts" -> `project_form_to_image` | `tool4d` |
 | Print a form to PDF with stylesheets applied | "Contracts" -> `print_form_to_file` | `tool4d` |
 | Screenshot a form as it looks *after* `On Load` | "The `dialog_screenshot` Chain", Pattern 4 | `4D`, **no** `--headless` |
+| Screenshot a `formClass` form, or a form in a given UI language | "Contracts" -> `dialog_screenshot_with_data` | `4D`, **no** `--headless` |
+| Capture a window of a running app (`MODIFY SELECTION`, app dialogs); blank-looking or transparent PNGs | Pattern 4, "Windows Owned by Another Process", "Transparent Window Background" | `4D` |
 | Dump the `Form` object as JSON at runtime | "Contracts" -> `run_project_form` | `4D`, **no** `--headless` |
 | Run an automated test suite | "Automated Testing" | `tool4d` |
 | Compile a project that declares a component dependency | "Compiling with a Component Dependency" | `tool4d` (with limits), `4D` IDE |
@@ -929,7 +931,7 @@ segments.
 
 A startup method is the only way to make a headless 4D run do anything:
 `--startup-method` names a project method, and everything else arrives
-through `--user-param`. The six methods below cover form capture and form
+through `--user-param`. The eight methods below cover form capture and form
 execution, and this skill ships their source in `assets/`:
 
 ```
@@ -940,13 +942,15 @@ skills/4dcli/assets/
   dialog_screenshot.4dm
   goto_page_then_screenshot.4dm
   screenshot_and_accept.4dm
+  dialog_screenshot_with_data.4dm
+  screenshot_in_form.4dm
 ```
 
 They are ordinary project methods, not 4D built-ins. A project that does
 not have them cannot be driven this way until they are installed -- see
 "Installing a Bundled Method" below.
 
-All six are generic: no table references, no project classes, no
+All eight are generic: no table references, no project classes, no
 hardcoded paths. They are written untokenized and are verified to compile
 both in a project with `"tokenizedText": false` and in one that omits the
 key (tokenized default).
@@ -964,9 +968,12 @@ is complete.
 | `dialog_screenshot` | `FormName:Page:/out.png` | `4D`, no `--headless` | Runtime screenshot after `On Load`. Entry point of a three-method chain |
 | `goto_page_then_screenshot` | -- | -- | Chain link. Never invoked as a startup method |
 | `screenshot_and_accept` | -- | -- | Chain link. Never invoked as a startup method |
+| `dialog_screenshot_with_data` | `FormName:Page:lang:factory:/out.png` | `4D`, no `--headless` | `dialog_screenshot` plus a UI language (`SET DATABASE LOCALIZATION(lang)` before `DIALOG`; `""` keeps the default) and form data from `EXECUTE METHOD(factory; $form; FormName)` (`""` = `{}`). Same chain |
+| `screenshot_in_form` | -- (`CALL FORM($window; "screenshot_in_form"; $path)`) | `4D` | Captures a window from inside the process that owns it (`MODIFY SELECTION`, `MODIFY RECORD`, an app dialog) |
 
 All four entry points that take a path share the same `--user-param`
-shape, `FormName:Page:Path`:
+shape, `FormName:Page:Path` (`dialog_screenshot_with_data` inserts
+`lang:factory` before the path; the rest applies to it too):
 
 * The value is split on `:`, and fewer than three segments is a silent
   no-op return. The **path may itself contain colons**: everything from
@@ -1056,6 +1063,23 @@ above). Keep both drivers when a project has plain-data forms *and* class
 forms: passing `Null` is not a fix, because it discards the page and
 output path that the chain reads back from `Form`.
 
+`dialog_screenshot_with_data` does this without a per-form driver: its
+`factory` segment names a project method that returns the form data, and
+its `lang` segment captures the form in a given UI language (one run per
+form and language for a localisation review, runtime-verified with `ja`
+and a `cs.ProjectListForm` instance):
+
+```4d
+#DECLARE($formName : Text) : Object
+If ($formName="ProjectList")
+	return cs.ProjectListForm.new()
+End if 
+return {}
+```
+
+Keep the factory out of the committed project if it exists only for
+captures.
+
 **Caveat -- binary.** `dialog_screenshot` requires `4D` **without**
 `--headless`, and does not work under `tool4d` at all. Headless mode
 auto-answers dialog boxes, so `DIALOG` is dismissed before the chained
@@ -1080,10 +1104,10 @@ Copy the asset to the project's methods directory, keeping the filename:
 <project>/Project/Sources/Methods/<name>.4dm
 ```
 
-Install only the methods the current task needs. Do not install all six
+Install only the methods the current task needs. Do not install all eight
 by reflex -- a screenshot task needs `project_form_to_image` alone.
-Installing `dialog_screenshot` means installing its two chain links as
-well.
+Installing `dialog_screenshot` or `dialog_screenshot_with_data` means
+installing the two chain links as well.
 
 Before writing each file, check whether it already exists:
 
@@ -1241,6 +1265,41 @@ CALL FORM(Current form window; Formula(screenshot_and_accept))
 
 The same rule applies anywhere state is changed and then observed: the
 change and the observation must be in separate execution cycles.
+
+#### Windows Owned by Another Process
+
+`FORM SCREENSHOT($window; $picture)` called from a different process on a
+window of a `MODIFY SELECTION` / `MODIFY RECORD` process hung until the
+timeout. Run the capture inside that window's own process instead:
+`CALL FORM($window; "screenshot_in_form"; $path)`, which calls
+`FORM SCREENSHOT($picture)` there (verified for output and input forms).
+`CALL FORM` from another process into an idle window is not guaranteed to
+run (`skills/4dlang/references/pitfalls.md`): wait for the PNG with a
+timeout, and if it never appears fall back to the real-window capture in
+`references/shared-desktop.md`.
+
+Find `$window` by title (`WINDOW LIST` + `Get window title`) or by process
+name, not with `Frontmost window`: with `--skip-onstartup`, or once
+`On Startup` has opened nothing, the Design Explorer is frontmost. To probe
+a running app (menus, table forms, a language switch), use a test startup
+method that calls the app's real entry points and then captures each
+window this way. Keep such harness methods out of the committed project.
+
+#### Transparent Window Background
+
+Why `FORM SCREENSHOT` PNGs come back (nearly) transparent in dark
+appearance is in `skills/4dform/references/screenshot-rendering.md`: a
+dialog can look blank or a title missing. Composite before reviewing
+(Pillow): `python3 skills/4dcli/scripts/flatten_screenshot.py dark out.png`
+(`dark` = `#1E1E1E`, `light` = `#F6F6F6`). Do not add a form `colorScheme`
+just for captures: it changes the deliverable.
+
+#### Scratch Copies
+
+When capturing from a copy of the project, copy `Project/`, `Resources/`
+(icons, `.lproj`, CSS images) **and** `Data/` if the forms show records.
+Without `Resources/`, every icon renders blank, which looks like a theme
+or dark-mode bug.
 
 #### Where to Place `QUIT 4D`
 

@@ -79,6 +79,15 @@ side effect of a default. With `"legacy"`, the column properties `width`,
 `minWidth`, `maxWidth` and `resizable` are respected; a sensible `minWidth`
 keeps content visible.
 
+**Check the `minWidth` sum, not only `width`.** Column `minWidth`s plus the
+vertical scroll bar (≈ 15 px) must fit the list box width; otherwise a
+permanent horizontal scroll bar appears and the last column is cut
+(observed: `minWidth`s summing to 510 px in a 520 px list box). After
+localisation, size name-like columns for the **widest language**
+(Japanese, German) and widen the form (`windowMinWidth`) rather than
+truncating. On a resizable form, a toolbar background rectangle above the
+list box needs `sizingX: "grow"` and objects to its right `sizingX: "move"`.
+
 With `"rightToLeft"`, column widths were observed to drift after repeated
 window resizes. If that mode is required, subscribe the form to `onResize`
 and restore the intended widths there with `LISTBOX SET COLUMN WIDTH`.

@@ -175,6 +175,30 @@ Demo_OpenLab(New object("filter"; "failures"))
 Reserve `CALL WORKER` for what it was designed for: one owner process per
 window, chosen **before** any dialog is displayed.
 
+## Hub Start Screen
+
+When the first window is a hub (tiles that open several demos) rather than
+a step in a sequence, it stays open and the children open beside it
+(verified, 4D 21 R5):
+
+| Child | How |
+|---|---|
+| Project form that is itself a browser (list) | a second non-blocking window **in the hub's process** (worker 1): the tile's object method looks for a window of `Current process` with the **localised** title and brings it to front, otherwise `Open form window` + `SET WINDOW TITLE` + `DIALOG(...; *)` |
+| Classic table forms (`MODIFY SELECTION`, `DISPLAY SELECTION`) | their own process: `New process(Current method name; 0; Current method name; {}; *)` (the `*` reuses a process with that name), then `FORM SET OUTPUT` / `FORM SET INPUT` + `MODIFY SELECTION` |
+| Dialogs that return a result (detail edit, delete confirmation) | modal: `Open form window(...; Movable form dialog box)` + `DIALOG` (blocking) + `CLOSE WINDOW`; read the result from the form object |
+| Actions (regenerate sample data) | run in place, then refresh |
+
+* Hub tiles do **not** use the Accept action: accepting closes the hub.
+* `New process` is right here. The anti-pattern below is the *start
+  method* re-entering itself through `New process`, not a table-form
+  process.
+* **Changing language from the hub**: `SET DATABASE LOCALIZATION`,
+  `CANCEL` the hub, then `CALL WORKER(1; "<start method>"; {})`; the start
+  method reopens it with the new title and menus. Details: `4dlocalise`
+  ("Switching Language at Runtime"). This does not hit the deadlock in
+  "A second window" below: `CANCEL` ends the hub's dialog first, so
+  worker 1 is free when the message arrives.
+
 ## Leaving Instead of Quitting
 
 When the application cannot continue (missing license, unsupported
@@ -191,7 +215,7 @@ Label the corresponding button "Close" (localised), not "Quit 4D".
 
 | Do not | Do |
 |---|---|
-| `$p:=New process(Current method name; 0; Current method name; 0)` | `CALL WORKER(1; Current method name; {})` |
+| `$p:=New process(Current method name; 0; Current method name; 0)` in the start method | `CALL WORKER(1; Current method name; {})` (table forms opened from a hub are the exception, see "Hub Start Screen") |
 | `DIALOG("Main"; $data)` + `CLOSE WINDOW` | `DIALOG("Main"; $data; *)` |
 | `Open form window("Main"; Pop up form window; ...)` | `Plain form window` |
 | `QUIT 4D` on failure | `INVOKE ACTION(ak return to design mode)` |
@@ -212,3 +236,5 @@ Label the corresponding button "Close" (localised), not "Quit 4D".
 - [ ] No `QUIT 4D`, no obsolete version checks, no dead code
 - [ ] Locals declared once; changed `.4dm` validated with `4dlsp`
 - [ ] User-visible strings localised (`4dlocalise`)
+- [ ] Window reuse by title compares with the localised title
+- [ ] Hub: modal children close their own window; non-modal children are reused, not duplicated
