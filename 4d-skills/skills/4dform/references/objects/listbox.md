@@ -89,8 +89,8 @@ and restore the intended widths there with `LISTBOX SET COLUMN WIDTH`.
 |---|---|
 | `rowHeight` | A **string** with a unit: `"32px"` or `"2em"` (schema pattern `^(\d+)(px\|em)?$`). A bare number fails schema validation. |
 | `currentItemSource` | Collection / entity-selection list boxes: expression receiving the clicked element, e.g. `"Form.selected"`. `currentItemPositionSource` receives its position, `selectedItemsSource` all selected elements. |
-| `events` for a detail pane | A list box whose selection drives other objects should list `onSelectionChange`, not only `onClick`: per the 4D event documentation a click event does not report keyboard (arrow-key) selection changes. Not exercised in the IDE here; the CalDAV-demo form had `onClick` only. `currentItemSource` is updated before the handler runs. |
 | `verticalAlign` | Default `automatic` aligns text to the **bottom** of the row; set `"middle"` explicitly (`skills/4dcss/SKILL.md`, "Limits"). |
+| `events` | React to a selection with `onSelectionChange` (`On Selection Change`), not `onClick`. A click on a row also fires `onSelectionChange`, and so do the arrow keys, Page Up/Down and Home/End; `onClick` alone leaves keyboard users with a stale detail pane. Dispatch it in its own `FORM Event.code=On Selection Change` branch, not inside `On Clicked`, so a click does not run the handler twice. |
 
 ```json
 "lbEmployees": {
