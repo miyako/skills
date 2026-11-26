@@ -124,9 +124,33 @@ $sel:=ds.Document.query("embedding > :1 order by embedding desc"; $cmp)
   (`skills/4daikit/SKILL.md`); for a local model and checking its quality
   see `skills/4dembeddings/SKILL.md`.
 * **Thresholds are model-specific**: some models compress cosine scores
-  into a narrow band. Calibrate on the real corpus
+  into a narrow band (ruri-v3: unrelated texts ≈ 0.8), so 0.01 changes hit
+  counts tenfold. Calibrate on the real corpus
   (`skills/demo-vector-search/SKILL.md`, "Calibrate the Threshold").
+* **Low thresholds also slow the indexed query.** The vector index earns its
+  keep only above the noise floor: on 300k x 768-dim vectors, threshold 0.85
+  answered in ≈ 320 ms while 0.55-0.75 (returning nearly every record) took
+  6-10 s — close to the ≈ 11 s full scan. Pick the demo threshold above the
+  model's unrelated-text floor, or the indexed-vs-scan comparison flattens.
+  Measured on 21 R5 with ruri-v3-310m.
 * **Sanity check:** ordering `ds.T.all().toCollection(...)` by
   `$v.cosineSimilarity($q)` should match `order by <attr> desc` exactly; a
   mismatch points at the index, a match with poor results at the
   embeddings.
+
+### Creating the vector index in code
+
+```4d
+ARRAY POINTER($fields; 1)
+$fields{1}:=->[Data]IndexedVector
+CREATE INDEX([Data]; $fields; Vector cosine index; "IndexedVector_cosine")
+```
+
+* The second parameter is an **array of pointers**, not a field reference:
+  `CREATE INDEX([Data]; [Data]IndexedVector; ...)` fails at runtime with
+  `[59] 4D was expecting a table/variable` (and the analyzer only complains
+  about a type cast). Pass the table reference first, then the pointer array.
+* The index type constant is `Vector cosine index` (also `Vector dot index`,
+  `Vector euclidean index`); the last argument is the index name.
+* Headless builds can create the index after the import in the same
+  `tool4d` run; on 300k x 768-dim vectors it takes on the order of a minute.

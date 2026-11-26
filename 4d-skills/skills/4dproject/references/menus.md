@@ -85,6 +85,22 @@ IDs for standard items (see the `4dlocalise` skill).
 4. Body has custom logic → keep `"method"`; optionally add `"action"` for
    enable/disable management.
 
+## UTF-8 BOM in 4D-written JSON
+
+`menus.json` written by 4D starts with a UTF-8 BOM (`EF BB BF`); the same was
+observed for `Project/Sources/tips.json`. A scripted rewrite that parses with
+a BOM-tolerant reader and writes back with plain `json.dumps` silently drops
+the BOM. 4D still reads the file, but the byte-level change is unreviewed and
+other tooling may not be BOM-tolerant. After rewriting a 4D-written JSON file,
+restore the BOM it had:
+
+```sh
+printf '\xef\xbb\xbf' | cat - menus.json > tmp && mv tmp menus.json
+```
+
+Check the original file's first bytes before the rewrite and reproduce them
+afterwards.
+
 ## 4D crashes at open inside `VMenu::Rebuild`
 
 A crash while a project opens, before any project code runs, can come from

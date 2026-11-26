@@ -517,9 +517,17 @@ Do not install tool4d globally and do not modify the user's PATH.
 | `--project` | Path to the `.4DProject` file |
 | `--startup-method` | 4D method to execute at startup |
 | `--dataless` | No data file. Use whenever the project may be open elsewhere, to avoid lock conflicts |
+| `--data` | Path to the data file (`.4DD`) to open |
+| `--create-data` | With `--data`: create the data file if it does not exist instead of failing. Easy to miss in `tool4d --help`; without it a fresh checkout fails with `[-10524] current data file not found` |
 | `--user-param` | A single text argument, read back with `Get database parameter(User param value; $text)` |
 | `--headless` | Full `4D` only: run without a GUI. Requires a license |
 | `--skip-onstartup` | Do not run the `On Startup` database method (which typically opens windows) before `--startup-method`. Without it, tool4d **and** full 4D run both: a start method called from `On Startup` and from the test method runs twice (`skills/4dstartup/SKILL.md`, "Why the check runs in the worker") |
+
+`--create-data` is the missing piece for headless builds that start from an
+empty checkout (the repository ships no `Data/`, or the build drops and
+recreates it): point `--data` at the wanted path and add `--create-data`, and
+tool4d creates the data file before running the startup method. Measured on
+21 R5 (100189).
 
 ## Path Arguments
 
@@ -741,6 +749,38 @@ order -- each step costs one run and narrows the cause.
 With a handler installed, execution also **continues past** the statement
 that raised, so read the log as interleaved rather than sequential: the
 first error is the real one, and the ones after it are its consequences.
+
+## Driving a GUI Form with Synthetic Clicks
+
+4D form objects are **not exposed to accessibility**: System Events sees only
+window chrome (close/zoom/minimize buttons), so UI-scripted clicks cannot
+reach form controls. Drive real interactions with synthetic CGEvents instead
+(a ~40-line Swift tool posting `CGEvent` mouse down/up with
+`mouseEventClickState = 1`, and keyboard events with
+`keyboardSetUnicodeString` for typing). Verified live on HDI_Embeddings:
+tab controls (built-in `gotoPage` action), buttons, text inputs and
+drop-down selections all react to synthetic clicks, and a full
+generate-then-search flow can be driven without a human.
+
+Procedure that worked:
+
+1. Get window bounds from `CGWindowListCopyWindowInfo` (window title is the
+   form title). Form content starts below the title bar (~28 pt).
+2. Locate click targets by OCR **bounding boxes**, not by guessing from form
+   JSON: capture the window (`screencapture -l <id>`), OCR with
+   `VNRecognizeTextRequest` per-observation bounding boxes (normalized 0-1,
+   origin bottom-left — convert to top-left), and click the label centre.
+   Tab labels merge into one OCR observation; derive per-tab centres from
+   the merged span's evenly spaced labels.
+3. **Activate the app first** (`tell application "4D" to activate`): the
+   host desktop's frontmost window silently swallows clicks aimed at the
+   covered 4D window — the cursor moves, the click lands on the wrong
+   window, and nothing appears to happen. Confirm the target is actually
+   visible with a full-screen capture before blaming coordinates.
+4. Verify each step by re-capturing and OCR-ing: page content after a tab
+   click, the results label after a button click, the re-ordered list box
+   after a search. OCR misreads glyphs (類似度 → 瀬似度); confirm wording in
+   the XLIFF/HTML source before reporting a text bug.
 
 ## Compile Check
 
@@ -1285,14 +1325,25 @@ the **same** cycle therefore capture the **old** page.
 
 Chain `CALL FORM` calls instead; each one is a separate cycle:
 
-1. **Cycle 1** (`goto_page_then_screenshot`): call `FORM GOTO PAGE($page)`,
-   then issue `CALL FORM(screenshot_and_accept)`. Rendering happens at the
-   end of this cycle.
+0. **Cycle 0** (`goto_page_then_screenshot`, first run): with
+   `DIALOG(...; *)` the queued `CALL FORM` can execute before the form's
+   first display cycle, and a `FORM GOTO PAGE` issued that early is
+   silently ignored -- the form then displays page 1 no matter what was
+   requested. The shipped asset requeues itself once (`Form.__hop`) so the
+   navigation lands on a displayed form.
+1. **Cycle 1** (`goto_page_then_screenshot`, second run): call
+   `FORM GOTO PAGE($page)`, then issue `CALL FORM(screenshot_and_accept)`.
+   Rendering happens at the end of this cycle.
 2. **Cycle 2** (`screenshot_and_accept`): call `FORM SCREENSHOT` -- now the
    page is correctly rendered. Then `ACCEPT` and `QUIT 4D`.
 
 ```4d
 // goto_page_then_screenshot -- called via CALL FORM
+If (Form.__hop=Null)  // first run may precede the first display cycle
+	Form.__hop:=1
+	CALL FORM(Current form window; Formula(goto_page_then_screenshot))
+	return 
+End if 
 FORM GOTO PAGE(Form.__page)
 // Chain: screenshot runs in the NEXT cycle, after this cycle renders
 CALL FORM(Current form window; Formula(screenshot_and_accept))
@@ -1300,6 +1351,11 @@ CALL FORM(Current form window; Formula(screenshot_and_accept))
 
 The same rule applies anywhere state is changed and then observed: the
 change and the observation must be in separate execution cycles.
+
+If the target form has a tab control with the `gotoPage` standard action,
+the action reverts programmatic `FORM GOTO PAGE` to the tab's own page --
+remove the action for the capture and restore it afterwards
+(`skills/4dform/references/objects/tab.md`, "Goto Page").
 
 #### Windows Owned by Another Process
 

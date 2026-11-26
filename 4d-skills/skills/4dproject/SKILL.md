@@ -137,15 +137,22 @@ other skills link here rather than restating them.
   A confidently remembered token is exactly as dangerous as a random one
   (a real incident: `Size of array:C267` was written from memory; `C267` is
   another command; one later session invented three more: `Not:C34`,
-  `Movable form dialog box:K39:8`, `On Data Change:K2:15`; a third session
-  invented `New collection:C1781`, which resolved to a Text-returning
+  `Movable form dialog box:K39:8`, `On Data Change:K2:15`; another session
+  invented `File:C477` -- resolved as "Get text resource" -- and
+  `Folder:C482` -- resolved as "SET DOCUMENT POSITION" -- and wrote event
+  constants in a nonexistent `K4` namespace, `On Clicked:K4:1`; a third
+  session invented `New collection:C1781`, which resolved to a Text-returning
   command, left the typed variable Null and surfaced much later as
   `Undefined collection` on the first `.push()` -- in a form's `On Load`,
-  so the demo window never finished loading).
-* **The LSP does not catch a wrong token number.** The `New collection:C1781`
-  file passed `4dlsp` validation with 0 diagnostics; only running the code
-  exposed it. A project-wide audit is cheap and catches every invention at
-  once: `git grep -hoE ":C[0-9]+|:K[0-9]+:[0-9]+" <bad-ref> -- Project/Sources`
+  so the demo window never finished loading; a fourth invented
+  `New collection:C1487`, also caught only when the interpreted runtime
+  aborted the form's On Load with a syntax error).
+* **The LSP does not catch a wrong token number.** Both `New collection`
+  inventions passed `4dlsp` / `tool4d-lsp-stdio validate` with 0
+  diagnostics; only running the code exposed them, so `validate` passing is
+  not evidence that every token is real. A project-wide audit is cheap and
+  catches every invention at once:
+  `git grep -hoE ":C[0-9]+|:K[0-9]+:[0-9]+" <bad-ref> -- Project/Sources`
   vs the same on the good ref, then `comm -13`. Any token that appears only
   on the bad side was invented -- remove it or verify it.
 * **A bare (paren-less) tokenized call can also fail to parse.** Under
