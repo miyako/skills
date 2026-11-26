@@ -57,8 +57,10 @@ once with the 21 R5 properties (`padding*`, `verticalAlign`,
 * Run `4dlsp` with the tool4d of the **new** release: an older one reports
   false errors on new syntax (`4dlsp`, "Pin the build").
 * Leave `compatibilityVersion` as the owner set it unless they ask: it
-  changes behaviour for attendees (`demo-shareable-repo`, step 2). Name the
-  exact 4D build the captures were made with in the README.
+  changes behaviour for attendees (`demo-shareable-repo`, step 2). If it is
+  below the gate of a property the new form uses (`4dproject`, "Feature
+  gates"), say so and ask; do not raise it as a side effect. Name the exact
+  4D build the captures were made with in the README.
 
 ## Geometry
 
@@ -74,8 +76,10 @@ Measure a capture; do not assume.
 The README's before/after images are the point of the repository:
 
 * **Runtime only.** Capture each form in each UI language with full 4D
-  (`4dcli`, `dialog_screenshot` chain, `SET DATABASE LOCALIZATION` before
-  opening the form), into `docs/images/<Form>_<lang>.png`. A static
+  (`4dcli`, `dialog_screenshot_with_data`, which sets the language and the
+  `formClass` data; or the real-window capture in
+  `references/shared-desktop.md` for README images), into
+  `docs/images/<Form>_<lang>.png`. A static
   preview (`fourdform`) does not draw `padding*` or `verticalAlign` and
   shows SVG icons as text: never use it as evidence for the feature.
 * Wrap every capture in `timeout` (e.g. 90 s) and kill stragglers by PID:

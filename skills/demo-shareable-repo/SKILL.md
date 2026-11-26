@@ -37,29 +37,30 @@ automatically, or one documented download from Releases.
 ## Workflow
 
 One branch per effort. Stop after the survey and after each effort for the
-owner's review. Earlier template instructions (e.g. HDI_Template) are a
-baseline only: confirm current choices with the owner.
+owner's review.
 
 1. **Survey** (`4dproject`) and record findings before changing anything.
    Record the audience, what the demo is *about* (polishing must not hide
    the subject, e.g. the Fluent UI forms), and whether attendees get data
-   or generate it (`demo-sample-data`). Older personal templates (an HDI
-   template repository) are a **baseline**: confirm each preference, and
-   record which ones were not adopted and why.
-2. **Version.** `compatibilityVersion` in the `.4DProject` matches the 4D
-   release named in the repository and README badge (a "21R5" repo had
-   21 R6 = 2160). Set it to the lowest release the demo supports; an
-   existing lower value is not a reason to raise it (`4dproject`).
-   Changing it is the owner's decision: it can change behaviour for
-   attendees. If it stays, the README names the exact 4D build the demo
-   was verified with.
+   or generate it (`demo-sample-data`). Older personal templates (e.g.
+   HDI_Template) are a **baseline**: confirm each preference with the
+   owner, and record which ones were not adopted and why
+   (`references/template-baseline.md`).
+2. **Version.** The README badge and Requirements name the release that
+   `compatibilityVersion` encodes. A value **newer** than the release the
+   repository is named for (a "21R5" repo carrying 2160 = 21 R6) is a
+   defect; an **older** one is the lowest supported release, not a defect
+   (`4dproject`, "Surveying an Inherited Project"). Either way, changing it
+   is the owner's decision: it can change behaviour for attendees. The
+   README also names the exact 4D build the demo was verified with.
 3. **No hidden configuration.** Anything git-ignored that the demo needs
    (`AIProviders.json`, API keys, local paths) breaks for attendees.
    Prefer local, keyless services (`4dembeddings`); otherwise document the
    exact file to create.
 4. **Components** through `dependencies.json` only, pinned to released
    versions; never commit `Components/` builds.
-5. **Opens into the demo.** `On Startup` opens the main form directly; no
+5. **Opens into the demo.** `On Startup` opens the main form directly, or
+   a launcher when the demo has several forms (`demo-launcher`); no
    splash, no menu hunt (HDI demos keep their branded splash as the
    start form: `demo-hdi`). Show progress and readiness **in the form**
    (status line, disabled actions until ready), not in alerts. Use the
@@ -112,7 +113,7 @@ baseline only: confirm current choices with the owner.
 
 ## Checklist
 
-- [ ] compatibilityVersion = target release = version stated in the README (or left unchanged by the owner's decision, with the verified build named)
+- [ ] compatibilityVersion not newer than the target release; README states that release and the verified build; any change decided by the owner
 - [ ] Runs from a fresh clone + documented release download only
 - [ ] Opens straight into the demo form; status shown in the form
 - [ ] UI in the OS language (en/ja) or an in-app switch; data-language decision recorded; README says which language the shipped data uses

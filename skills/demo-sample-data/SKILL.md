@@ -105,8 +105,9 @@ can show Japanese data, and attendees can regenerate data in their own language.
 
 * If attendees should open the project with data, commit `Data/data.4DD`
   (narrow the canonical `.gitignore` as described in `4dproject`), generated
-  in the **source language**, and point to the regenerate button in the
-  README. Data too large for the repository: `demo-data-distribution`.
+  in the data language decided with the owner (`demo-presentation`,
+  "Language Decisions"; by default the source language), and point to the
+  regenerate button in the README. Data too large for the repository: `demo-data-distribution`.
 * Regenerate it with the final generator before the handoff commit.
 
 ## Checklist
@@ -116,5 +117,5 @@ can show Japanese data, and attendees can regenerate data in their own language.
 - [ ] Separator per language; no hard-coded spaces between fragments
 - [ ] Enumerations written as keys
 - [ ] Names unique where the UI lists them
-- [ ] Shipped data regenerated with the final generator, in the source language
+- [ ] Shipped data regenerated with the final generator, in the decided data language
 - [ ] Runtime screenshot of the main list in each language (`4dcli`)

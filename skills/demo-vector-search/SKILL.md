@@ -61,10 +61,9 @@ scan ≈ 4 s when most rows match).
 
 ## Sanity Check
 
-When results look wrong, separate "index wrong" from "embeddings wrong":
-compute `cosineSimilarity` over `all().toCollection()` in code, sort, and
-compare with `order by IndexedVector desc`. Identical order = the index is
-fine; look at the model (`4dembeddings`).
+When results look wrong, separate "index wrong" from "embeddings wrong"
+with the brute-force comparison in `4dorda` (`references/queries.md`).
+Identical order = the index is fine; look at the model (`4dembeddings`).
 
 ## Present
 

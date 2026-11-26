@@ -17,12 +17,12 @@ string. Different from `language-attributes.md`, which keeps per-language
 
    ```4d
    var $rows:=ds.INFO.all().orderBy("PageNumber").toCollection("PageNumber,TabTitle,Description")
-   File("/tmp/info.json"; fk posix path).setText(JSON Stringify($rows; *))
+   File("/PACKAGE/info.json").setText(JSON Stringify($rows; *))
    QUIT 4D
    ```
 
-   Use `File(...; fk posix path)`: `TEXT TO DOCUMENT` with the same POSIX
-   path wrote nothing in a headless run (`4dcli`, "Writing Output Files").
+   Use a `File` object, not `TEXT TO DOCUMENT` with a POSIX path, which
+   wrote nothing in a headless run (`4dcli`, "Writing Output Files").
    Keep the original bytes: styled text uses CR line breaks and
    `<span style=...>` markup.
 3. **Generate XLIFF** from a script (`xliff_pair.py` and "Styled text" in
