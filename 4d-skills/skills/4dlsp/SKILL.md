@@ -58,6 +58,11 @@ searches for tool4d automatically in this order:
    - Windows: `%ProgramFiles%\4D\<version>\tool4d\`
    - Linux: `/opt/4d/`, `/opt/4D*/`, `/usr/local/bin/`
 
+Discovery takes the first hit in that order, not the newest build: with
+both a 4D Analyzer extension copy (21 R4) and a newer installed
+`/Applications/4D 21.2 LTS (100694)/tool4d.app` present, the extension copy
+was chosen. Pass `--tool` when the project needs a specific build.
+
 If tool4d is installed via the 4D Analyzer VS Code extension, no
 configuration is needed. Otherwise pass `--tool <path-to-tool4d>` (or set
 `TOOL4D_PATH`) explicitly -- e.g. on macOS a manually-installed 4D.app is
