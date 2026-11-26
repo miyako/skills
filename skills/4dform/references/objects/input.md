@@ -208,6 +208,8 @@ Typing `1999.1.1` into a `dateFormat: "systemLong"` input and validating it prod
 
 ## Picture-Type Input
 
+This is also the object to use for any picture held in `Form`, an object property or a runtime variable: `type: "picture"` ignores `dataSource` (see `picture.md`). Set `enterable: false` for a display-only preview.
+
 A picture-type input (`dataSourceTypeHint: "picture"`) is the only input variant that displays and accepts image data (pasted from the Clipboard or dragged in) rather than character data. Its context menu (unless disabled) adds **Import...** and **Save as...** commands, plus temporary, non-persistent overrides of the display format (Truncated non-centered / Scaled to fit / Scaled to fit centered proportional). Per `properties_Object.md#expression-type`, a picture variable used as a process variable has a stricter typing requirement than other expression types: it must already be declared (`var varName : Picture`) and initialized *before* the form loads (in the method that calls `DIALOG`, not the form's own `On Load`) for correct display in interpreted mode -- otherwise the picture variable will not render correctly.
 
 ## Supported Properties (per JSON Schema)
