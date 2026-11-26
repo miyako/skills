@@ -67,17 +67,8 @@ is genuinely needed by more than one skill, install it directly under
 `4d-language-classic` and `4d-language-oop` are natural-language lookup
 tools for the two 4D language subsets and are consumed together by the
 single `4dlang` skill (see `skills/4dlang/SKILL.md`), so they share one
-destination directory rather than each getting its own -- they are not
-each `4dlsp`-only the way `tool4d-lsp-stdio` is. (An earlier revision of
-this skillset provisioned `4d-language-classic` into `tools/4dlsp/`,
-alongside `tool4d-lsp-stdio`, back when `4dlsp` was the only skill doing
-language lookup. That mapping no longer matches the "named after the
-skill that depends on it" rule below now that `4dlang` owns lookup for
-both languages, hence the move.) More precisely: `tools/4dlsp/` named a
-*skill*, not a capability, so it became wrong the moment a second
-consumer appeared. Two skills both reaching into a directory named after
-one of them is how such a path rots, and the rename fixes the naming
-defect rather than merely relocating a file.
+destination directory. An earlier revision installed `4d-language-classic`
+into `tools/4dlsp/`; reprovision it into `tools/4dlang/`.
 
 ```
 <working-repo>/
@@ -99,18 +90,14 @@ defect rather than merely relocating a file.
     ...
 ```
 
-When a new tool is added to this skillset in the future, default to
-giving it its own `tools/<skill>/` subdirectory unless it is genuinely
-shared by more than one consumer, in which case it stays directly under
-`tools/`.
-
 Do not install them globally and do not modify the user's PATH.
 
 Before downloading, confirm the working repo's `.gitignore` ignores the
 destination directory of each tool you provision (`/tools/4dcatalog/`,
-`/tools/4dform/`, `/tools/4dlsp/`, `/tools/4dlang/`, and `/tools/4dcli/`
-for tool4d), and append any missing entry without disturbing existing
-ones. The canonical list is in the ".gitignore" section of
+`/tools/4dform/`, `/tools/4dlsp/`, `/tools/4dlang/`), and append any
+missing entry without disturbing existing ones. (`/tools/4dcli/` holds
+tool4d, which this skill does not provision; `4dcli` installs it there --
+see "Obtaining tool4d" in `skills/4dcli/SKILL.md`.) The canonical list is in the ".gitignore" section of
 `skills/4dproject/SKILL.md`. Do **not** ignore the whole `tools/` folder:
 some repositories commit their own scripts there. A provisioned binary
 that slips under GitHub's 100 MB per-file limit is accepted and
@@ -339,7 +326,8 @@ Remove-Item $tmp
 ```
 
 As above, set `$destDir = "tools/4dform"` for `boon`,
-`$destDir = "tools/4dlsp"` for `tool4d-lsp-stdio`, or
+`$destDir = "tools/4dlsp"` for `tool4d-lsp-stdio`,
+`$destDir = "tools/4dcatalog"` for `4d-catalog-diagram`, or
 `$destDir = "tools/4dlang"` for `4d-language-classic`/`4d-language-oop`.
 
 ## Provisioning Multiple Tools
@@ -358,7 +346,8 @@ Common sets:
   `tools/4dform/fourdform.exe` on Windows 10+, arm64 or x64) for standalone
   PNG previews; Windows also needs the Evergreen WebView2 Runtime
 - 4dlsp needs: `tool4d-lsp-stdio` (`tools/4dlsp/tool4d-lsp-stdio`,
-  macOS and Windows only -- no Linux build)
+  all platforms), plus a tool4d it can drive (obtained via `4dcli`, not
+  this skill)
 - 4dlang needs: `4d-language-classic` (`tools/4dlang/4d-language-classic`,
   all platforms) and `4d-language-oop`
   (`tools/4dlang/4d-language-oop`, all platforms)
@@ -371,7 +360,7 @@ After installation, verify each tool can run:
 tools/4dcatalog/xmllint --version
 tools/4dcatalog/4d-catalog-diagram --version
 tools/4dform/boon --help
-# macOS only
+# fourdform: macOS here; Windows below
 tools/4dform/fourdform --version
 tools/4dform/fourdform --help
 tools/4dlsp/tool4d-lsp-stdio --version
@@ -451,6 +440,7 @@ The dependency relationships are:
 
 ```
 4dcatalog --> xmllint             --> 4dtools provisions tools/4dcatalog/xmllint
+4dcatalog --> 4d-catalog-diagram  --> 4dtools provisions tools/4dcatalog/4d-catalog-diagram
 4dform    --> boon                --> 4dtools provisions tools/4dform/boon
 4dform    --> fourdform           --> 4dtools provisions tools/4dform/fourdform (macOS) or fourdform.exe + companions (Windows)
 4dlsp     --> tool4d-lsp-stdio    --> 4dtools provisions tools/4dlsp/tool4d-lsp-stdio

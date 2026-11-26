@@ -95,13 +95,12 @@ DIALOG("Main"; $params; *)
 | `SET MENU BAR(1)` | Keeps the menu bar installed after the window closes. |
 | `Plain form window` | A normal movable window. Never `Pop up form window` for a window with controls: pop-ups close when the user clicks outside and are not movable. It is also the default when the type is omitted. |
 | `SET WINDOW TITLE` | The title is what the reuse loop matches on. |
-| `DIALOG(form; data; *)` | `*` makes the dialog non-blocking in the worker; the window lives as long as the form. No `CLOSE WINDOW`. It needs the window opened just before by `Open form window` (without one: error -9909). The data object becomes `Form` inside the form. The form method is never called with a parameter, so do not copy the start method's `#DECLARE($params : Object)` into it (`$params` stays `Null`, silently) -- see "The form method" in `skills/4dform/SKILL.md`. |
+| `DIALOG(form; data; *)` | `*` makes the dialog non-blocking in the worker; the window lives as long as the form. No `CLOSE WINDOW`. It needs the window opened just before by `Open form window` (without one: error -9909). The data object becomes `Form` inside the form. The form method is never called with a parameter, so do not copy the start method's `#DECLARE($params : Object)` into it (`$params` stays `Null`, silently) -- see `skills/4dform/SKILL.md` (form methods receive no parameters). |
 
 Rules:
 
-* **Declare each local once, above the `If`.** `var` is method-scoped, not
-  block-scoped: declaring `$window` in both branches triggers "Redefinition
-  of variable".
+* **Declare each local once, above the `If`.** Declaring `$window` inside
+  the `If` and again after it triggers "Redefinition of variable".
 * `GET WINDOW RECT` / `SET WINDOW RECT` take `left; top; right; bottom`
   in that order -- name the variables accordingly.
 * Arrays are still declared with `ARRAY LONGINT`, not `var`.
@@ -129,8 +128,8 @@ object passed to `DIALOG` **takes precedence over the form's `formClass`**
 (see `skills/4dform/references/form-concepts.md`, "Precedence Rules"). The
 start method's `{}` therefore replaces the class instance: `Form.init()` in
 `On Load` then fails with an error dialog quoting the form method. When the
-form declares a `formClass`, call `DIALOG("Main")` without data, or pass a real instance (`cs.MainForm.new()`), never the
-`{}` marker. Observed on 21 R5 with a form-class form opened from this start
+form declares a `formClass`, call `DIALOG("Main"; *)` without data, or pass
+a real instance (`cs.MainForm.new()`), never the `{}` marker. Observed on 21 R5 with a form-class form opened from this start
 method.
 
 ## Moving to the Next Form
@@ -182,7 +181,7 @@ works: it is a nested `DIALOG` and the outer dialog resumes when it is
 closed. Use a parameter, not `Storage`, to hand data to it; inside the second form that data is `Form` (e.g. `Form.filter`), not a method parameter.
 
 ```4d
-Demo_OpenLab(New object("filter"; "failures"))
+OpenSecondWindow({filter: "failures"})
 ```
 
 Reserve `CALL WORKER` for what it was designed for: one owner process per
@@ -209,7 +208,7 @@ a step in a sequence, it stays open and the children open beside it
   `CANCEL` the hub, then `CALL WORKER(1; "<start method>"; {})`; the start
   method reopens it with the new title and menus. Details: `4dlocalise`
   ("Switching Language at Runtime"). This does not hit the deadlock in
-  "A second window" below: `CANCEL` ends the hub's dialog first, so
+  "A second window" above: `CANCEL` ends the hub's dialog first, so
   worker 1 is free when the message arrives.
 
 ## Leaving Instead of Quitting
