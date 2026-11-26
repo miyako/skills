@@ -26,10 +26,12 @@ headings.
 
 ## English
 ### What it demonstrates
+### Key commands           (optional)
 ### Requirements
 ### Getting started
 ### Running the demo
 ### How it works
+### Points of interest     (optional)
 ### Rebuilding the data
 
 ## References
@@ -42,11 +44,13 @@ headings.
 | Badges | version = the 4D release that `compatibilityVersion` targets; platforms actually supported |
 | Intro | one paragraph: the feature, the data, what runs locally |
 | What it demonstrates | 4-8 bullets, each backed by code in the repo, naming the 4D API |
+| Key commands | optional: table of the 4D commands/classes the demo is built on, each linked to the 4D docs (HDI baseline) |
 | Requirements | 4D version, first-launch network, **disk space** (data + models) |
 | Getting started | clone, download `Data.zip` from Releases and where to put it, open, what happens on first launch |
 | Running the demo | the live script: which sample to pick, what to toggle, what to compare; quote real numbers (hit counts, ms) |
 | How it works | real method/form names and the flow; the one piece of code worth reading |
-| Rebuilding the data | generator script + headless command line |
+| Points of interest | optional: the few files worth reading, one line each |
+| Rebuilding the data | generator script + headless command line, or the in-app "regenerate" button (`demo-sample-data`); how to switch language |
 | References | 4D docs, components, model card **and** the exact GGUF repository used |
 | Modernisation notes | only for converted legacy demos: one row per branch **that exists on the remote**, linking the guiding skill |
 

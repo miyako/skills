@@ -15,7 +15,8 @@ description: >
 > **Scope:** technote-localisation repositories only -- the repository root
 > has a `technote.json`. The `make` targets, `src/`, `figures/`, `demo/` and
 > `tools/` paths below belong to that template. In any other repository,
-> do not use this skill.
+> do not use this skill; for generated per-language demo data, see
+> `demo-sample-data`.
 
 ## 1. Understand the current data
 - Find the data files: JSON or CSV in the demo's `Resources/`, the `data/` folder, or files loaded by the startup

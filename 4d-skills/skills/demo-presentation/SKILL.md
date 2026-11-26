@@ -29,6 +29,8 @@ downloads and the model load are already done.
 ## Language Decisions (ask early)
 
 1. **UI language**: follows the OS; ship en + ja XLIFF (`4dlocalise`).
+   Add an in-app switch when the presenter shows both languages or
+   attendees run a 4D in another language; it cannot rely on `Common*`.
 2. **Data language**: the corpus and the sample inputs may stay Japanese
    in both UI languages. Say so in the English README ("Japanese
    questions work best").
@@ -52,7 +54,8 @@ Record what was not seen in a real Japanese environment:
   (`4dlocalise`). Their behaviour on a Japanese OS is unverified.
 * Dates in list boxes follow the OS format, not the UI language.
 * GUI rendering on a Japanese OS (fonts, IME in inputs).
-* Windows / Fluent UI if only a Mac was available.
+* Windows / Fluent UI if only a Mac was available. When Fluent UI is the
+  subject of the demo, get Windows captures before the talk.
 
 ## Checklist
 
