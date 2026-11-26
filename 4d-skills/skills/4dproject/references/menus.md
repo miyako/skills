@@ -85,6 +85,28 @@ IDs for standard items (see the `4dlocalise` skill).
 4. Body has custom logic → keep `"method"`; optionally add `"action"` for
    enable/disable management.
 
+## 4D crashes at open inside `VMenu::Rebuild`
+
+A crash while a project opens, before any project code runs, can come from
+AppKit rather than from `menus.json`. The signature in the `.ips` report:
+
+* `lastExceptionBacktrace`: `-[NSMenu removeAllItems]` <-
+  `xbox::XMacTextMenu::Clear()` <- `xbox::VMenuItem::~VMenuItem()`
+  (AppKit's own `_menuDidRemoveAllItems` handler throws an Objective-C
+  exception).
+* crashed thread: `std::terminate` <- `xbox::VMenuItem::~VMenuItem()` <-
+  `xbox::VMenu::Rebuild()` <- `V4DApplication::ResetMenuBar` <-
+  `V4DDatabase_application_impl::_Init_Menus` <- `_Open`. The exception
+  escapes a C++ destructor, so the process terminates.
+
+Seen three times on macOS 27.2.1 (4D 21.2 build 100691 twice, 21 R5 build
+100175 once). A scratch copy of the same project, with a `menus.json` that
+was the default bar plus a method menu, opened on 100691 without crashing, so
+the trigger is not established. Do not rewrite `menus.json` or drop the
+method items to chase it. Grep the report for `_menuDidRemoveAllItems`, record
+the macOS and 4D build, and reduce `menus.json` in a scratch copy only if the
+crash reproduces there.
+
 ## Checklist
 
 - [ ] Every `"method"` item in `menus.json` audited

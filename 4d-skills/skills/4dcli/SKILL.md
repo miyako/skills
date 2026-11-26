@@ -1321,6 +1321,22 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   which names neither the constant nor the line. When a
   `--startup-method` run dies that way, bisect the constants
   (`fk home folder`, `fk system folder`, ...) before suspecting paths.
+* A fix on disk does not reach a 4D instance that is already running. The
+  user's open 4D keeps the class and method code it loaded when the project
+  opened. If the same dialog returns with the **same line number** after a
+  fix that shifted the lines above it, the instance is stale, not the fix
+  wrong: ask the user to quit 4D completely and reopen the project. Before
+  saying so, prove the fix in a fresh instance of the user's exact build, old
+  code against fixed code: a scratch copy of the project for each, and a
+  startup method that wraps the call in `ON ERR CALL` (handler
+  `#DECLARE($mode : Variant; $code : Variant; $text : Variant)` writing
+  `Last errors` to a file), writes a small result object to a file, then
+  `QUIT 4D`. Launch with `open -n -a "<exact build>/4D.app" --args
+  --project=<copy> --dataless --skip-onstartup --startup-method=<name>`, poll
+  for the file, and stop only the PID you started (`references/shared-desktop.md`).
+  Observed in 4D 21.2 LTS (100691): the old class raised error 15 and drew 0
+  `<rect>`, the fixed class ran clean and drew 3; the user's restart then
+  cleared the dialog.
 
 ## Smoke Scripts: Locating tool4d and Keeping Assertions Honest
 
