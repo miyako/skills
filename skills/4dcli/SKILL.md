@@ -674,17 +674,19 @@ order -- each step costs one run and narrows the cause.
    ```
 
    ```4d
-   // dump_on_err.4dm -- $1=2 is the runtime error, $1=3 the window
-   If ($1=2)
-   	LOG EVENT(Into system standard outputs; \
-   		"failed in "+Error method+" ("+String(Error code)+"): "+Error formula)
-   End if
+   // dump_on_err.4dm -- called with no parameters
+   var $first : Object
+   ON ERR CALL(""; ek local)   // a failure in here must not re-enter
+   $first:=Last errors[0]
+   LOG EVENT(Into system standard outputs; \
+   	"failed in "+Error method+":"+String(Error line)+" ("+String($first.errCode)+"): "+$first.message)
    ```
 
    `ek local` keeps the handler inside the method; restore it with
    `Method called on error(ek local)` if the method is long. There is no
-   `Error description` variable: `Error formula` is the source text of the
-   failing call, which is what the message above shows.
+   `Error description` or `Error code` variable (both read as empty):
+   the message is `Last errors[0].message`, and `Error formula` is the source
+   text of the failing call.
 
 2. **Install the handler before anything can fail**, because the locations
    that fail silently are the ones a handler installed late never reaches:
