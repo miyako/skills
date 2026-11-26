@@ -246,6 +246,12 @@ Treat this as a workaround, not a preference.
 | `tool4d` (21 R3) | `/Applications/4D 21 R3/tool4d.app/Contents/MacOS/tool4d` |
 | `4D` (21 R3) | `/Applications/4D 21 R3/4D.app/Contents/MacOS/4D` |
 | `4D` (21.1 LTS) | `/Applications/4D 21.1/4D.app/Contents/MacOS/4D` |
+| `tool4d` (21.2 LTS, build-suffixed folder) | `/Applications/4D 21.2 LTS (100694)/tool4d.app/Contents/MacOS/tool4d` |
+
+Installer folders often carry the build number in their name, and several
+builds of one train can sit side by side (observed: `4D 21.2 LTS (100691)`
+and `(100694)`). Do not assume a version-only folder name: list
+`/Applications/4D*/` and pick the build the task needs.
 
 ## Obtaining tool4d
 
