@@ -120,10 +120,19 @@ and to reading properties inside a preemptive process.
 * `Value type` returns an Integer, not a type name. `"type="+Value type($x)`
   raises a runtime type error instead of concatenating; wrap it:
   `"type="+String(Value type($x))`.
-* `Error description` does not exist. An error handler that reads it fails to
-  compile and takes the whole run down (no report, no log). The real
-  properties are `Error code`, `Error method`, `Error line`, `Error formula`
-  and `Last errors`.
+* `Error description` and `Error code` do not exist. Both compile (read as
+  undeclared variables, so `validate` and `check-syntax` stay silent) and
+  evaluate to empty, which turns a handler built on them into a no-op. Read
+  the failure from `Last errors` (a collection; `[0].errCode`,
+  `[0].message`) plus `Error method`, `Error line` and `Error formula`.
+  Measured on tool4d 21R4 with `ON ERR CALL(...; ek local)`.
+* An error handler is called with **no parameters** (`Count parameters`
+  is 0 there, measured on tool4d 21R4). `#DECLARE($type : Integer)` plus
+  `If ($type=2)` is never true, so the handler never reports. If the
+  handler itself raises an error it is called again until 4D reports
+  `-9996 Stack is full`: start it with `ON ERR CALL(""; ek local)`. Do not
+  write `Form` from a handler that may run outside a window: there `Form`
+  is an empty object (`Value type(Form)=Is object`), not Null.
 * A process-scoped `var X : Type` declared inside a method persists between
   `CALL WORKER` messages **and starts as Null** in a fresh process, not as 0
   or empty. `If ($counter<$limit)` is then never true, and the loop silently
@@ -223,6 +232,14 @@ Reference: https://developer.4d.com/docs/API/HTTPRequestClass
 * A started process is not a ready service. For a server, poll its own
   documented readiness endpoint with a deadline; an open port or the first
   `onData` proves only that something launched.
+* The child process does not die with the 4D process that started it:
+  `QUIT 4D` from a startup method or harness leaves it running, re-parented
+  to PID 1, and it keeps whatever it holds (a PTY, a port, a lock). Call
+  `.terminate()` before quitting; do not rely on the form's `On Unload`.
+* In `onTerminate`, compare `$worker.pid` with the pid of the worker the
+  object currently holds before resetting state. After `stop()` and a
+  restart, a late `onTerminate` of the *old* process would otherwise mark
+  the new one stopped.
 * `commandLine` is not run through a shell: shell builtins and pipes do
   not work (use `cmd /c` or `/bin/sh -c` explicitly), and quoting must be
   tested with paths containing spaces and quotes.
