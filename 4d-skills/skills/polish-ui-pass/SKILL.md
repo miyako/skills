@@ -42,9 +42,8 @@ change behaviour in the same commit.
   `prefers-color-scheme` blocks.
 * List box class: `alternateFill: automaticAlternate`, transparent grid
   lines, `verticalAlign: middle`.
-* Button height: 27 px for `liquid-glass`, 23 px for `mac-classic`; one
-  later demo used 32 px `fluent-ui` / 23 px `win-classic` (unverified on
-  Windows).
+* Button heights per theme: `4dcss` (`references/form-themes.md`); the
+  Windows values there are unverified.
 * Semantic colour classes in `styleSheets.css` with dark overrides
   (`brand`, `muted`, `panel`); platform sheets hold only fonts and
   heights. A brand blue `#289FE8` became `#5CB8FF` in dark mode for
@@ -58,9 +57,8 @@ change behaviour in the same commit.
 
 Each Japanese glyph is about one font size wide, whatever the word. Budget
 `width ≥ characters × fontSize + horizontal padding` for a Japanese label,
-button or tab, and check the English width separately. Do not set
-`fontFamily` for Japanese text: the system font (Hiragino Sans on macOS)
-is the fallback and matches the platform. Measure in a runtime capture.
+button or tab, and check the English width separately. Leave `fontFamily`
+unset (`4dcss`, "Fonts"). Measure in a runtime capture.
 
 ## Exemption: colours that are the feature
 
@@ -87,7 +85,7 @@ form JSON and code, and move only the surrounding chrome to CSS.
 
 - [ ] Behaviour unchanged; polish in separate commits
 - [ ] No hard-coded colours or button heights left in form JSON, except colours the demo is about
-- [ ] Every custom colour has a dark-mode value
+- [ ] Every custom colour has a dark-mode value, unless the forms pin `colorScheme`
 - [ ] No fake buttons, no Latin-only fonts on localised text
-- [ ] Every form captured in each UI language, light and dark
+- [ ] Every form captured in each UI language, light and dark (or the pinned scheme only)
 - [ ] Unverified platforms listed in the PR

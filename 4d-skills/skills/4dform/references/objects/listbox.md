@@ -106,7 +106,9 @@ scroll-bar width change. The deliberate, documented exception:
 | `scrollbarHorizontal` | `"hidden"` |
 | long-text column `truncateMode` | `"withEllipsis"` (the full text is shown elsewhere, e.g. a detail pane) |
 
-Record the reason in the PR. Keep the defaults for every other list box.
+The window is fixed, so the `rightToLeft` width drift on resize (above)
+does not arise. Record the reason in the PR. Keep the defaults for every
+other list box.
 
 ## Other Properties Often Written Wrong
 
