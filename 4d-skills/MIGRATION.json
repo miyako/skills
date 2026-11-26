@@ -165,7 +165,7 @@
     },
     "readme.structure.instructions.md": {
       "status": "instruction",
-      "skill": null,
+      "skill": "demo-shareable-repo",
       "url": null,
       "path": ".github/instructions/readme.structure.instructions.md",
       "templates": [
@@ -178,7 +178,7 @@
     },
     "readme.branches.instructions.md": {
       "status": "instruction",
-      "skill": null,
+      "skill": "demo-shareable-repo",
       "url": null,
       "path": ".github/instructions/readme.branches.instructions.md",
       "templates": [

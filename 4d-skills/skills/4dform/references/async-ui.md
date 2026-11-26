@@ -73,3 +73,26 @@ CALL FORM($window; Formula(Form.onImportDone($1)); $result)
   (`skills/4dlang/references/pitfalls.md`).
 * Standard objects and collections passed to another process are copied;
   pass plain values (window number, path text) rather than references.
+
+## Status Lines Fed by Callbacks
+
+A status text that callbacks update (model download, loading, ready,
+"N hits in M ms") works best as a **non-enterable input** bound to a
+`Form` property, not a static text:
+
+```json
+"statusLine": {
+	"type": "input", "dataSource": "Form.status",
+	"enterable": false, "focusable": false,
+	"borderStyle": "none", "fill": "transparent",
+	"left": 20, "top": 560, "width": 600, "height": 17
+}
+```
+
+* The callback sets `Form.status` through `CALL FORM`; no
+  `OBJECT SET TITLE` and no object name to keep in sync.
+* Disable the action that depends on the state (`OBJECT SET ENABLED`)
+  until the status is "ready", and re-enable it in the completion callback.
+* Store the window number for callbacks that run in other processes
+  (`Storage.<feature>.window`), and check it is non-zero before
+  `CALL FORM`.

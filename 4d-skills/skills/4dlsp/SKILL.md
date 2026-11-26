@@ -152,6 +152,12 @@ per file via `textDocument/diagnostic`. It accepts the same
 `--shutdown-timeout`/`--skip-onstartup`/`--dataless`/`--log-level`/
 `--json` flags as `validate`.
 
+`--dataless` and `--skip-onstartup` take a value; a bare flag is rejected:
+
+```sh
+tools/4dlsp/tool4d-lsp-stdio check-syntax --workspace Project/ --dataless true --skip-onstartup true
+```
+
 `[FILES]...` is **optional** for `check-syntax` (unlike `validate`,
 where it's required):
 
@@ -257,6 +263,12 @@ the analyzer reports every use of one of its classes:
 ```
 Sources/Classes/MyScene.4dm:21:19: error: The class cs.SomeComponent.SomeClass is unknown.
 ```
+
+Compiled release builds staged by hand in `Components/` (unzipped
+`.4dbase` from a component's GitHub release, e.g. `cs.AIKit`, `cs.llama`,
+`cs.event`) were also reported unknown although tool4d resolved them at
+runtime. Run `install-components` first; if they stay unknown, apply the
+rule below.
 
 Treat this as an analyzer limitation, not a code error: the constructors are
 resolved when the host actually loads the component. Do not silence it by

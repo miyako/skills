@@ -57,6 +57,7 @@ This skill owns project-level knowledge that every other 4D skill relies on:
 | Component release/version/tag, Dependency manager compatibility, GitHub preview/prerelease | `references/component-releases.md` |
 | Declaring a dependency, local `Components/` staging, compiled vs source component, headless `tool4d` without a Dependency manager | `references/dependencies.md` |
 | GitHub Actions release run fails with no jobs, "configuration ... not supported", evidence/artifact path mismatches, PR creation refused, force-push rejected, Windows-runner utility missing | `references/hosted-ci-failures.md` |
+| Taking over a fork or someone else's demo | this file, "Surveying an Inherited Project" |
 | Version, tokens, `.gitignore` | this file |
 
 ## File Format
@@ -200,6 +201,33 @@ Rules:
   contains API keys or other secrets, whichever way the folder is handled.
 * A repository may add project-specific entries (build output, `.venv/`,
   ...); this list is the 4D baseline, not a ceiling.
+
+## Surveying an Inherited Project
+
+Before changing a project someone else wrote (a fork, a webinar demo),
+check these; each was found in a real demo:
+
+* **`compatibilityVersion` vs target.** A repository named for 21 R5
+  carried `2160` (21 R6). Make it match the release the project targets
+  and the 4D the audience has, and say so in the README.
+* **Hidden configuration.** Code that depends on git-ignored files
+  (`Settings/AIProviders.json` model aliases, keys) does not run for
+  anyone who clones the repository. Replace it with a self-contained setup
+  or document the file.
+* **Scratch and destructive methods.** Look for methods that null or drop
+  data, end with `TRACE`, or carry default names (`Methode2`). Remove them
+  from shipped projects.
+* **Vendored agent files.** A copied `.agents/skills/` folder conflicts
+  with the canonical skillset; replace it with the `miyako/skills` `dist`
+  submodule ("Using the skills in a 4D repository" in the skillset README).
+* **Foreign-locale defaults.** A French 4D install leaves `"Barre #1"` in
+  `menus.json` and French folder names in `folders.json`. Harmless, but
+  rename the menu bar in shared projects.
+* **Indexes and trash.** Check `catalog.4DCatalog` indexes against what the
+  code assumes (`4dcatalog`, "Vector index"); an index on a trashed table
+  does nothing for the live one.
+* **Large tracked files.** GitHub warns at 50 MB and rejects at 100 MB;
+  check generated data files before committing.
 
 ## Modification
 
