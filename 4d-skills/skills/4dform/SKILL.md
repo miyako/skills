@@ -271,10 +271,20 @@ A form task is complete when all three hold. Report each explicitly.
 3. **Every `ObjectMethods/*.4dm` is referenced by a `"method"` property**
    in the form JSON, and the object also declares the `"events"` it needs.
 
-Step 3 is a manual check: there is no validator for it. An orphaned object
-method produces no error at all -- it is simply never called, so the form
-appears to load correctly and does nothing. Enumerate the files under
-`ObjectMethods/` and find each one in the form JSON.
+Run step 3 with the bundled script (stdlib only, exit code `1` on a problem):
+
+```sh
+python3 skills/4dform/scripts/check_object_methods.py Project/Sources/Forms
+```
+
+It reports every `ObjectMethods/*.4dm` that no object references, every
+`"method"` that points to a missing file, and every object method whose
+object has no `"events"`. An orphaned object method produces no error at
+all -- it is simply never called, so the form appears to load correctly and
+does nothing. Neither schema validation, `validate`/`check-syntax`, nor a
+headless self-test that calls the form's class directly can see it (seen on
+a demo whose 16 buttons all did nothing while every headless check passed).
+Only a GUI click or this check does.
 
 **A fourth check is cheap and worth adding when 4D is available:** have a
 `tool4d` startup method call `FORM LOAD(<form name>; *)` inside `Try`. It
