@@ -47,6 +47,8 @@ Colour schemes are not supported with the `win-classic` form theme.
 - Replace hardcoded `#000000` or `#FFFFFF` (or near-equivalents like `#212121`) in `stroke` for text and shape primitives with `"automatic"` **only if** you want them to adapt. If specific branded colours are needed, use CSS instead.
 - Form objects that **omit** `fill` or `stroke` entirely use a 4D-internal default, which is **not** the same as `"automatic"`. To ensure they adapt to dark mode, explicitly set `"fill": "automatic"` and/or `"stroke": "automatic"`. This is especially important for full-form background rectangles that rely on the implicit default fill.
 
+- Do not force a fixed light page (a full-form `#FFFFFF` rectangle) under native controls. Buttons and list box headers follow the system appearance, so in dark mode a forced white page left them light-on-light and unreadable (observed in a `FORM SCREENSHOT` capture on 21.2 LTS, build 100695). Give the page, text and list box classes light and dark values in `@media (prefers-color-scheme: ...)` instead, and capture the form in the appearance you claim to support.
+
 ### ⚠️ Scope: `"automatic"` is a form-object CSS property value, not an HTML/rich-text colour
 
 `"automatic"` and `"automaticAlternate"` are only meaningful as the value of a `fill`/`stroke`/`alternateFill` **property on a form object or CSS class** (in `form.4DForm`, `styleSheets*.css`). They are **not** valid inside inline HTML/rich-text markup such as `<span style="color:#000000">` embedded in JSON sample data, area/4D Write Pro content, or any other string that is rendered by an HTML/rich-text parser rather than 4D's own form-CSS engine.
