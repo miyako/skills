@@ -278,6 +278,19 @@ Schema validation does not catch the missing pair. Check it:
 jq -r '.pages[]?.objects // {} | to_entries[] | select(.value.type == "button" and (.value.borderFillColor // .value.borderColor) and (.value.style != "custom" or .value.borderStyle != "custom")) | .key' form.4DForm
 ```
 
+Symptoms of the missing `borderStyle`, measured with `FORM SCREENSHOT` on
+4D 21 R5 / macOS 27 (Liquid Glass), white `stroke`:
+
+| Button JSON | Painted |
+|---|---|
+| `style: custom` + colours only | nothing: no fill or border, the white title is invisible |
+| same + `defaultButton: true` | a grey system pill, white title unreadable |
+| `style` **and** `borderStyle` `custom` (± `defaultButton`) | the colours, as authored |
+
+`fill` does not colour a custom button either. A grey pill or an invisible
+button under Liquid Glass is this missing pair, not a theme limitation:
+check the pair before redesigning the button.
+
 At runtime: `OBJECT SET BORDER STYLE(*; "btn@"; Border Custom)`,
 `OBJECT SET RGB COLORS(*; "btn@"; $font; $fill; ""; $border)` (the fourth
 parameter is new in 21 R5) and `OBJECT SET CORNER RADIUS`.

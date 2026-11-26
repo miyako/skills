@@ -134,13 +134,15 @@ For demo, webinar and seminar projects shared with attendees.
 
 | Task | Skill | File path |
 |----------|-------|-----------|
-| Make a demo cloneable and runnable by attendees; README conventions; `.agents` submodule workflows | demo-shareable-repo | `skills/demo-shareable-repo/SKILL.md` |
+| Make a demo cloneable and runnable by attendees; README conventions; optional `.agents` submodule workflows; earlier template baseline | demo-shareable-repo | `skills/demo-shareable-repo/SKILL.md` |
 | Size, package, verify and publish demo data (Git vs LFS vs release asset) | demo-data-distribution | `skills/demo-data-distribution/SKILL.md` |
 | Generate per-language demo sample data that looks plausible to the audience; regenerate button | demo-sample-data | `skills/demo-sample-data/SKILL.md` |
 | Vector-search demo: scale, real vector index, threshold calibration, indexed vs scan timing | demo-vector-search | `skills/demo-vector-search/SKILL.md` |
 | Live presentation UX, Japanese audience, UI vs data language | demo-presentation | `skills/demo-presentation/SKILL.md` |
 | Localise a demo end to end: decisions to ask, strings and data text to XLIFF, language switch, served pages, Japanese review | demo-localise | `skills/demo-localise/SKILL.md` |
 | HDI ("How do I") repositories: splash form, version/license check, splash XLIFF keys, HDI README intro and branch table | demo-hdi | `skills/demo-hdi/SKILL.md` |
+| Launcher form: one button per demo form, side-by-side windows, in-app language switch with reopen, single launcher | demo-launcher | `skills/demo-launcher/SKILL.md` |
+| Old vs new technique (R-x vs R-y forms): one class two forms, version gates, before/after runtime captures | demo-feature-comparison | `skills/demo-feature-comparison/SKILL.md` |
 
 ### Technote-localisation repositories only
 

@@ -181,6 +181,19 @@ accepts `":xliff:ID"` only as its whole value, never mixed with static
 text. `Localized string` returns `""` and sets `OK` to 0 when the ID is
 missing; fall back to a default rather than displaying an empty label.
 
+**Lists built in code.** Keep a short list in **one** trans-unit, `|`
+separated, so the translator sees the whole list and its order in
+context, and split it in `On Load`:
+
+```4d
+Form.tripType:={values: Split string(Localized string("NewTrip_TripTypes"); "|"); index: 0}
+```
+
+Remove `choiceList` / `saveAs` from the object in the form JSON when the
+data source becomes such an object. The same works for parallel lists
+(a decimals list `2|2|0` next to a currency list). Values that are
+**stored** need a key, not the label (`references/stored-enumerations.md`).
+
 ## Switching Language at Runtime
 
 * `SET DATABASE LOCALIZATION("ja")` affects only what is displayed **after**
@@ -243,7 +256,12 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
   `:xliff:CommonCancel` stayed "Cancel" after switching to `ja` (OS en-GB,
   4D app UI Japanese). Use them only when the UI language always equals
   the app's language. When the language is chosen at runtime, define
-  project IDs instead (`Button_Cancel`: Cancel / キャンセル).
+  project IDs instead (`Button_Cancel`: Cancel / キャンセル), and copy the
+  wording from 4D's own files
+  (`4D.app/Contents/Resources/<lang>.lproj/Common<LANG>.xlf`) so it matches
+  the system. A project ID that happens to share a `Common*` name looks
+  translated in English and fails silently in Japanese: check the `ja`
+  capture.
 * **Line breaks.** 4D strings use CR (`\r`, `Char(13)`) as the line break.
   Inspect the original bytes (e.g. `xxd`) of a multi-line string before
   moving it to XLIFF. A literal CR inside XML is normalised to LF by the
@@ -344,8 +362,16 @@ take the same path. Validate the result with `4dform`.
   to stay English in tool4d (`CommonMenuItemQuit` → "Quit" under `ja`)
   and in the 4D GUI after a runtime switch (above). On a Japanese OS they
   have not been checked.
+* `xliff_check.py` cannot see the `Common*` problem above: treat every
+  `:xliff:Common*` as a warning when the project has more than one
+  `.lproj`.
 * `fourdform <form> --language ja` (`4dform`) resolves `:xliff:` from
   `Resources/ja.lproj`: a quick way to spot a literal left in a form.
+* **Per-language runtime captures** are possible without anyone at the
+  screen: full 4D with `--startup-method` + `--user-param`, a method that
+  calls `SET DATABASE LOCALIZATION(<lang>)` before opening the form, and
+  the `dialog_screenshot` chain (`4dcli`, "Startup-Method Patterns").
+  tool4d alone cannot show forms. This is the recommended visual check.
 * **Width in every language, at runtime.** Japanese is wider at the same
   font size; two truncations in one demo (a tile subtitle, list box names)
   showed only in `ja` runtime captures. Capture each form in each language

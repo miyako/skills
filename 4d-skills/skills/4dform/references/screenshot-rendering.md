@@ -74,7 +74,10 @@ runtime evidence. Observed gaps: it shows built-in `:xliff:Common*` IDs
 unresolved, and does not draw 21 R5 coloured buttons
 (`borderStyle: "custom"`), so a start screen made of coloured tiles
 previews empty. It shows data sources (`Form.name`), not values: use it for
-layout, and `4dcli` runtime captures for content. Project `:xliff:` IDs do
+layout, and `4dcli` runtime captures for content. It also draws SVG
+toolbar icons as literal text and does not render the 21 R5 `padding*` /
+`verticalAlign` text placement on inputs and text, so never use it as
+evidence for a demo or polish change about those properties. Project `:xliff:` IDs do
 resolve with `--language ja` (from `Resources/ja.lproj`), a quick check for
 literals left in a form.
 

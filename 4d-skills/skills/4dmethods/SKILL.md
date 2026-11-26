@@ -33,6 +33,7 @@ visibility at the same time, and vice versa.
 | `menus.json` method vs standard action | `4dproject` (`references/menus.md`) |
 | Checking `.4dm` syntax | `4dlsp` |
 | Class functions (`Function`, `shared`/`singleton` keywords) | `4dlang` |
+| Arithmetic: 4D has **no operator precedence** (`2+3*4` = 20); parenthesise every mixed expression | `4dlang` (`references/pitfalls.md`) |
 
 References:
 - Project method properties: https://developer.4d.com/docs/Project/project-method-properties

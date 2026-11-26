@@ -11,6 +11,14 @@ description: >
 
 # Live Demo and Japanese Audience
 
+## Related
+
+| Topic | Skill |
+|---|---|
+| Start screen, language toggle, side-by-side windows | `demo-launcher` |
+| Old vs new technique, before/after captures | `demo-feature-comparison` |
+| Shareable repository, README | `demo-shareable-repo` |
+
 ## Live UX
 
 | Pattern | Why |
@@ -50,6 +58,16 @@ also:
   "How do I..." title); ask.
 * Re-check label fit in both languages (`polish-ui-pass`).
 
+## Appearance
+
+Pin `"colorScheme"` (`"light"` or `"dark"`) on **every** demo form,
+launchers and dialogs included, as a deliberate choice for the projector.
+A launcher left on automatic, on a machine in dark mode, got white text
+from its dark CSS rules on a light background in captures. When the
+scheme is pinned, remove the other scheme's media query for those forms;
+if the demo must support both, capture both. This is a decision about the
+deliverable, not a capture trick (`4dcli`).
+
 ## Verification Gaps
 
 Record what was not seen in a real Japanese environment:
@@ -68,4 +86,5 @@ Record what was not seen in a real Japanese environment:
 - [ ] Comparison values visible side by side
 - [ ] Demo warmed up (downloads and model load done) before the session
 - [ ] UI / data / presentation language decisions recorded
+- [ ] `colorScheme` pinned on every demo form (or both schemes captured)
 - [ ] Verification gaps listed in the PR

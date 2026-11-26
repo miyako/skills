@@ -2,8 +2,8 @@
 name: demo-shareable-repo
 description: >
   Turn a 4D demo project into a repository that attendees can clone and run
-  on their own machine: survey for hidden config and leftovers, the .agents
-  skills submodule with its weekly update workflow, opening straight into
+  on their own machine: survey for hidden config and leftovers, the optional
+  .agents skills submodule with its weekly update workflow, opening straight into
   the demo form, first-launch downloads with in-form status, UI language
   following the OS, version pinning, and the bilingual developer-facing
   README. Use when preparing, polishing or publishing a demo, webinar or
@@ -28,6 +28,9 @@ automatically, or one documented download from Releases.
 | Live presentation, Japanese audience | `demo-presentation` |
 | Localising the demo end to end | `demo-localise` |
 | HDI ("How do I") repositories: splash form, README intro and branch table | `demo-hdi` |
+| Launcher form, language toggle, side-by-side windows | `demo-launcher` |
+| Old vs new technique in one demo, before/after captures | `demo-feature-comparison` |
+| Earlier template preferences and what changed | `references/template-baseline.md` |
 | Localisation | `4dlocalise` |
 | Visual polish | `polish-ui-pass` |
 
@@ -47,6 +50,9 @@ baseline only: confirm current choices with the owner.
    release named in the repository and README badge (a "21R5" repo had
    21 R6 = 2160). Set it to the lowest release the demo supports; an
    existing lower value is not a reason to raise it (`4dproject`).
+   Changing it is the owner's decision: it can change behaviour for
+   attendees. If it stays, the README names the exact 4D build the demo
+   was verified with.
 3. **No hidden configuration.** Anything git-ignored that the demo needs
    (`AIProviders.json`, API keys, local paths) breaks for attendees.
    Prefer local, keyless services (`4dembeddings`); otherwise document the
@@ -87,11 +93,16 @@ baseline only: confirm current choices with the owner.
 
    Screenshot harness methods (`4dcli`) are not in the committed project.
    `Data/` is committed only on purpose (`4dproject`, `demo-sample-data`).
-9. **Skills submodule.** `.agents` is the `dist` branch of miyako/skills
-   (see the repository README); never edit inside `.agents`. Add
-   `.github/workflows/update-skills.yml` (weekly bump of the submodule
-   pointer) and `copilot-setup-steps.yml` with `submodules: true`.
-   Templates: `references/workflows.md`.
+   `.gitignore` starts from the canonical list (`4dproject`); add the root
+   `Settings/` folder when it holds machine-specific user settings.
+9. **Skills submodule (owner's choice).** Ask whether attendees should get
+   the agent skills. A submodule is not included in GitHub's "Download
+   ZIP", and attendees who only run the demo do not need it; one owner
+   dropped it for a webinar. When kept: `.agents` is the `dist` branch of
+   miyako/skills (see the repository README); never edit inside
+   `.agents`. Add `.github/workflows/update-skills.yml` (weekly bump of
+   the submodule pointer) and `copilot-setup-steps.yml` with
+   `submodules: true`. Templates: `references/workflows.md`.
 10. **README** (`references/readme.md`).
 11. **Verify like an attendee:** fresh clone in a temp folder, data from
     the release, open, first launch, search, quit; no orphan processes
@@ -101,7 +112,7 @@ baseline only: confirm current choices with the owner.
 
 ## Checklist
 
-- [ ] compatibilityVersion = target release = README badge
+- [ ] compatibilityVersion = target release = version stated in the README (or left unchanged by the owner's decision, with the verified build named)
 - [ ] Runs from a fresh clone + documented release download only
 - [ ] Opens straight into the demo form; status shown in the form
 - [ ] UI in the OS language (en/ja) or an in-app switch; data-language decision recorded; README says which language the shipped data uses
@@ -110,6 +121,6 @@ baseline only: confirm current choices with the owner.
 - [ ] The subject of the demo (e.g. the Fluent theme) is shown, or the gap is stated in the README
 - [ ] Cancelling an add or edit leaves no record
 - [ ] No scratch methods, locale leftovers or vendored skills
-- [ ] `.agents` submodule on `dist` + update workflow
+- [ ] Skills submodule decision recorded; if kept, `.agents` on `dist` + update workflow
 - [ ] README follows `references/readme.md`
 - [ ] No orphan helper processes after quit

@@ -3,7 +3,7 @@ name: 4dstartup
 description: >
   The canonical non-blocking pattern for opening a 4D application's first
   window (startup / splash / main form) and chaining to the next form:
-  #DECLARE($params : Object), window reuse with WINDOW LIST + CALL FORM,
+  #DECLARE($params : Object), window reuse with WINDOW LIST inside worker 1,
   CALL WORKER(1; Current method name; {}), SET MENU BAR, Open form window
   with Plain form window, DIALOG(...; *), Accept-action buttons that open the
   next form, and INVOKE ACTION(ak return to design mode) instead of QUIT 4D.
@@ -59,42 +59,39 @@ parameter by itself through `CALL WORKER`:
 #DECLARE($params : Object)
 
 var $title : Text
-var $window : Integer
-$title:=Localized string("Main_WindowTitle")  // or a fixed title
+var $window; $left; $top; $right; $bottom : Integer
 
 If (Count parameters=0)
-	
-	// already open? bring it to the front instead of opening a duplicate
-	ARRAY LONGINT($windows; 0)
-	WINDOW LIST($windows)
-	var $i : Integer
-	For ($i; 1; Size of array($windows))
-		$window:=$windows{$i}
-		If (Window process($window)=1) && (Get window title($window)=$title)
-			var $left; $top; $right; $bottom : Integer
-			GET WINDOW RECT($left; $top; $right; $bottom; $window)
-			CALL FORM($window; Formula(SET WINDOW RECT($left; $top; $right; $bottom; $window)))
-			return 
-		End if 
-	End for 
-	
+	// always hop to the application process first; see "Why the check runs in the worker"
 	CALL WORKER(1; Current method name; {})
-	
-Else 
-	
-	SET MENU BAR(1)
-	$window:=Open form window("Main"; Plain form window; Horizontally centered; Vertically centered)
-	SET WINDOW TITLE($title; $window)
-	DIALOG("Main"; $params; *)
-	
+	return 
 End if 
+
+// worker 1 from here on: already open? bring it to the front instead of opening a duplicate
+$title:=Localized string("Main_WindowTitle")  // or a fixed title
+ARRAY LONGINT($windows; 0)
+WINDOW LIST($windows)
+var $i : Integer
+For ($i; 1; Size of array($windows))
+	$window:=$windows{$i}
+	If (Window process($window)=Current process) && (Get window title($window)=$title)
+		GET WINDOW RECT($left; $top; $right; $bottom; $window)
+		SET WINDOW RECT($left; $top; $right; $bottom; $window)
+		return 
+	End if 
+End for 
+
+SET MENU BAR(1)
+$window:=Open form window("Main"; Plain form window; Horizontally centered; Vertically centered)
+SET WINDOW TITLE($title; $window)
+DIALOG("Main"; $params; *)
 ```
 
 | Element | Why |
 |---|---|
 | `#DECLARE($params : Object)` | One optional parameter: `Count parameters` tells the two roles apart. The method stays **visible** (it is an entry point -- see the `4dmethods` skill). |
-| `WINDOW LIST` + title match + `CALL FORM` / `SET WINDOW RECT` | Re-running the method (menu, second startup) brings the existing window to the front instead of opening a duplicate. `CALL FORM` runs the call in the window's own process. |
-| `CALL WORKER(1; Current method name; {})` | Runs the `Else` branch in the application process (worker 1). `{}` (an empty object) is the parameter that selects the `Else` branch. Replaces `New process`. |
+| `WINDOW LIST` + title match + `SET WINDOW RECT` | Re-running the method (menu, second startup) brings the existing window to the front instead of opening a duplicate. It runs in worker 1, the process that owns the window, so `SET WINDOW RECT` is called directly. |
+| `CALL WORKER(1; Current method name; {})` | Re-runs the method in the application process (worker 1). `{}` (an empty object) is the parameter that selects the worker role. Replaces `New process`. |
 | `SET MENU BAR(1)` | Keeps the menu bar installed after the window closes. |
 | `Plain form window` | A normal movable window. Never `Pop up form window` for a window with controls: pop-ups close when the user clicks outside and are not movable. It is also the default when the type is omitted. |
 | `SET WINDOW TITLE` | The title is what the reuse loop matches on. |
@@ -114,6 +111,16 @@ Rules:
 The `On Startup` database method
 (`Project/Sources/DatabaseMethods/onStartup.4dm`) just calls the start
 method with no argument.
+
+### Why the check runs in the worker
+
+The start method can be called twice almost at once: `--startup-method`
+does **not** replace `On Startup` (both run), and a user can press the menu
+shortcut twice. If the "already open?" loop runs in the caller, both calls
+check before either window exists, and two windows open (observed with a
+demo launcher). Worker 1 handles its messages one at a time and
+`DIALOG(...; *)` returns before the next message, so a check placed after
+the `CALL WORKER` hop sees the first window. Never put it before the hop.
 
 ### Forms with a `formClass`
 
@@ -230,12 +237,13 @@ Label the corresponding button "Close" (localised), not "Quit 4D".
 | `If (Application version<"1650")` | nothing -- dead code in a `.4DProject` |
 | `C_TEXT($cr)`, `If (Shift down)` debug scaffolding | remove dead code |
 | `var $window` in both branches | declare once above the `If` |
+| `WINDOW LIST` check before `CALL WORKER` | check in the worker branch (two quick calls both pass the check otherwise) |
 | Missing `SET MENU BAR(1)` | install the menu bar before opening the window |
 
 ## Checklist
 
 - [ ] Start method uses `#DECLARE($params : Object)` and `Count parameters=0` to choose the role
-- [ ] Existing window found by title and brought to front with `CALL FORM` + `SET WINDOW RECT`
+- [ ] "Already open?" check runs **after** the `CALL WORKER` hop (in worker 1), never in the caller; existing window brought to front with `SET WINDOW RECT`
 - [ ] `CALL WORKER(1; Current method name; {})`, no `New process`
 - [ ] `SET MENU BAR(1)` before opening the window
 - [ ] `Plain form window` and `DIALOG(...; *)`; no `CLOSE WINDOW`
