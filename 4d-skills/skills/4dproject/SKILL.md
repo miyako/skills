@@ -133,7 +133,10 @@ other skills link here rather than restating them.
   A confidently remembered token is exactly as dangerous as a random one
   (a real incident: `Size of array:C267` was written from memory; `C267` is
   another command; one later session invented three more: `Not:C34`,
-  `Movable form dialog box:K39:8`, `On Data Change:K2:15`).
+  `Movable form dialog box:K39:8`, `On Data Change:K2:15`; another session
+  invented `File:C477` -- resolved as "Get text resource" -- and
+  `Folder:C482` -- resolved as "SET DOCUMENT POSITION" -- and wrote event
+  constants in a nonexistent `K4` namespace, `On Clicked:K4:1`).
 * **Mandatory grep-first check, every time:** before writing any `:CNNN` or
   `:KNN:NN`, grep the project's own source for that exact
   `Name:CNNN` / `Name:KNN:NN` string.
