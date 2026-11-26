@@ -347,6 +347,18 @@ does not round-trip, replaces whole-value `text`, `windowTitle`,
 the literals it did not map. Table forms (`Project/Sources/TableForms/`)
 take the same path. Validate the result with `4dform`.
 
+**Converting `tips.json` tooltips.** Older projects localise tooltips through
+`Project/Sources/tips.json`: a form object carries
+`"tooltip": {"$ref": "/SOURCES/tips.json#<key>"}` and 4D resolves the key at
+runtime. Convert these to plain `":xliff:<ID>"` strings in the form JSON and
+delete `tips.json`. Before converting, audit the file: `$ref` keys that name
+nothing in `tips.json` (or keys in `tips.json` no form references) are silent
+dead weight; map only the refs that resolve, and translate their text into the
+string table. A regex that replaces the `$ref` object with a string can
+consume the preceding `"tooltip":` key and produce invalid JSON -- repair by
+re-inserting the key on the generated `"tooltip": ":xliff:..."` lines, then
+`jq empty` every touched form.
+
 ## Verification
 
 * Every ID referenced by `:xliff:` or `Localized string` exists in every
