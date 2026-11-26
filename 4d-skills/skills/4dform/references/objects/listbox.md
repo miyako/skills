@@ -115,6 +115,7 @@ other list box.
 | Property | Rule |
 |---|---|
 | `rowHeight` | A **string** with a unit: `"32px"` or `"2em"` (schema pattern `^(\d+)(px\|em)?$`). A bare number fails schema validation. |
+| `listboxType` | Set `"collection"` (or `"entitySelection"`) on every list box whose `dataSource` is a collection or entity selection. It is not inferred: without it the list box is array-based, `Form.rows` is never read as a collection, and the list stays **empty with no error**, even though the data is there. Schema validation passes either way. |
 | `currentItemSource` | Collection / entity-selection list boxes: expression receiving the clicked element, e.g. `"Form.selected"`. `currentItemPositionSource` receives its position, `selectedItemsSource` all selected elements. |
 | `verticalAlign` | Default `automatic` aligns text to the **bottom** of the row; set `"middle"` explicitly (`skills/4dcss/SKILL.md`, "Limits"). |
 | `events` | React to a selection with `onSelectionChange` (`On Selection Change`), not `onClick`. A click on a row also fires `onSelectionChange`, and so do the arrow keys, Page Up/Down and Home/End; `onClick` alone leaves keyboard users with a stale detail pane. Dispatch it in its own `FORM Event.code=On Selection Change` branch, not inside `On Clicked`, so a click does not run the handler twice. |
