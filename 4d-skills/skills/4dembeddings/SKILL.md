@@ -64,8 +64,9 @@ Other URL shapes returned a 55 KB HTML page that was saved as `.gguf`;
 
 ## Acceptance Test (mandatory)
 
-"It returns 768 numbers" proves nothing. A mis-converted ruri-v3 GGUF
-passed that smoke test and gave near-random retrieval. Before building
+"It returns 768 numbers" proves nothing. A GGUF whose tokenizer was
+mis-labelled at conversion passes that smoke test yet gives near-random
+retrieval (`<unk>` for katakana, a cosine floor of 0.8-0.9). Before building
 data, run all three:
 
 1. **Tokenizer metadata.** The GGUF `tokenizer.ggml.model` must match the
@@ -90,13 +91,9 @@ Observed:
 
 | Model (GGUF q8) | Check | p@10 (6 queries, ja tickets) | Scores |
 |---|---|---|---|
-| `keisuke-miyako/ruri-v3-310m-gguf-q8_0` | `bert` label on a SentencePiece vocab; `['<unk>',' 印',' 刷','<unk>']` | 36/60 | floor ≈ 0.8-0.9 |
 | `Targoyle/ruri-v3-310m-GGUF` | `llama`; clean pieces | 58/60 | top ≈ 0.9, median ≈ 0.80 |
 | bge-m3 | -- | 58/60 | top ≈ 0.7, median ≈ 0.45; 1024 dims, 2× slower |
 | multilingual-e5-base | -- | 56/60 | top ≈ 0.88, median ≈ 0.80 |
-
-Do not use the `keisuke-miyako` ruri-v3 GGUFs (all sizes) until they are
-re-converted with a SentencePiece vocabulary.
 
 ## Lifecycle
 
