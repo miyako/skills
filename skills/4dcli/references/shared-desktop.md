@@ -7,6 +7,12 @@ capturing its window, and leaving no process behind.
 
 ## Never send keystrokes or clicks
 
+The default for an unattended run. When the user explicitly asks for a live,
+watched click-through, use the synthetic `CGEvent` procedure in
+[`../SKILL.md`](../SKILL.md#driving-a-gui-form-with-synthetic-clicks) and keep
+the rules below for everything else: target the window you started by PID,
+never by owner name, and never `pkill` or `killall` a 4D app.
+
 4D form objects are not exposed to Accessibility: System Events sees the
 window but no text fields or buttons. `activate` followed by `keystroke`
 raced with the user's browser in a real session: the screenshot showed the
