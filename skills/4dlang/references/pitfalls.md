@@ -112,6 +112,10 @@ and to reading properties inside a preemptive process.
 
 ## Value Types, Null and Guards
 
+* `String($o.key)` on a property that holds **Null** (for example a JSON
+  `null` from a CLI envelope: `{"stage": null}`) returns the text `"null"`,
+  not `""`. A guard such as `If (String($e.stage)#"")` is always true and
+  prints `stage: null`. Test `$e.stage#Null` first. Observed on 21 R5.
 * `Is number` is **not** a `Value type` constant. `Value type($x)#Is number`
   compiles, runs and is **always true** (the undefined constant evaluates to
   0 and no type equals 0), so the guard never skips anything. The numeric
