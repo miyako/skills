@@ -61,3 +61,5 @@ headings.
 * Numbers (sizes, timings, hit counts) are measured on the shipped data.
   Re-measure them when the data or the model changes.
 * State that demo data is fictitious when it is generated.
+* Say which language the shipped data is in when it differs by UI
+  language, and how to regenerate it in the other.

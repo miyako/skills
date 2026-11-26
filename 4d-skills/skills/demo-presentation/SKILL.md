@@ -4,8 +4,8 @@ description: >
   Make a 4D demo work live in front of an audience, especially in Japan:
   typo-free sample inputs, visible comparisons, readiness shown in the
   form, separate UI-language and data-language decisions, Japanese
-  wording and fonts, and what must be checked on a Japanese OS before the
-  session. Use when preparing a demo for a webinar, seminar or
+  wording, and what must be checked on a Japanese OS (fonts, IME,
+  built-in strings) before the session. Use when preparing a demo for a webinar, seminar or
   presentation, or when localising a demo for a Japanese audience.
 ---
 
@@ -21,6 +21,7 @@ description: >
 | Readiness in the form: status line, action disabled until ready | no "is it frozen?" moments |
 | Numbers formatted (`###,###,##0`) with units | readable from the back row |
 | Window sized for 1280×800 projection, no scroll bars | nothing hidden |
+| Cancel leaves nothing behind (no blank row after "New" → Cancel) | the audience notices; `4dorda`, "Save only on confirmation" |
 
 Warm up before the session: open the demo once so the first-launch
 downloads and the model load are already done.
@@ -46,9 +47,10 @@ downloads and the model load are already done.
 
 Record what was not seen in a real Japanese environment:
 
-* tool4d `Localized string` with `SET DATABASE LOCALIZATION("ja")`
-  returned English for built-in `Common*` strings: check them in 4D on a
-  Japanese OS (or with the 4D language set to Japanese).
+* Built-in `Common*` strings ignore `SET DATABASE LOCALIZATION("ja")` (tool4d
+  and the 4D GUI): a runtime language switch needs project IDs
+  (`4dlocalise`). Their behaviour on a Japanese OS is unverified.
+* Dates in list boxes follow the OS format, not the UI language.
 * GUI rendering on a Japanese OS (fonts, IME in inputs).
 * Windows / Fluent UI if only a Mac was available.
 

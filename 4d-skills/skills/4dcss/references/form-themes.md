@@ -232,7 +232,11 @@ The `FORM theme` command returns the current rendering mode as a string at runti
 | `"liquidGlass"` | Liquid Glass is active |
 | `"classic"` | Classic rendering |
 
-Use this when you need to adjust behaviour programmatically beyond what CSS can handle — for example, dynamically setting meta-source colours in listboxes.
+Use this when you need to adjust behaviour programmatically beyond what CSS can handle — for example, dynamically setting meta-source colours in listboxes, or keeping buttons resized in code at 27px: `($t=Null) ? ((FORM theme="liquidGlass") ? 27 : 24) : 32`.
+
+`FORM theme` returns `""` outside a form context (e.g. in a startup method before the form is open). Call it from the form or a `CALL FORM` callback.
+
+Code that resizes controls must re-apply the same minimums after a theme switch. `OBJECT GET BEST SIZE` on an input under the System theme returned ~18px, shorter than the text line; clamp it (`$height:=($best<28) ? 28 : $best`).
 
 ```4d
 If (FORM theme="liquidGlass")

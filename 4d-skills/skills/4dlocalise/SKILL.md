@@ -142,6 +142,10 @@ missing; fall back to a default rather than displaying an empty label.
   rebuilt after the switch; keep the selected `index` and restore it.
 * Language codes use a dash (`"fr-ca"`), `.lproj` folders an underscore
   (`fr_ca.lproj`).
+* Built-in `Common*` IDs do **not** follow the switch (see "XLIFF Rules").
+* Dates and numbers in list boxes and inputs follow the **OS** format
+  ("Nov 25, 2026" on an English OS), not the database localisation. List
+  it as a known gap rather than calling the UI fully localised.
 
 Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 (MIT License).
@@ -161,8 +165,13 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 * **Built-in `Common*` IDs.** 4D ships its own XLIFF (`commonEN.xlf`, ...)
   with IDs such as `CommonMenuFile`, `CommonMenuEdit`, `CommonMenuItemQuit`,
   `CommonMenuItemCopy`, `CommonOK`, `CommonCancel`, `CommonYes`,
-  `CommonNo`, `CommonClose`, `CommonTrue`, `CommonFalse`. Use them for
-  standard menus and buttons, and **never redefine them** in project files.
+  `CommonNo`, `CommonClose`, `CommonTrue`, `CommonFalse`, and **never
+  redefine them** in project files. They resolve in the 4D application's
+  language and ignore `SET DATABASE LOCALIZATION`: in the 4D 21 R5 GUI,
+  `:xliff:CommonCancel` stayed "Cancel" after switching to `ja` (OS en-GB,
+  4D app UI Japanese). Use them only when the UI language always equals
+  the app's language. When the language is chosen at runtime, define
+  project IDs instead (`Button_Cancel`: Cancel / キャンセル).
 * **Line breaks.** 4D strings use CR (`\r`, `Char(13)`) as the line break.
   Inspect the original bytes (e.g. `xxd`) of a multi-line string before
   moving it to XLIFF. A literal CR inside XML is normalised to LF by the
@@ -200,8 +209,9 @@ IDs match `^[A-Za-z][A-Za-z0-9_]*$`: no dots or dashes (rename
 * When 4D or tool4d is available (`4dcli`), run a test method that calls
   `SET DATABASE LOCALIZATION("ja")` then `Localized string` for several IDs,
   and again for the source language. Built-in `Common*` IDs were observed
-  to stay English in tool4d (`CommonMenuItemQuit` → "Quit" under `ja`):
-  check those in the 4D GUI before concluding they are broken.
+  to stay English in tool4d (`CommonMenuItemQuit` → "Quit" under `ja`)
+  and in the 4D GUI after a runtime switch (above). On a Japanese OS they
+  have not been checked.
 * Forms cannot be checked headlessly: ask the user to open them and check
   label fit (translations can be much longer or shorter).
 
@@ -212,7 +222,7 @@ IDs match `^[A-Za-z][A-Za-z0-9_]*$`: no dots or dashes (rename
 - [ ] `Resources/{lang}.lproj/` exists for every language, source included
 - [ ] `{name}{LANG}.xlf` files exist for every language
 - [ ] ID-based entries directly under `<body>`, not in form groups
-- [ ] No `Common*` ID redefined
+- [ ] No `Common*` ID redefined; none used where the language is switched at runtime
 - [ ] Multi-line strings keep CR line breaks (`&#13;`)
 - [ ] IDs match `^[A-Za-z][A-Za-z0-9_]*$`
 - [ ] `<source>` is English; `<target>` translated (identical in the English file)

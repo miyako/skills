@@ -60,10 +60,11 @@ Engine".
 | A headless run exits non-zero with no output, or stops part-way | "When a Startup Method Dies With No Output" | the engine you already chose |
 | Decide where a run may write its output | "Writing Output Files" | none |
 | Decide which version a feature needs | "Version Requirements" | none |
+| Compile the whole project and read the result | "Compile Check" | `tool4d` |
 | Obtain or install tool4d | "Obtaining tool4d" | none |
 | Make an installed tool4d visible to `4dlsp` | "Pointing `4dlsp` at it" | none |
 | Understand what a capture actually *shows* | `skills/4dform/references/screenshot-rendering.md` | none |
-| Open the full 4D app on the user's desktop without stealing focus, capture its window, quit it; stop helper servers (llama-server) a run started | `references/shared-desktop.md` | `4D` (GUI) |
+| Open the full 4D app on the user's desktop without stealing focus, capture only its own window by PID, let it quit itself; stop helper servers (llama-server) a run started | `references/shared-desktop.md` | `4D` (GUI) |
 
 ### Reading budget
 
@@ -286,7 +287,14 @@ report the download as temporarily unavailable.
 
 At time of writing the newest publicly available builds are `21 R3` and
 `21.2` LTS; `21 R4` is in beta and 404s here. Those version numbers date
-quickly -- the rule above does not.
+quickly -- the rule above does not. (Later, `21 R5` also 404ed while
+`/Applications/4D 21 R5 (100189)/` already held both `4D.app` and
+`tool4d.app`: the local probe is what found it.)
+
+Among local builds, pick one **at least as new as** the project's
+`compatibilityVersion`. An older build still runs the code but rejects
+newer parameters: 21 R4 flagged the 21 R5 fourth parameter of
+`OBJECT SET RGB COLORS` as an error that 21 R5 does not report.
 
 ### Step 2: Download
 
@@ -730,6 +738,28 @@ order -- each step costs one run and narrows the cause.
 With a handler installed, execution also **continues past** the statement
 that raised, so read the log as interleaved rather than sequential: the
 first error is the real one, and the ones after it are its consequences.
+
+## Compile Check
+
+The canonical whole-project compile, for a project without component
+dependencies (with them, read the next section):
+
+```4d
+// compileTest
+var $r : Object:=Compile project({targets: ["arm64_macOS_lib"; "x86_64_generic"]})
+File("/PACKAGE/compile.json").setText(JSON Stringify($r; *))
+QUIT 4D
+```
+
+```sh
+"$TOOL4D" --project "$PWD/Project/MyDemo.4DProject" \
+  --startup-method=compileTest --dataless --skip-onstartup
+```
+
+Read `compile.json`: `success` true and an empty `errors`. Install the
+method in a scratch copy of the project when it should not be committed.
+This catches what `4dlsp` misses (undeclared variables, form-method
+parameters; see "The compiler also finds defects interpretation forgives").
 
 ## Compiling with a Component Dependency
 

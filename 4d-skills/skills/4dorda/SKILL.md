@@ -130,6 +130,15 @@ End if
   `.lock()`; a lock is also released when no reference to the entity remains
   in memory.
 
+### Save only on confirmation
+
+Do not save a new entity before an edit dialog opens. A "New" button that
+called `.save()` first left a blank record behind whenever the user
+cancelled. Create it with `.new()`, pass it to the dialog, and `.save()` in
+the OK/Save handler only. Derive anything that needs the primary key (an
+order number such as `"SO-"+String(20000+$e.ID)`) right after that first
+save, then save again.
+
 ## Bulk Import -- `fromCollection()`
 
 `ds.<Dataclass>.fromCollection($objects)` creates or updates one entity per
@@ -190,6 +199,7 @@ Function get fullName() : Text
 - [ ] Query values passed through placeholders, never concatenated (`references/queries.md`)
 - [ ] Null searched with the literal `null`, not a placeholder
 - [ ] `save()` / `drop()` / `lock()` status checked
+- [ ] New entities saved on confirmation, not before the edit dialog
 - [ ] Attribute values tested `#Null` before string or arithmetic use
 - [ ] `$sel[$i]` copied to a variable before modifying or saving
 - [ ] `fromCollection()` property names match attribute names exactly

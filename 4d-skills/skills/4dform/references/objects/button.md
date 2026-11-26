@@ -77,7 +77,7 @@ Font properties also combine naturally with icons — large `fontSize` scales te
 | Property | Values | Description |
 |----------|--------|-------------|
 | `defaultButton` | boolean | Highlights as the recommended action. Only for `regular` and `flat`. |
-| `borderStyle` | `"system"`, `"none"`, `"solid"`, `"dotted"`, `"raised"`, `"sunken"`, `"double"` | Border line style |
+| `borderStyle` | `"system"`, `"none"`, `"solid"`, `"dotted"`, `"raised"`, `"sunken"`, `"double"`, `"custom"` (21 R5) | Border line style |
 | `visibility` | `"visible"`, `"hidden"` | `"hidden"` = invisible **and inactive** (does not respond to clicks) |
 | `display` | boolean | `false` = **not rendered but still active** (responds to clicks). Only for `custom` style. |
 | `focusable` | boolean | Whether the button can receive keyboard focus (see below) |
@@ -258,6 +258,29 @@ Only applicable when `style` is `"custom"`:
 | `customBorderX` | Horizontal internal margin (pixels) |
 | `customBorderY` | Vertical internal margin (pixels) |
 | `customOffset` | Icon offset (pixels) |
+
+### Coloured buttons (21 R5)
+
+21 R5 can colour a button's background and border. The colours apply only
+when **both** `"style": "custom"` and `"borderStyle": "custom"` are set;
+otherwise they are silently ignored and the button renders as a system
+button:
+
+```json
+"btnBlue": { "type": "button", "style": "custom", "borderStyle": "custom",
+  "borderFillColor": "#2E75B6", "borderColor": "#1F4E79", "borderWidth": 1,
+  "borderRadius": 8, "stroke": "#FFFFFF", "height": 24 }
+```
+
+Schema validation does not catch the missing pair. Check it:
+
+```sh
+jq -r '.pages[]?.objects // {} | to_entries[] | select(.value.type == "button" and (.value.borderFillColor // .value.borderColor) and (.value.style != "custom" or .value.borderStyle != "custom")) | .key' form.4DForm
+```
+
+At runtime: `OBJECT SET BORDER STYLE(*; "btn@"; Border Custom)`,
+`OBJECT SET RGB COLORS(*; "btn@"; $font; $fill; ""; $border)` (the fourth
+parameter is new in 21 R5) and `OBJECT SET CORNER RADIUS`.
 
 A `custom` button with `"display": false` creates an **invisible but active clickable area**. This is useful for defining clickable regions over a graphic element or background image.
 

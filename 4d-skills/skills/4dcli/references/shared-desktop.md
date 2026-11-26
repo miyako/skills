@@ -20,44 +20,93 @@ user's app.
 * For a form that must be seen after `On Load`, use the
   `dialog_screenshot` chain (`../SKILL.md`), which captures from inside 4D.
 
+## Only touch the instance you started
+
+The user may have their own 4D running, often the same build. Anything that
+selects by app name or path (window owner `"4D"`, `tell application
+"<path>/4D.app" to quit`, `killall 4D`) reaches their instance too. In a
+real session a capture keyed on owner name `"4D"` grabbed the user's own
+project window; after the quit-by-path that followed, no 4D was running,
+so it may have closed the user's instance too. So:
+
+1. Launch a new instance and record **its** PID.
+2. Select windows by `kCGWindowOwnerPID`, never by owner name.
+3. Let 4D quit itself from the startup method; otherwise `kill <literal PID>`.
+4. Never `osascript ... quit`, `killall` or `pkill` a 4D app.
+
 ## Launching without stealing focus
 
 ```sh
-open -g -n -a "/Applications/4D v21 R5/4D.app" --args \
-  --project "$PWD/Project/MyDemo.4DProject" --data "$PWD/Data/data.4DD"
+open -g -n -a "/Applications/4D 21 R5 (100189)/4D.app" --args \
+  --project "$PWD/Project/MyDemo.4DProject" --data "$PWD/Data/data.4DD" \
+  --startup-method shotRun --skip-onstartup --user-param "ja|MyForm"
+sleep 6
+pgrep -n -f "$PWD/Project/MyDemo.4DProject"    # the PID of this instance
 ```
 
 `-g` keeps it in the background, `-n` starts a new instance. Use absolute
-paths.
+paths; `pgrep -f` on the unique project path finds only the copy you just
+started (use a scratch copy of the project if the user may have the same
+one open).
 
 ## Capturing one window, even when occluded
 
 `screencapture -x -o -l<windowID> out.png` captures one window by ID,
 without sound or shadow, even behind other windows. Get the ID from
-CoreGraphics, not from Accessibility:
+CoreGraphics by PID, not from Accessibility or the owner name:
 
 ```swift
-// winid.swift -- usage: swift winid.swift 4D "Window title"
+// winid.swift -- usage: winid <pid>  ->  id width height title
 import CoreGraphics
-let a = CommandLine.arguments
-let list = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as! [[String: Any]]
-for w in list where (w[kCGWindowOwnerName as String] as? String) == a[1]
-    && (w[kCGWindowName as String] as? String ?? "").contains(a[2]) {
-  print(w[kCGWindowNumber as String]!); break
+let pid = Int(CommandLine.arguments[1])!
+let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as! [[String: Any]]
+for w in list where (w[kCGWindowOwnerPID as String] as? Int) == pid {
+  let b = w[kCGWindowBounds as String] as! [String: Any]
+  print(w[kCGWindowNumber as String]!, b["Width"]!, b["Height"]!, w[kCGWindowName as String] ?? "")
 }
 ```
 
-Window names and captures need the Screen Recording permission for the
-terminal. Without it `kCGWindowName` is empty: match on owner and bounds,
-and check the result (`../SKILL.md`, "Screenshot Sanity Check").
-
-## Quitting
+Compile once (`swiftc winid.swift -o winid`) and pick the largest window
+that is not the Explorer:
 
 ```sh
-osascript -e 'tell application "/Applications/4D v21 R5/4D.app" to quit'
+ID=$(./winid "$PID" | grep -v "Explorer\|エクスプローラー" | sort -k2 -n | tail -1 | cut -d' ' -f1)
+screencapture -x -o -l"$ID" out.png
 ```
 
-An Apple Event addressed by path quits that copy without keystrokes.
+Window names and captures need the Screen Recording permission for the
+terminal. Without it `kCGWindowName` is empty: match on PID and bounds,
+and check the result (`../SKILL.md`, "Screenshot Sanity Check").
+
+Prefer this real-window capture over `FORM SCREENSHOT` for review images:
+it shows the real window background and text that `FORM SCREENSHOT` drops
+(see `../../4dform/references/screenshot-rendering.md`).
+
+## Preparing the window from inside 4D
+
+The startup method opens the form and sets its state, then schedules the
+quit, so the shell never has to address the app:
+
+```4d
+// shotRun -- --user-param "lang|form|..."
+var $param : Text
+var $unused : Real:=Get database parameter(User param value; $param)
+var $p : Collection:=Split string($param; "|")
+SET DATABASE LOCALIZATION($p[0])
+var $window : Integer:=Open form window($p[1]; Plain form window; Horizontally centered; Vertically centered)
+DIALOG($p[1]; {}; *)
+CALL FORM($window; Formula(shotPrepare))  // runs after On Load
+CALL WORKER("shotQuit"; Formula(DELAY PROCESS(Current process; 480)))  // ~8 s
+CALL WORKER("shotQuit"; Formula(QUIT 4D))
+```
+
+Guard optional objects before using their geometry
+(`If (OBJECT Get pointer(Object named; "panel")#Null)`): on a form without
+the object, coordinates come back 0 and a window resized from them shrank
+to 20 px.
+
+After the capture, wait for the PID to exit (`kill -0 <pid>` in a loop);
+if it is still there, `kill <literal PID>`.
 
 ## Background servers started by the project
 

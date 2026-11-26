@@ -104,6 +104,9 @@ and to reading properties inside a preemptive process.
   `For ($i; 1; $c.length)` skips element 0 and then raises
   `Index in collection is out of range (-10713)` on the final pass.
   Iterate `For ($i; 0; $c.length-1)` or use `For each ($item; $c)`.
+* Not every member returns `This`: `$e.fromObject($o)` returns nothing,
+  so `$e.fromObject($o).save()` fails. Check the return type with
+  `4dlang` before chaining.
 * `4D.File.name` is the **display name without the extension**: `cube.stl`
   reads as `cube`. Building a path back from a collected `.name` produces
   `.../cube` and a "file not found" from whatever consumes it. Use

@@ -16,8 +16,9 @@ Leave separators (`"isSeparator": true`) and existing `:xliff:` titles
 { "title": ":xliff:MenuItemDemo", "method": "Demo" }
 ```
 
-Standard menus (File, Edit, Quit...) should use 4D's built-in `Common*` IDs
-(see `../SKILL.md`). Menu structure itself: `skills/4dproject/references/menus.md`.
+Standard menus (File, Edit, Quit...) can use 4D's built-in `Common*` IDs
+when the UI language is the app's language; they ignore
+`SET DATABASE LOCALIZATION` (see `../SKILL.md`). Menu structure itself: `skills/4dproject/references/menus.md`.
 
 ## 2. Forms -- `Project/Sources/Forms/*/form.4DForm` and `TableForms/`
 
