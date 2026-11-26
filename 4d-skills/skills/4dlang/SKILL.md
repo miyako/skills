@@ -80,7 +80,7 @@ against the intended runtime, not merely the corpus's R5 compiler.
 | Task involves | Open |
 |---|---|
 | Looking up a command or class member | this file |
-| Operator precedence, text comparison, literals, Object guards for instance checks, inheritance boundaries, `Value type` / `Is number` guards, Null and process-scoped `var`, path conventions (HFS vs POSIX), `Formula` / `This`, `.call()`, `4D.HTTPRequest`, `4D.SystemWorker`, workers and `Signal.wait()` timeouts, stretched timers, mis-guessed command signatures, number formatting (`String` with a format or locale), `4D.File` / `4D.Folder` behaviour, `var` placement | `references/pitfalls.md` |
+| Operator precedence, text comparison, literals, Object guards for instance checks, inheritance boundaries, `Value type` / `Is number` guards, Null and process-scoped `var`, path conventions (HFS vs POSIX), `Formula` / `This`, `.call()`, `4D.HTTPRequest`, `4D.SystemWorker`, workers and `Signal.wait()` timeouts, stretched timers, mis-guessed command signatures, number formatting (`String` with a format or locale), Text member access (`Length` vs `.length`), `For each` loop-variable typing, `4D.File` / `4D.Folder` behaviour, `var` placement, tool4d's form-method blind spot | `references/pitfalls.md` |
 
 ## Why one skill, not two
 

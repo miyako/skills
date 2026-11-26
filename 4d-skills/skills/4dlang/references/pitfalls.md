@@ -117,6 +117,16 @@ and to reading properties inside a preemptive process.
   `For ($i; 1; $c.length)` skips element 0 and then raises
   `Index in collection is out of range (-10713)` on the final pass.
   Iterate `For ($i; 0; $c.length-1)` or use `For each ($item; $c)`.
+* **Text values have no `.length` member.** `Form.log.length` (or
+  `$t.length`) compiles unnoticed and raises `[54] Argument types are
+  incompatible`-adjacent runtime errors — observed as `Object or Collection
+  Expected` in the GUI interpreter and as `[-9996] Stack is full (too much
+  recursion or nested calls)` under tool4d 21.2 LTS (100694), both pointing
+  at the same member access on a Text. Use the `Length(...)` command;
+  `.length` is valid on Collections and Objects only. Found in
+  [miyako/ldap-demo](https://github.com/miyako/ldap-demo): the headless smoke
+  passed 19/19 because the call lived in a form-path method tool4d never
+  parses (see the GUI-vs-tool4d note below).
 * Not every member returns `This`: `$e.fromObject($o)` returns nothing,
   so `$e.fromObject($o).save()` fails. Check the return type with
   `4dlang` before chaining.
@@ -302,6 +312,21 @@ https://developer.4d.com/docs/Develop/processes
   outputs; ...)` is a tool4d-only diagnostic; in an application the harness
   can only observe files the code writes itself, so design the run to publish
   a machine-readable report.
+* **tool4d never parses form-path methods** (the `method.4dm` inside a
+  `.4DForm` folder), so a headless smoke suite can pass 19/19 while the forms
+  crash on first open in the IDE. Measured on
+  [miyako/ldap-demo](https://github.com/miyako/ldap-demo) with tool4d 21.2
+  LTS (100694): five bugs lived exclusively in form-path methods or in code
+  only they call — a `Folder(Get 4D folder(...))` platform-path modal, a
+  `Text.length` member access, a certificate *path* passed where the
+  component wants PEM text, a write sequence that always collided with
+  itself, and a default search doomed by the fixture's own server-side size
+  limit. Budget a real GUI pass (drive the forms with a startup method that
+  reads `--user-param`, dumps the form as JSON and screenshots the window)
+  for any form-driven demo; the smoke's coverage ends at the project
+  boundary. GUI runtime-error dialogs expose nothing to Accessibility; read
+  them by OCR of a window screenshot (`screencapture -l<WID>` + Vision), and
+  stop a dialog-blocked instance with `kill -9` — SIGTERM is ignored.
 
 ## Number Formatting, File API and Commands That Look Like Procedures
 
@@ -317,6 +342,7 @@ https://developer.4d.com/docs/Develop/processes
 | `Open document(path)` as a statement | It is a function: `This function has been called as a procedure.` Assign or discard the result (`$opened:=String(Open document($path))`). |
 | `CONFIRM(message {; okTitle {; cancelTitle}})` as a function | It is a procedure: it returns nothing and reports the choice in the `OK` system variable (`1` = OK button). Write `CONFIRM(...)` then `If (OK#1)`. The title order is OK first, then Cancel, so `CONFIRM($msg; "Cancel"; "Title")` labels the OK button "Cancel". `tool4d-lsp-stdio validate` returned 0 diagnostics for `If (Not(CONFIRM(...)))`, so the analyzer does not catch it; the dialog needs a person, so check the path by reading it, not by a headless run. |
 | `For each ($v; $array)` | `For each` accepts a collection or an object only; an array from `ARRAY TEXT` / `OB GET PROPERTY NAMES` fails at runtime with `"For each" statement expects a collection or an object`. Use `OB Keys($object)` for property names. |
+| `For each ($t : Text; $nested)` | The loop variable's declared type must accept the **items**: iterating `parseDN()`'s result — a collection of RDNs where each RDN is itself a collection of `{type, value}` pairs — into a Text variable hangs the form process under a local `ON ERR CALL` handler and raises `[54] Argument types are incompatible` without one (tool4d 21.2 LTS 100694 reproduces the error headlessly). Declare the loop variable as `Collection` and iterate the inner pairs with an `Object` variable. A `.length` assertion passes while the iteration fails — assert structure, not just cardinality. Found in [miyako/ldap-demo](https://github.com/miyako/ldap-demo). |
 | Restoring an error handler | `ON ERR CALL($previous; ek local)` restores nothing if `$previous` was never assigned: an empty text removes the handler. Capture it first, `$previous:=Method called on error(ek local)`, then install yours. The analyzer reports no diagnostic for an unassigned `$previous`. Found by code review, not a measured run. |
 | `var` placement | A `var` inside an `If` or `For each` block compiles and is block-scoped; the "declarations must be at the top" rule forbids a redeclaration, not a block-local declaration. Keep declarations at the top by convention, and do not diagnose block-local `var` as a syntax error. |
 
