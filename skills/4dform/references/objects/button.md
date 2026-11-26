@@ -297,6 +297,28 @@ Reference: https://developer.4d.com/docs/FormObjects/propertiesDisplay#not-rende
 - Use `OBJECT SET VISIBLE` to hide/show at runtime (also makes inactive).
 - Reference: https://developer.4d.com/docs/commands/object-set-visible
 
+### Fake buttons to real buttons
+
+Older forms draw a "button" as three objects: a rectangle (the face), a
+text label, and a `display: false` button on top that takes the clicks.
+These do not follow the theme (Liquid Glass, Fluent UI, dark mode), have
+no focus or keyboard behaviour, and the label is a separate object to
+localise. Replace each trio with one real button:
+
+* the button keeps its name, method, events and action; it takes the
+  label's `text` (keep the `:xliff:` reference) and loses `display`,
+  `borderStyle`, `fontSize`, `fontWeight` and the fixed height;
+* the rectangle and the label are removed;
+* a class (`default`, or `--class`) gives the theme height
+  (`skills/4dcss/references/form-themes.md`), and `top` is moved so the
+  button stays centred on the old face.
+
+`scripts/fake_buttons.py form.4DForm --dry-run` lists the trios it found
+(button bounds within `--tolerance` px of a rectangle, label top-left
+inside the button) and writes nothing; without `--dry-run` it rewrites
+the file, keeping a BOM if present. Check the result in the Form Editor
+and a capture: a label that was not inside its button is left alone.
+
 ## Positioning and Sizing
 
 | Property | Type | Description |

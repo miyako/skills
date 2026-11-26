@@ -146,10 +146,9 @@
       "note": "4D AI Kit async callbacks and streaming; the window pattern is in 4dstartup."
     },
     "startup.instructions.md": {
-      "status": "instruction",
-      "skill": "4dstartup",
-      "url": null,
-      "path": ".github/instructions/hdi.startup.instructions.md",
+      "status": "skill",
+      "skill": "demo-hdi",
+      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/demo-hdi",
       "templates": [
         "HDI_Template"
       ],
@@ -161,26 +160,24 @@
         "f3a4c1df71080d1114ad3e16848f3fee02cb93e5",
         "ffc167ca231e345ecbd78d892b49cd2d222bd5d2"
       ],
-      "note": "Split: the generic non-blocking startup / form-chaining pattern is now the 4dstartup skill (https://github.com/miyako/skills/tree/main/4d-skills/skills/4dstartup); the HDI splash-form specifics stay in HDI repositories as hdi.startup.instructions.md. Repositories that are not HDI (e.g. technote-derived) have no splash form: delete the file there; the 4dstartup skill covers it."
+      "note": "Split: the generic non-blocking startup / form-chaining pattern is the 4dstartup skill; the HDI splash-form specifics (options object, version and license checks, splash XLIFF keys) are the demo-hdi skill. Delete hdi.startup.instructions.md from HDI repositories. Repositories that are not HDI (e.g. technote-derived) have no splash form: 4dstartup covers them."
     },
     "readme.structure.instructions.md": {
-      "status": "instruction",
-      "skill": "demo-shareable-repo",
-      "url": null,
-      "path": ".github/instructions/readme.structure.instructions.md",
+      "status": "skill",
+      "skill": "demo-hdi",
+      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/demo-hdi",
       "templates": [
         "HDI_Template"
       ],
       "variants": [
         "39f8816582a130c7d83f1e2c45cd178a267e08db"
       ],
-      "note": "Repository-specific (HDI README structure); stays in HDI_Template and HDI repositories."
+      "note": "HDI README intro, Key commands and References now in demo-hdi; generic README structure in demo-shareable-repo (references/readme.md). Delete the file from HDI repositories."
     },
     "readme.branches.instructions.md": {
-      "status": "instruction",
-      "skill": "demo-shareable-repo",
-      "url": null,
-      "path": ".github/instructions/readme.branches.instructions.md",
+      "status": "skill",
+      "skill": "demo-hdi",
+      "url": "https://github.com/miyako/skills/tree/main/4d-skills/skills/demo-hdi",
       "templates": [
         "HDI_Template"
       ],
@@ -190,7 +187,7 @@
         "7cc5b8c21588220a3601c295167b06b695ed1007",
         "9be9f508d1be9a17f49fa7ec666eb9af80637753"
       ],
-      "note": "Repository-specific (HDI branch/README conventions, HDI_Template variant without the token table); stays in HDI_Template and HDI repositories."
+      "note": "The Modernisation notes branch table (fixed intro and header, one row per real remote branch) is now in demo-hdi. Delete the file from HDI repositories."
     },
     "readme.usage.guidance.instructions.md": {
       "status": "deleted",
