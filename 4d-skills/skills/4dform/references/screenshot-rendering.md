@@ -72,7 +72,12 @@ data bindings, or verify every 4D stylesheet property. Report unsupported
 features and rendering errors rather than presenting an approximation as
 runtime evidence. Observed gaps: it shows built-in `:xliff:Common*` IDs
 unresolved, and does not draw 21 R5 coloured buttons
-(`borderStyle: "custom"`).
+(`borderStyle: "custom"`), so a start screen made of coloured tiles
+previews empty. It shows data sources (`Form.name`), not values: use it for
+layout, and `4dcli` runtime captures for content. Project `:xliff:` IDs do
+resolve with `--language ja` (from `Resources/ja.lproj`), a quick check for
+literals left in a form. A Fluent UI subject needs a Windows host for both
+previews and runtime captures.
 
 ## Deterministic Output
 

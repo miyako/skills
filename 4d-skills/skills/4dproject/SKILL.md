@@ -132,7 +132,8 @@ other skills link here rather than restating them.
   resolves to a *different, real* command or constant -- not to an error.
   A confidently remembered token is exactly as dangerous as a random one
   (a real incident: `Size of array:C267` was written from memory; `C267` is
-  another command).
+  another command; one later session invented three more: `Not:C34`,
+  `Movable form dialog box:K39:8`, `On Data Change:K2:15`).
 * **Mandatory grep-first check, every time:** before writing any `:CNNN` or
   `:KNN:NN`, grep the project's own source for that exact
   `Name:CNNN` / `Name:KNN:NN` string.
@@ -207,6 +208,17 @@ Rules:
   contains API keys or other secrets, whichever way the folder is handled.
 * A repository may add project-specific entries (build output, `.venv/`,
   ...); this list is the 4D baseline, not a ceiling.
+* **No `.*` wildcard.** A repository that ignores `.*` wholesale also hides
+  `.github/`, `.agents` and `.gitignore` itself. Replace it with the
+  canonical list.
+* **Committed sample data.** A demo may ship `Data/data.4DD` on purpose so
+  that it opens with records. Replace the `[dD][aA][tT][aA]/` line with
+  narrower entries (`Data/Logs/`, `*.journal`, `Data/Backups/`, and
+  `Data/Settings/` when machine-specific), and say in the README which
+  language the data is in (`demo-shareable-repo`). Large data belongs in a
+  release asset instead (`demo-data-distribution`).
+* Add the `/tools/<skill>/` entries **before** provisioning (`4dtools`),
+  once each.
 
 ## Surveying an Inherited Project
 
@@ -215,7 +227,10 @@ check these; each was found in a real demo:
 
 * **`compatibilityVersion` vs target.** A repository named for 21 R5
   carried `2160` (21 R6). Make it match the release the project targets
-  and the 4D the audience has, and say so in the README.
+  and the 4D the audience has, and say so in the README. An **older**
+  value (`2130` in a "21 R5" demo) is the lowest supported release, not
+  necessarily a defect: raising it changes runtime behaviour, so never do
+  it as a side effect. Ask, or record the decision.
 * **Hidden configuration.** Code that depends on git-ignored files
   (`Settings/AIProviders.json` model aliases, keys) does not run for
   anyone who clones the repository. Replace it with a self-contained setup
