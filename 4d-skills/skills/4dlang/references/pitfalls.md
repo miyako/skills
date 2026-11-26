@@ -12,6 +12,8 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 | Pitfall | Rule |
 |---|---|
 | No arithmetic precedence | Expressions are evaluated strictly left to right: `3+4*5` is `35`. Write `3+(4*5)`. |
+| A comparison mixed with arithmetic | `This.selected=$i-1` is `(This.selected=$i)-1`: a Boolean minus a number, which raises error 15 *This operation is not compatible with the two arguments* **at runtime only**. `validate`, `check-syntax` and `Compile project` (`success:true`) all pass. Write `This.selected=($i-1)`. The same applies inside a ternary condition: `(a=$i-1) ? x : y`. |
+| Silent layout errors from the same rule | Where no type error results, the value is just wrong: `$x+$w/2` is `($x+$w)/2` and `$off+($a-$b)*$k` is `($off+($a-$b))*$k`. Geometry, centring and scale code (SVG, form coordinates) draws plausibly but in the wrong place. Parenthesise each sub-expression, and compute a repeated test once (`$sel:=(…=($i-1))`). |
 | `&&` / `\|\|` have no precedence over each other | `$a \|\| $b && $c` is `($a \|\| $b) && $c`. Parenthesise every operand of a mixed condition. |
 | Negation | Use `Not($x)`. `!` delimits date literals (`!2026-01-21!`); `not` / `!` as negation exist only inside ORDA query strings. |
 | Text `=` is not exact | `"a"="A"` is True (case ignored), and `@` in the right operand is a wildcard (`"abcd"="ab@"` is True). The same holds in `Case of` branches such as `:($x="abc")` and for `#`. |
