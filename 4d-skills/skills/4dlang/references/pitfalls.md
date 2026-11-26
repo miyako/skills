@@ -125,6 +125,14 @@ and to reading properties inside a preemptive process.
   `.../cube` and a "file not found" from whatever consumes it. Use
   `.fullName` whenever the name must round-trip into a path, and
   `.extension` when only the suffix is wanted.
+* `.length` on a **Text** works in some positions and not others in
+  interpreted runs: `$s[$s.length-1]` is fine, but a comparison such as
+  `If ($top.length>60)` throws `[-10716] Object or Collection Expected`
+  (with an error handler swallowing it, the branch is skipped and
+  truncation silently never happens). `.length` on a collection or entity
+  selection in the same `If` is fine. Use `Length($text)` for text; the
+  analyzer reports no diagnostic either way. Measured on tool4d 21 R5
+  (100189).
 
 ## Value Types, Null and Guards
 
