@@ -319,6 +319,17 @@ Reference: https://developer.4d.com/docs/Events/onAfterKeystroke, https://develo
 
 A modern application should use `On After Edit` instead: it fires after **every** transitional edit action, whether that action was a single keystroke, a paste, a cut, an automatic drop, an FEP-composed edit, or an Undo -- one consistent event regardless of the mechanism that produced the change, rather than needing to separately special-case pastes/cuts/drops/FEP/Undo alongside keystroke handling. This is the event that fires for an automatically dropped text or picture -- `On Data Change` does not fire until the object is subsequently validated (tab/Return/click-out).
 
+### `On After Edit` sees the previous value
+
+During `On After Edit` the data source (`Form.dpi`, a field, a variable) still
+holds the text **before** the edit; it is updated only on validation. Reading it
+there lags one edit behind. Read the in-progress text with `Get edited text`.
+It also fires after every keystroke, so do not start slow work (a CLI call, an
+HTTP request, a conversion) from it directly. For "apply when the user is done"
+behaviour, use `On Data Change`, which fires after the value is committed and
+the data source holds it. Observed in a form whose preview re-rendered with the
+previous value on each edit and launched a process per keystroke.
+
 ### `FILTER KEYSTROKE` — Intercepting Individual Keystrokes
 
 Reference: https://developer.4d.com/docs/commands/filter-keystroke
