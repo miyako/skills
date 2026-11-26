@@ -520,7 +520,7 @@ Do not install tool4d globally and do not modify the user's PATH.
 | `--dataless` | No data file. Use whenever the project may be open elsewhere, to avoid lock conflicts |
 | `--user-param` | A single text argument, read back with `Get database parameter(User param value; $text)` |
 | `--headless` | Full `4D` only: run without a GUI. Requires a license |
-| `--skip-onstartup` | Do not run the `On Startup` database method (which typically opens windows) before `--startup-method` |
+| `--skip-onstartup` | Do not run the `On Startup` database method (which typically opens windows) before `--startup-method`. Without it, tool4d **and** full 4D run both: a start method called from `On Startup` and from the test method runs twice (`skills/4dstartup/SKILL.md`, "Why the check runs in the worker") |
 
 ## Path Arguments
 
@@ -1242,6 +1242,42 @@ Architecture: `dialog_screenshot` opens `DIALOG` with `*`
 (non-blocking), then `CALL FORM(goto_page_then_screenshot)`, then
 `CALL FORM(screenshot_and_accept)`.
 
+Full 4D also opens the Design environment (Explorer) behind the dialog.
+`FORM SCREENSHOT` captures the form only and is unaffected; a real-window
+capture by window ID (`references/shared-desktop.md`) is too. Never take a
+whole-screen `screencapture` to look at 4D: 4D is not frontmost, so it
+records the user's desktop and other apps (delete such images).
+
+#### Smoke-testing a running app without UI automation
+
+To test flows that start from buttons (open a second window, switch
+language), let a scratch startup method call the app's real entry point,
+then drive the open form with `CALL FORM(<window>; "<method the button
+calls>"; ...)`: the method runs in the form's context, as a click would.
+Between steps, log the state as JSON and quit:
+
+```4d
+// smoke_log -- appends one step to /PACKAGE/out/smoke.json
+#DECLARE($step : Text)
+ARRAY LONGINT($windows; 0)
+WINDOW LIST($windows)
+var $list : Collection:=[]
+var $i; $l; $t; $r; $b : Integer
+For ($i; 1; Size of array($windows))
+	GET WINDOW RECT($l; $t; $r; $b; $windows{$i})
+	$list.push({title: Get window title($windows{$i}); process: Window process($windows{$i}); rect: [$l; $t; $r; $b]})
+End for 
+var $file : 4D.File:=File("/PACKAGE/out/smoke.json")
+var $log : Collection:=$file.exists ? JSON Parse($file.getText()) : []
+$log.push({step: $step; language: Get database localization(Current localization); windows: $list})
+Folder("/PACKAGE/out").create()
+$file.setText(JSON Stringify($log; *))
+```
+
+Assert on the JSON from the shell (window count, titles in the new
+language, rects kept). Such a log caught a start method that opened two
+windows. Keep the harness in a scratch copy, out of the shipped project.
+
 #### Form Rendering Cycle
 
 4D defers form rendering to the end of each execution cycle (a form event
@@ -1323,6 +1359,16 @@ BLOB TO DOCUMENT($path; $blob)
 ```
 
 Write output next to the project, then read it back from the shell.
+
+`Get 4D folder` returns a **system** path (`:`-separated on macOS), so
+appending a POSIX fragment such as `"out/x.txt"` gives a path that does not
+exist, and `TEXT TO DOCUMENT` wrote nothing, without an error, in a real
+session. Use the filesystem object instead, with a folder that exists:
+
+```4d
+Folder("/PACKAGE/out").create()
+File("/PACKAGE/out/debug.json").setText(JSON Stringify($log; *))
+```
 
 The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
 `Convert path POSIX to system`) are language-level -- look them up via

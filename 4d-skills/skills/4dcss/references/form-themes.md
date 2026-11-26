@@ -142,6 +142,14 @@ button.
 **Rule:** "no other button uses this class yet" is not a stopping point --
 it is a prompt to find every other button that should use it.
 
+**Exclude from the height audit** buttons with `"style": "custom"` (no
+native chrome, so the 27px threshold does not apply: coloured tiles,
+toolbar icons) and `"display": false` hit areas laid over another object.
+Listing them produces false positives. A custom button that paints
+nothing or a grey pill under Liquid Glass is missing
+`"borderStyle": "custom"` (`skills/4dform/references/objects/button.md`,
+"Coloured buttons").
+
 ### Critical: CSS Specificity vs Form JSON
 
 Properties defined directly in the `.4DForm` JSON have **the highest specificity** and override CSS rules — unless the CSS uses `!important` (which is discouraged).
@@ -350,6 +358,7 @@ When adapting a 4D project for Liquid Glass:
 - [ ] `styleSheets_mac.css` exists in `Project/Sources/`
 - [ ] `@media (form-theme: liquid-glass)` rule sets `height: 27px` for **both** `.default` and `button.default`
 - [ ] `@media (form-theme: mac-classic)` rule sets `height: 23px` for **both** `.default` and `button.default`
+- [ ] `style: custom` buttons and `display: false` hit areas left out of the height audit; coloured custom buttons carry `borderStyle: custom`
 - [ ] All target buttons in `form.4DForm` have `"class"` assigned (e.g., `"default"`)
 - [ ] `height` property removed from target buttons in `form.4DForm`
 - [ ] `bottom` property removed from target buttons in `form.4DForm` (if present)

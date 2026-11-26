@@ -35,13 +35,13 @@ headings.
 ### Rebuilding the data
 
 ## References
-## Screenshots            (optional)
+## Screenshots            (optional; or inline under each section)
 ## Modernisation notes    (converted legacy demos only)
 ```
 
 | Section | Content |
 |---|---|
-| Badges | version = the 4D release that `compatibilityVersion` targets; platforms actually supported |
+| Badges | optional (owner's choice): version = the 4D release that `compatibilityVersion` targets; platforms actually supported. Without badges, state the version in Requirements |
 | Intro | one paragraph: the feature, the data, what runs locally |
 | What it demonstrates | 4-8 bullets, each backed by code in the repo, naming the 4D API |
 | Key commands | optional: table of the 4D commands/classes the demo is built on, each linked to the 4D docs (HDI baseline) |
@@ -65,5 +65,9 @@ headings.
 * Numbers (sizes, timings, hit counts) are measured on the shipped data.
   Re-measure them when the data or the model changes.
 * State that demo data is fictitious when it is generated.
+* Screenshots are **runtime** captures (`4dcli`), one per language when
+  the UI is localised, stored under `docs/images/` and linked by relative
+  path. Never a static preview (`fourdform`) for a feature it cannot draw.
+  The Japanese section shows the Japanese captures.
 * Say which language the shipped data is in when it differs by UI
   language, and how to regenerate it in the other.
