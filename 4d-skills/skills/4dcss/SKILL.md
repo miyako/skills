@@ -147,6 +147,7 @@ Visual properties are safe in CSS: `fill`, `stroke`, `alternateFill`,
 | Not settable from CSS | `method`, `type`, `class`, `events`, and the list attributes `choiceList`, `excludedList`, `labels`, `list`, `requiredList` |
 | Web alias + 4D value | 4D-specific values (e.g. `sunken`) work only with the 4D name: `borderStyle: sunken;`, not `border-style: sunken;` |
 | `borderRadius` | Documented for Input, Rectangle and Text Area (inputs / text areas only with `none`, `solid` or `dotted` borders). On buttons it was observed to round only the fill while a `solid` border stays square: use `fill` + `borderStyle: none` for rounded flat buttons. |
+| Button colours (21 R5) | `borderFillColor` / `borderColor` need `style: custom` **and** `borderStyle: custom` on the button; without both they are ignored. See `skills/4dform/references/objects/button.md`. |
 | Vertical text alignment | `verticalAlign` applies to list boxes, columns, headers and footers only; inputs have none. To centre text visually in an input, make its `height` close to the line height (observed). |
 | List box `verticalAlign` | `automatic` (default) means **bottom** for text (top for pictures). Set `verticalAlign: middle` explicitly on list box classes. |
 

@@ -20,12 +20,12 @@ change behaviour in the same commit.
 
 | # | Step | Owner |
 |---|---|---|
-| 1 | Survey: form list, existing stylesheets, hard-coded colours and heights, window sizing | `4dform`, `4dcss` |
+| 1 | Survey: form list, existing stylesheets, hard-coded colours and heights, window sizing; which colours are the demo's subject (exempt) | `4dform`, `4dcss` |
 | 2 | Localise first (strings to XLIFF), so later layout is checked with real label lengths | `4dlocalise` |
 | 3 | Stylesheet split: brand and typography in `styleSheets.css`; control heights per theme in `styleSheets_mac.css` / `styleSheets_windows.css` | `4dcss` |
 | 4 | Header band and background: full-bleed, `rightMargin: 0` when a band spans the form | `4dform` (`references/form-concepts.md`) |
 | 5 | Dark mode: every custom colour has a `prefers-color-scheme: dark` pair | `4dcss` (`references/dark-mode.md`) |
-| 6 | Control heights: buttons and dropdowns ≥ 27 px under Liquid Glass; Fluent UI not verified (say so) | `4dcss` (`references/form-themes.md`) |
+| 6 | Control heights: buttons and dropdowns ≥ 27 px under Liquid Glass; Fluent UI not verified (say so). Heights set in code must hold after every theme switch (best-size inputs shrank to ~18 px) | `4dcss` (`references/form-themes.md`) |
 | 7 | Layout: alignment grid, spacing, no overlaps | `4dform` (`references/layout.md`) |
 | 8 | List boxes: defaults, or the fitted exception for a fixed window | `4dform` (`references/objects/listbox.md`) |
 | 9 | Status and feedback: callback-fed status lines, disabled actions until ready | `4dform` (`references/async-ui.md`) |
@@ -43,22 +43,36 @@ change behaviour in the same commit.
   lines, `verticalAlign: middle`.
 * Button height: 27 px for `liquid-glass`, 23 px for `mac-classic`
   (the Windows sheet mirrored this unverified).
+* Theme swatch buttons (a button that switches to a theme) mirror that
+  theme: same fill, border and corner radius (e.g. 8 / 4 / 14 px), so the
+  button previews the result. Coloured buttons need `style` and
+  `borderStyle` both `custom` (`4dform`, `references/objects/button.md`).
+
+## Exemption: colours that are the feature
+
+"No hard-coded colours" is for the product's own chrome. When a demo
+exists to show colour APIs (`OBJECT SET RGB COLORS`, coloured buttons,
+themes set in code), those colours are the subject: keep them in the
+form JSON and code, and move only the surrounding chrome to CSS.
 
 ## Verify
 
 1. `fourdform` quick preview and the 4dform done-gate for structure.
 2. Real rendering with 4D in the background, captured by window ID with
-   no clicks or keystrokes (`4dcli`, `references/shared-desktop.md`).
+   no clicks or keystrokes, selecting only the PID you started
+   (`4dcli`, `references/shared-desktop.md`). Never quit 4D by app name
+   or path: the user may have their own 4D open.
 3. For each UI language (en, ja): no truncated labels, no clipped
    buttons, no horizontal list-box scroll bar.
 4. Light and dark appearance.
-5. Write down what you could not verify (Windows / Fluent UI; ja `Common*`
-   strings in tool4d) in the PR. Do not claim it.
+5. Write down what you could not verify (Windows / Fluent UI; light mode
+   if the machine is dark; `Common*` strings on a Japanese OS) in the PR.
+   Do not claim it.
 
 ## Checklist
 
 - [ ] Behaviour unchanged; polish in separate commits
-- [ ] No hard-coded colours or button heights left in form JSON
+- [ ] No hard-coded colours or button heights left in form JSON, except colours the demo is about
 - [ ] Every custom colour has a dark-mode value
 - [ ] Every form captured in each UI language, light and dark
 - [ ] Unverified platforms listed in the PR

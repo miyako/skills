@@ -46,14 +46,20 @@ baseline only: confirm current choices with the owner.
    versions; never commit `Components/` builds.
 5. **Opens into the demo.** `On Startup` opens the main form directly; no
    splash, no menu hunt. Show progress and readiness **in the form**
-   (status line, disabled actions until ready), not in alerts.
+   (status line, disabled actions until ready), not in alerts. Use the
+   `4dstartup` pattern (worker, reuse an open window, menu bar, `DIALOG(*)`,
+   localised window title).
 6. **First-launch downloads** (models, data) show size and progress, go
    to a stable per-user cache (e.g. `~/.GGUF/<repo>`), and are reused on
    later launches.
 7. **Language.** UI follows the OS language, en + ja XLIFF (`4dlocalise`).
    Decide separately whether the **data** and sample inputs are localised.
+   If a generator builds data in the current UI language, the shipped data
+   file has one language: say which in the README and how to rebuild it in
+   the other (e.g. the "create sample data" button).
 8. **Clean up.** Remove scratch or destructive methods (e.g. one that nulls
-   every vector and ends with `TRACE`), French or other locale leftovers in
+   every vector and ends with `TRACE`), dead code (properties and methods
+   nothing reads), French or other locale leftovers in
    `menus.json`/`folders.json`, and vendored `.agents/skills` copies.
 9. **Skills submodule.** `.agents` is the `dist` branch of miyako/skills
    (see the repository README); never edit inside `.agents`. Add
@@ -63,14 +69,17 @@ baseline only: confirm current choices with the owner.
 10. **README** (`references/readme.md`).
 11. **Verify like an attendee:** fresh clone in a temp folder, data from
     the release, open, first launch, search, quit; no orphan processes
-    afterwards (`4dcli`, `references/shared-desktop.md`).
+    afterwards (`4dcli`, `references/shared-desktop.md`). Also run every
+    add/edit path and **cancel** it: nothing may be left behind (`4dorda`,
+    "Save only on confirmation").
 
 ## Checklist
 
 - [ ] compatibilityVersion = target release = README badge
 - [ ] Runs from a fresh clone + documented release download only
 - [ ] Opens straight into the demo form; status shown in the form
-- [ ] UI in the OS language (en/ja); data-language decision recorded
+- [ ] UI in the OS language (en/ja); data-language decision recorded; README says which language the shipped data uses
+- [ ] Cancelling an add or edit leaves no record
 - [ ] No scratch methods, locale leftovers or vendored skills
 - [ ] `.agents` submodule on `dist` + update workflow
 - [ ] README follows `references/readme.md`

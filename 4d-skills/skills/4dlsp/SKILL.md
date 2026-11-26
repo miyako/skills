@@ -63,6 +63,11 @@ both a 4D Analyzer extension copy (21 R4) and a newer installed
 `/Applications/4D 21.2 LTS (100694)/tool4d.app` present, the extension copy
 was chosen. Pass `--tool` when the project needs a specific build.
 
+Use a tool4d at least as new as the project's `compatibilityVersion`. An
+older build reports false errors on newer syntax: 21 R4 flagged the 21 R5
+fourth parameter of `OBJECT SET RGB COLORS`; 21 R5 reported nothing.
+Before fixing such a diagnostic, check which tool4d the run used.
+
 If tool4d is installed via the 4D Analyzer VS Code extension, no
 configuration is needed. Otherwise pass `--tool <path-to-tool4d>` (or set
 `TOOL4D_PATH`) explicitly -- e.g. on macOS a manually-installed 4D.app is
@@ -404,6 +409,9 @@ tools/4dlsp/tool4d-lsp-stdio validate --workspace Project/ Sources/Methods/myMet
   Do not second-guess them.
 - tool4d may take a few seconds to start (it loads the project). The default
   startup timeout is 30 seconds.
+- Gate on the parsed output (`--json`: every `diagnostics` array empty),
+  never on the exit code: `validate` and `check-syntax` exit `0` with
+  errors present.
 - Validate only the files you created or modified, not the entire project.
 - **`validate` reporting 0 errors does not guarantee every command is
   current.** Some obsolete/renamed commands (e.g. old commands replaced by
