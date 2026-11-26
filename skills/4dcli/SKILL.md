@@ -1386,8 +1386,13 @@ The path APIs themselves (`File`, `4D.File`, `Convert path system to POSIX`,
   for pretty-printing.
 * `LOG EVENT(Into system standard outputs; $message)` prints to stdout,
   the simplest way to get short results out of a headless run.
-* Omit `--dataless` only when a test must read or write records, and run
+ * Omit `--dataless` only when a test must read or write records, and run
   it on a copy of the data file.
+* A run that opens the data file can rewrite it even when the method only
+  reads: the engine builds indexes on first use (`IndexManager ... built
+  ...` in the log) and the bytes of a committed `Data.4DD` change. In a
+  repo where `Data/` is committed on purpose, `git checkout` the data
+  files before committing, or the verification run ships binary churn.
 * Runtime error line numbers count from the start of the **method or
   function** (the `Function` line is line 1), not from the start of the
   class file.
@@ -1489,6 +1494,25 @@ for a hand-off. The same project, captured through the `dialog_screenshot`
 chain in the full 4D application, produced content-rich pages (100+ KB
 PNGs). When the screenshot must show data or styling, use the full 4D app
 and verify the result, do not trust the file's existence.
+
+When the agent has no image input, read the capture with macOS **Vision
+OCR** instead -- one small Swift binary verifies both the window title
+(see `references/shared-desktop.md`, the `winid` helper prints it) and the
+rendered text:
+
+```sh
+# ocr.swift -- usage: ocr <image.png>
+# VNRecognizeTextRequest, recognitionLevel .accurate,
+# recognitionLanguages ["en-US", "ja-JP"]; swiftc ocr.swift -o ocr
+/tmp/winid/ocr /tmp/capture.png
+```
+
+The text output is enough to assert the things that matter after a run:
+the localised window title, that a version gate shows its error and Close
+button, that tab captions and status lines resolved from XLIFF, and that
+no `Syntax Error` dialog is stacked in front of the form (a dialog appears
+as its own window in `winid`'s list before you even capture). Compile both
+helpers once per host; they have no dependencies beyond the OS.
 
 ## Tool Dependencies
 
