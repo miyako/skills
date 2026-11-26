@@ -14,10 +14,10 @@ description: >
 # Old vs New Technique Demo
 
 The audience must see that the **only** difference is the technique. The
-pattern comes from a webinar that set the same "New Trip" form twice: once
-with the 21 R4 technique (rectangles behind borderless text and inputs) and
-once with the 21 R5 properties (`padding*`, `verticalAlign`,
-`borderRadius`, `fill` on the objects). The names are examples.
+running example is one form built twice: once with the 21 R4 technique
+(rectangles behind borderless text and inputs) and once with the 21 R5
+properties (`padding*`, `verticalAlign`, `borderRadius`, `fill` on the
+objects). The names are examples.
 
 ## Related
 
@@ -78,17 +78,16 @@ The README's before/after images are the point of the repository:
 * **Runtime only.** Capture each form in each UI language with full 4D
   (`4dcli`, `dialog_screenshot_with_data`, which sets the language and the
   `formClass` data; or the real-window capture in
-  `references/shared-desktop.md` for README images), into
+  `skills/4dcli/references/shared-desktop.md` for README images), into
   `docs/images/<Form>_<lang>.png`. A static
   preview (`fourdform`) does not draw `padding*` or `verticalAlign` and
   shows SVG icons as text: never use it as evidence for the feature.
-* Wrap every capture in `timeout` (e.g. 90 s) and kill stragglers by PID:
-  one capture loop was cut off by an agent timeout, not by 4D.
+* Wrap every capture in `timeout` (e.g. 90 s) and kill stragglers by PID,
+  so a capture loop is not cut off by the agent's own timeout instead.
 * Capture from a scratch copy of the project, so harness methods never
   enter the shipped demo.
-* Look at every capture: in one demo the captures, not the syntax
-  checker, revealed a misplaced label (operator precedence) and clipped
-  Japanese text.
+* Look at every capture: a misplaced label (operator precedence) or
+  clipped Japanese text shows in a capture, not in the syntax checker.
 
 ## Checklist
 

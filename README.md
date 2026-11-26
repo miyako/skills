@@ -59,7 +59,7 @@ For demo, webinar and seminar projects shared with attendees.
 | [`demo-sample-data`](4d-skills/skills/demo-sample-data/SKILL.md) | Per-language generated sample data that looks plausible to the audience, with a regenerate button |
 | [`demo-vector-search`](4d-skills/skills/demo-vector-search/SKILL.md) | Vector-search demos: scale, real vector index, threshold calibration, indexed vs scan timing |
 | [`demo-presentation`](4d-skills/skills/demo-presentation/SKILL.md) | Live-demo UX, Japanese audience, UI vs data language |
-| [`demo-localise`](4d-skills/skills/demo-localise/SKILL.md) | Localising a demo end to end: decisions to ask, then routing to `4dlocalise`, `4dstartup` and `demo-presentation` |
+| [`demo-localise`](4d-skills/skills/demo-localise/SKILL.md) | Localising a demo end to end: decisions to ask, then routing to `4dlocalise`, `4dstartup` and `demo-presentation`; companion browser pages |
 | [`demo-hdi`](4d-skills/skills/demo-hdi/SKILL.md) | HDI ("How do I") repositories: splash form, version and license check, README intro and branch table (replaces the HDI_Template instructions) |
 | [`demo-launcher`](4d-skills/skills/demo-launcher/SKILL.md) | Launcher form: one button per demo form, side-by-side windows, in-app language switch, single launcher, smoke test |
 | [`demo-feature-comparison`](4d-skills/skills/demo-feature-comparison/SKILL.md) | Old vs new technique demos: one class two forms, version gates, before/after runtime captures |
@@ -244,3 +244,4 @@ its new home (`instructions.<file>.status`: `skill`, `instruction` or
 | `technote-translation` | Stays in its repositories under `.github/instructions/` |
 | `copilot-instructions.md` | The repository's root `AGENTS.md` |
 | `readme.usage.guidance`, `readme.hdi` | Deleted |
+| `4d-project-instructions`, `tool4d-cli`, `plugin-dev` | Not migrated yet; left in their repositories |

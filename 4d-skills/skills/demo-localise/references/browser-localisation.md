@@ -32,12 +32,10 @@ content in the source language.
 
 ## Map the served page and its requests
 
-Before editing paths, identify which server owns each page and asset.
-Project-root and component `WebFolder` directories are distinct roots;
-do not assume that a page under one is available from the other. Verify
-the actual URL, port and base path for every page and endpoint. Prefer a
-relative, same-origin request such as `fetch('/runDemo')` when the page
-and endpoint are served by the same origin. This avoids introducing a
+Identify the `WebFolder` root, server, port and route of each page and
+endpoint as in
+[`demo-shareable-repo`'s companion-page guidance](../../demo-shareable-repo/references/web-companions.md).
+A relative, same-origin request (e.g. `fetch('/<endpoint>')`) avoids a
 second origin and unnecessary CORS configuration; it is not proof that
 the endpoint is authorized or safe to expose.
 
@@ -54,23 +52,3 @@ the selector and after dynamic results arrive. Exercise the same-origin
 endpoint from the actual served page. A timed-out browser smoke test is
 inconclusive: report the timeout and leave the behavior unverified rather
 than treating it as a pass.
-
-Keep project-specific unresolved items separate from general guidance.
-In the source demo handoff for this guidance, the following remained
-unverified or unresolved: native form titles stored in `Data/Data.4DD`,
-floating 4D dependency references, and a missing `00_Start` menu method.
-No 4D runtime/LSP validation or Japanese native-UI review was available,
-and the browser JavaScript smoke test timed out. These are not established
-defects in other 4D projects; inspect and verify them in the project being
-worked on.
-
-The same handoff reported ten static labels in paired English/Japanese
-XLIFF, OS-language selection for the native UI, browser-language detection
-with a persistent selector and dynamic page translation, separate
-component and project-root `WebFolder` pages, and a same-origin
-`/runDemo` endpoint on port 8044 for the component page. These are
-observations about that demo, not required paths, counts or port numbers
-for other projects. Its cleanup also removed an undefined
-`loadSessionCounts()` call, an unreferenced `ticketingSession.js`, and
-explicit Latin-only fonts; the latter follows the existing font guidance
-in `4dcss`.

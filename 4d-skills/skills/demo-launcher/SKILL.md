@@ -14,9 +14,8 @@ description: >
 # Demo Launcher
 
 A small form that opens first and lets the presenter reach each part of
-the demo in one click, in either UI language. The patterns come from a
-bilingual (en/ja) webinar that compared two versions of one form; the
-names below (`Demo_*`, `Launcher`) are examples.
+the demo in one click, in either UI language (e.g. en/ja). The names
+below (`Demo_*`, `Launcher`, `FormA`/`FormB`) are examples.
 
 ## Related
 
@@ -75,8 +74,7 @@ Demo_openForm("FormA"; {left: $left1; top: $top})
 Demo_openForm("FormB"; {left: $left2; top: $top+24})
 ```
 
-Parenthesise every sub-expression: 4D has no operator precedence, and a
-missing pair put a label in the wrong box in the same demo
+Parenthesise every sub-expression: 4D has no operator precedence
 (`skills/4dlang/references/pitfalls.md`). Check the result at the
 projector's resolution (1280×800 is a safe assumption).
 

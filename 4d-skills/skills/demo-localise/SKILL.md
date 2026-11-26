@@ -19,7 +19,7 @@ is checked with real label lengths.
 ## Ask first
 
 Ask the owner, one question at a time, and record the answers in the PR.
-Defaults that one en/ja seminar demo chose (21 R5, Japan):
+Typical defaults for an en/ja demo presented in Japan:
 
 | Decision | Default |
 |---|---|
@@ -62,6 +62,6 @@ Defaults that one en/ja seminar demo chose (21 R5, Japan):
 - [ ] No user-facing literal left in forms, code, menus or the data file
 - [ ] `xliff_check.py` clean; every unit has a `ja` target
 - [ ] Switch reopens the start screen in the other language
-- [ ] Served pages follow the 4D language
+- [ ] Served pages follow the agreed language source (4D UI or browser) in every language
 - [ ] Every form rendered in each language; no clipped Japanese text
 - [ ] README in both languages says which language the data uses
