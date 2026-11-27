@@ -26,8 +26,8 @@ when a project already follows a different house style.
   a short native word over a katakana transliteration: "トラベル
   エージェンシー" wrapped or clipped where "旅行会社" fitted. Katakana
   loanwords are often *longer* than the English.
-* Do not translate a product or series brand the owner keeps in English
-  (e.g. "How do I..." for HDI demos); ask.
+* Do not translate a product or series brand the owner keeps in English;
+  ask.
 * Translate meaning, not word order: word order changes around
   placeholders (`{1} of {2}` → `{2} 件中 {1} 件`, `../SKILL.md`).
 

@@ -178,8 +178,7 @@ When a listbox uses `"metaSource"` to dynamically style rows/cells with fill col
 ### alternateFill
 
 - Use `"automaticAlternate"` at the **listbox level** for automatic dark/light adaptation.
-- Do **not** repeat the same `alternateFill` at the column level unless it is a deliberate column-specific override.
-- Remove column-level `alternateFill` if it matches the listbox-level value (it adds no value and creates maintenance burden).
+- Remove a column-level `alternateFill` that repeats the listbox value (column-level properties are for overrides; see "Rules" above).
 
 ### Odd-row (`fill`) colour with light/dark variants
 
@@ -191,8 +190,8 @@ If you want a custom odd-row background (instead of fully automatic), do it via 
 4. Define light/dark odd-row colours in `styleSheets.css`:
 
    Define the rule on **both** the bare class and the compound
-   `listbox.my-list` selector (the bare class alone does not always match a
-   listbox at runtime -- see "Matching quirk" in `../SKILL.md`):
+   `listbox.my-list` selector (one of the two does not always match at
+   runtime -- see "Matching quirk" in `../SKILL.md`):
 
 ```css
 @media (prefers-color-scheme: light) {
@@ -211,7 +210,7 @@ If you want a custom odd-row background (instead of fully automatic), do it via 
 - Never hardcode light-mode-only colours in meta source methods.
 - Use the hidden-rectangle reference technique described above.
 - White text (`#FFFFFF`) on a coloured background (e.g., red `#FF4040`) is acceptable in both modes because the cell fill provides contrast.
-- Do not stop at checking one assignment site. If a listbox's meta-source array is populated both on form load and on a selection-change/refresh event, both sites must resolve colours the same way (both via the hidden-rectangle technique, sharing the same resolved variables) — fixing only the load-time initializer and leaving a refresh handler with hardcoded hex reintroduces the bug the moment the user interacts with the listbox.
+- Fix every assignment site of a meta-source array (load and refresh handlers), not only the first one -- see the audit steps under "Use Case: Listbox Meta Expression".
 
 
 ## Colour Palette Recommendations

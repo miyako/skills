@@ -113,7 +113,7 @@ When the demo is presented in both languages, put an
 `English | 日本語` dropdown on the splash, initialised from
 `Get database localization(Current localization)`. On change:
 `SET DATABASE LOCALIZATION($lang)`, `CANCEL`, then
-`CALL WORKER(1; "00_Start"; {})` so the splash reopens and every
+`CALL WORKER(1; "<start method>"; {})` (`00_Start` in the template) so the splash reopens and every
 `:xliff:` reference resolves again (`4dlocalise`, "Switching
 Language at Runtime"; `4dstartup`, "Hub Start Screen").
 

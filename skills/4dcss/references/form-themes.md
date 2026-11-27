@@ -111,7 +111,7 @@ Use CSS media queries in `styleSheets_mac.css` to set appropriate button heights
 }
 ```
 
-**Why both selectors?** In practice, 4D's CSS engine may not always match a compound `button.default` selector at runtime, even when the form object is clearly a button. Using the class-only `.default` selector as a fallback ensures the height rule is applied reliably. The compound `button.default` selector is kept for specificity when other object types also use the `default` class but should not receive button sizing.
+**Why both selectors?** See "Matching quirk" in `../SKILL.md`: the class-only `.default` makes the rule apply reliably; the compound `button.default` is kept for when other object types also use the `default` class.
 
 **This was discovered in practice**: a button with `"class": "default"` and no `height` in the form JSON rendered as a flat, square button because only `button.default` was defined in the CSS. Adding `.default` alongside it fixed it immediately.
 
@@ -152,9 +152,7 @@ nothing or a grey pill under Liquid Glass is missing
 
 ### Critical: CSS Specificity vs Form JSON
 
-Properties defined directly in the `.4DForm` JSON have **the highest specificity** and override CSS rules — unless the CSS uses `!important` (which is discouraged).
-
-Therefore, for CSS-driven sizing to work:
+A property in the `.4DForm` JSON beats CSS ("Specificity" in `../SKILL.md`). For CSS-driven sizing to work:
 
 1. **Remove** the `height` property from the button definition in `form.4DForm`
 2. **Remove** the `bottom` property if present (it implicitly constrains height)
@@ -255,7 +253,7 @@ The `FORM theme` command returns the current rendering mode as a string at runti
 | `"liquidGlass"` | Liquid Glass is active |
 | `"classic"` | Classic rendering |
 
-Use this when you need to adjust behaviour programmatically beyond what CSS can handle — for example, dynamically setting meta-source colours in listboxes, or keeping buttons resized in code at 27px: `($t=Null) ? ((FORM theme="liquidGlass") ? 27 : 24) : 32`.
+Use this when you need to adjust behaviour programmatically beyond what CSS can handle — for example, dynamically setting meta-source colours in listboxes, or keeping buttons resized in code at 27px or more: `$height:=(FORM theme="liquidGlass") ? 27 : $classicHeight`.
 
 `FORM theme` returns `""` outside a form context (e.g. in a startup method before the form is open). Call it from the form or a `CALL FORM` callback.
 
@@ -343,7 +341,7 @@ Creating a CSS rule for `button.default` but not adding `"class": "default"` to 
 }
 ```
 
-**Why:** 4D's CSS engine may not reliably match the compound `button.default` selector for all button objects at runtime, even when the form object type is `"button"`. Always define height on **both** `.default` and `button.default` to ensure the rule applies.
+**Why:** the compound selector may not match at runtime ("Matching quirk" in `../SKILL.md`). Define height on **both** `.default` and `button.default`.
 
 ### ❌ Migrating only the first form/button you find
 

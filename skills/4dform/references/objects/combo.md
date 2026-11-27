@@ -8,8 +8,8 @@ summary: "Combo box object: enterable drop-down variant, object/array/choice-lis
 # 4D Combo Box Object
 
 Reference: https://developer.4d.com/docs/FormObjects/comboBoxOverview
-Also: https://developer.4d.com/docs/FormObjects/dropdownList_Overview (shared data source mechanics)
-Also: https://developer.4d.com/docs/FormObjects/properties_DataSource, https://developer.4d.com/docs/FormObjects/properties_RangeOfValues
+Also: https://developer.4d.com/docs/FormObjects/dropdownListOverview (shared data source mechanics)
+Also: https://developer.4d.com/docs/FormObjects/propertiesDataSource, https://developer.4d.com/docs/FormObjects/propertiesRangeOfValues
 Also: https://blog.4d.com/use-collections-and-lists-within-forms-objects/ (object as the modern, recommended data source shape)
 
 ## Basic Definition
@@ -44,7 +44,7 @@ A combo box shares its three data source shapes (object, array, choice list) wit
 | Standard action | Supported (`gotoPage`, submenu actions) | **Not supported** -- not listed as a combo box feature at all |
 | `Required List` (`requiredList`) | N/A (drop-down is already a closed list) | Documented as **not available** for combo boxes in the Combo Box overview page, and interactively confirmed: setting `requiredList` on a combo box has **no effect** -- keyboard entry of arbitrary text remains fully possible and `On Validate` raises no error, even though the generic Range of Values property page's "Objects Supported" line for `requiredList` lists Combo Box. To force a finite, keyboard-entry-free list of required values, use a drop-down list instead. |
 | `Focusable` | Explicit `focusable` property (like a button) | Not a listed property -- a combo box is an ordinary enterable field and is always part of the tab order the same way an input is |
-| `On Clicked` | Fires on mouse-down, like a button | **Fires only for a popup selection** -- clicking the chevron opens the popup, and choosing an item from it fires `On Clicked` (a click-driven data change), the same way it does for a drop-down list. Clicking directly into the text-entry part of a combo does **not** fire `On Clicked` -- that's ordinary text editing, tracked with `On Data Change`/`On After Edit` like a normal input. Clicking the chevron and then clicking elsewhere to dismiss the popup **without** selecting anything does not fire `On Clicked` either (confirmed interactively) |
+| `On Clicked` | Fires on mouse-down | **Fires only for a popup selection** -- clicking the chevron opens the popup, and choosing an item from it fires `On Clicked` (a click-driven data change), the same way it does for a drop-down list. Clicking directly into the text-entry part of a combo does **not** fire `On Clicked` -- that's ordinary text editing, tracked with `On Data Change`/`On After Edit` like a normal input. Clicking the chevron and then clicking elsewhere to dismiss the popup **without** selecting anything does not fire `On Clicked` either (confirmed interactively) |
 | Combo-specific options | -- | `automaticInsertion` (add typed-but-unlisted values to the in-memory list) and `excludedList` (reject specific values from being typed/selected), neither of which exists for drop-down lists |
 
 ## Object-based
@@ -83,7 +83,7 @@ asFruit{2}:="Banana"
 asFruit{3}:="Cherry"
 ```
 
-The array is populated the same way as for a drop-down list (see https://developer.4d.com/docs/FormObjects/dropdownList_Overview#using-an-array), and the same `arrayNumber`/`arrayDate`/`arrayTime` hints apply. The key behavioral difference: since a combo box has no notion of a "currently selected element number" (the user can type text that matches no element at all), **the array variable itself is not used as an index** -- instead, whatever the user types or picks is written into **element `0`** of the array (`asFruit{0}`), regardless of what `asFruit{0}` held before. Read the current combo box value from `asFruit{0}` rather than `asFruit{asFruit}`.
+The array is populated the same way as for a drop-down list (see https://developer.4d.com/docs/FormObjects/dropdownListOverview#using-an-array), and the same `arrayNumber`/`arrayDate`/`arrayTime` hints apply. The key behavioral difference: since a combo box has no notion of a "currently selected element number" (the user can type text that matches no element at all), **the array variable itself is not used as an index** -- instead, whatever the user types or picks is written into **element `0`** of the array (`asFruit{0}`), regardless of what `asFruit{0}` held before. Read the current combo box value from `asFruit{0}` rather than `asFruit{asFruit}`.
 
 ## Choice list
 
@@ -108,7 +108,7 @@ Works the same way as a drop-down list's choice-list mode (inline array/collecti
 }
 ```
 
-Reference: https://developer.4d.com/docs/FormObjects/properties_DataSource#automatic-insertion
+Reference: https://developer.4d.com/docs/FormObjects/propertiesDataSource#automatic-insertion
 
 When `automaticInsertion` is `true` and the user types a value not already present in the associated list, that value is added to the **in-memory** list as soon as the entry is validated (e.g. pressing Return) -- interactively confirmed to append the new value at the **bottom** of the pop-up list, so it appears as a selectable choice from then on. When `false` (default), the typed value is stored in the data source but the list itself is left unchanged. This applies both to a choice-list combo box and to one whose list comes from an object/array data source. If the choice list originated from a Design-mode-defined toolbox list, the on-disk list definition is never modified by automatic insertion -- only the form's in-memory copy changes.
 
@@ -123,7 +123,7 @@ When `automaticInsertion` is `true` and the user types a value not already prese
 }
 ```
 
-Reference: https://developer.4d.com/docs/FormObjects/properties_RangeOfValues#excluded-list
+Reference: https://developer.4d.com/docs/FormObjects/propertiesRangeOfValues#excluded-list
 
 `excludedList` names values that cannot be entered into the combo box -- if the user types an excluded value and validates the entry, 4D rejects it and displays an alert dialog reading **"That value is not allowed."** (interactively confirmed). If the excluded list is hierarchical, only its first-level items are considered. This property has no drop-down list equivalent (a drop-down list only ever offers items already in its own list, so there is nothing to "exclude").
 
@@ -131,7 +131,7 @@ Reference: https://developer.4d.com/docs/FormObjects/properties_RangeOfValues#ex
 
 Alpha Format, Bold, Bottom, Choice List, Class, Draggable, Droppable, Date Format, Expression Type, Font, Font Color, Font Size, Height, Help Tip, Horizontal Sizing, Italic, Left, Object Name, Right, Time Format, Top, Type, Underline, Variable or Expression, Vertical Sizing, Visibility, Width.
 
-Notably absent compared to the drop-down list's property set: **Focusable** (a combo box is an ordinary enterable field, always focusable), **Standard action** (not supported at all), **Data Type (list)**/`saveAs` (no reference-storage mode), **Horizontal Alignment**, **Not rendered**, and **Save value**. Combo box adds **Draggable**/**Droppable**, which the drop-down list does not support.
+Notably absent compared to the drop-down list's property set: **Focusable** (a combo box is an ordinary enterable field, always focusable), **Standard action** (not supported at all), **Data Type (list)**/`saveAs` (no reference-storage mode), **Horizontal Alignment** (the JSON schema nevertheless accepts `textAlign` on a combo), **Not rendered**, and **Save value**. Combo box adds **Draggable**/**Droppable**, which the drop-down list does not support.
 
 ## Supported Events
 
@@ -145,7 +145,7 @@ Notably absent compared to the drop-down list's event set: **On After Edit**, **
 
 Like the drop-down list, `FORM SCREENSHOT` called with a form name (`FORM SCREENSHOT(formName; formPict; pageNum)`) renders the **Form Editor's static template** for a given page, not a live/running form -- it never executes `On Load` and never reflects any `Form.xxx`/array/field value assigned by form-object-method code. Every combo box kind (object-based, array-based, choice list, with or without `automaticInsertion`/`excludedList`) renders the **literal `dataSource` expression text** as its label in a CLI screenshot (e.g. `Form.comboFruit`, `asFruit`), never a resolved value.
 
-Some combo-box-specific behaviors are inherently interactive and cannot be observed via `FORM SCREENSHOT` at all (see `../screenshot-rendering.md` for static template rules) -- they require actually running the form interactively. Interactively confirmed results for this form:
+Some combo-box-specific behaviors are inherently interactive and cannot be observed via `FORM SCREENSHOT` at all (see `references/screenshot-rendering.md` for static template rules) -- they require actually running the form interactively. Interactively confirmed results:
 
 - Typing an excluded value (`excludedList`) and validating the entry triggers an alert dialog reading "That value is not allowed."; the value is not accepted.
 - `automaticInsertion` adds a newly typed value to the in-memory list as soon as the entry is validated (Return), appending it at the bottom of the pop-up list.

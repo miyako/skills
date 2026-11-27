@@ -1,8 +1,8 @@
 ---
 object: "checkbox"
 json_type: "checkbox"
-keywords: ["checkbox", "three-state", "tri-state", "disclosure", "collapseExpand", "Form.property", "standard action"]
-summary: "Checkbox object: 12 styles, three-state mode, data source rules, standard actions, height-based size variants."
+keywords: ["checkbox", "three-state", "tri-state", "disclosure", "roundedDisclosure", "Form.property", "standard action"]
+summary: "Checkbox object: 11 styles, three-state mode, data source rules, standard actions, height-based size variants."
 ---
 
 # 4D Checkbox Object
@@ -43,7 +43,7 @@ Checkboxes are closely related to buttons. They share most of the same visual pr
 | State persistence | Momentary (resets after click) | Persistent (stays checked/unchecked) |
 | Three-states | No | Yes (regular and flat styles only, integer variables only) |
 | Standard actions | Generic actions (accept, cancel, etc.) | Checkable actions (fontBold, fontItalic, etc.) |
-| Available styles | All 11 styles | 12 styles (no `help`; adds `disclosure`, `collapseExpand`) |
+| Available styles | 11 styles | 11 styles (no `help` or `circular`; adds `disclosure`, `roundedDisclosure`) |
 
 ## Data Source
 
@@ -115,7 +115,7 @@ The three-states property can be toggled at runtime:
 
 ## Checkbox Styles
 
-Checkboxes support 12 styles (all button styles except `help`, plus `disclosure` and `collapseExpand`):
+Checkboxes support 11 styles (the schema's `style` enum: all button styles except `help` and `circular`, plus `disclosure` and `roundedDisclosure`):
 
 | Style | Description |
 |-------|-------------|
@@ -127,30 +127,18 @@ Checkboxes support 12 styles (all button styles except `help`, plus `disclosure`
 | `gradientBevel` | Rounded with subtle gradient fill. |
 | `texturedBevel` | Gray textured background. |
 | `office` | Light blue background with thin border. |
-| `circular` | Circular outline with text below. |
 | `disclosure` | Disclosure triangle style. |
-| `collapseExpand` | Collapse/expand toggle style. |
+| `roundedDisclosure` | Rounded disclosure style. There is no `collapseExpand` value: an unknown `style` falls back to the regular look. |
 | `custom` | Fully customizable using background picture (`customBackgroundPicture`, `customBorderX/Y`, `customOffset`). |
 
 ### Checkbox-Specific Style Notes
 
 - **`regular` and `flat`**: These are the only styles that display the traditional checkbox appearance (a small square with a checkmark next to the label text). They are also the only styles that support three-states. The checkbox square itself retains its native system appearance regardless of text styling (stroke, fontWeight, etc. only affect the label text).
-- **Other styles** (toolbar, bevel, roundedBevel, gradientBevel, texturedBevel, office, circular): These render as **toggle buttons** -- visually identical to their button counterparts, with no checkbox square visible. They stay pressed/highlighted when checked. They are usually associated with a multi-state icon (`iconFrames: 4` or more).
+- **Other styles** (toolbar, bevel, roundedBevel, gradientBevel, texturedBevel, office): These render as **toggle buttons** -- visually identical to their button counterparts, with no checkbox square visible. They stay pressed/highlighted when checked. They are usually associated with a multi-state icon (`iconFrames: 4` or more).
 
 ### Icon States for Non-Regular Styles
 
-When using bevel-family or toolbar styles with an icon, the icon can have up to 6 states (since v20):
-
-| Frames | States |
-|--------|--------|
-| 1 | Single image for all states |
-| 2 | Unchecked, Checked |
-| 3 | Unchecked, Checked, Rollover |
-| 4 | Unchecked, Checked, Rollover, Disabled |
-| 5 | Unchecked, Checked, True Rollover, False Rollover, Disabled |
-| 6 | Unchecked, Checked, True Rollover, False Rollover, True Disabled, False Disabled |
-
-Reference: https://developer.4d.com/docs/FormObjects/propertiesTextAndPicture#number-of-states
+With bevel-family or toolbar styles, an icon can have up to 6 states (since v20); the frame-to-state table is in `references/form-concepts.md`, "Icon States (Multi-State Icons)".
 
 ## Visual Properties
 
@@ -275,10 +263,7 @@ Checkboxes support the same click events as buttons:
 
 ### Event Execution Order
 
-Same as buttons:
-1. **Object method** runs first
-2. **Form method** runs second
-3. **Standard action** runs last
+Object method, then form method, then standard action (`references/form-concepts.md`, "Event Execution Order").
 
 ### Object Method Pattern
 
@@ -332,7 +317,7 @@ checkbox {
 
 ## Localization
 
-Same as buttons -- use `:xliff:` references in the `text` property:
+Same as buttons (`button.md`, "Localization") -- use `:xliff:` references in the `text` property:
 
 ```json
 { "text": ":xliff:CheckboxEnable" }

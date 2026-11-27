@@ -279,7 +279,7 @@
       "variants": [
         "0de834cb41d9100ba5a88b3e40f93d6342adb151"
       ],
-      "note": "4D plugin repositories; out of scope for now (left untouched)."
+      "note": "4D plugin repositories; not migrated yet (left untouched). Native plugin string ownership is now covered by the 4dplugin skill."
     }
   },
   "skills": {

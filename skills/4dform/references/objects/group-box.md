@@ -24,7 +24,7 @@ Reference: https://developer.4d.com/docs/FormObjects/groupBox
 }
 ```
 
-A group box is a static (non-interactive) object used to visually assemble other form objects inside a titled frame. It has **no data source and no supported events at all** -- unlike every other object type in this project, the group box overview page does not even have a "Supported Events" section. It exists purely to draw a rectangular border with an optional title label, as a visual organizing aid.
+A group box is a static (non-interactive) object used to visually assemble other form objects inside a titled frame. It has **no data source and no supported events at all** -- unlike other object types, the group box overview page does not even have a "Supported Events" section. It exists purely to draw a rectangular border with an optional title label, as a visual organizing aid.
 
 ## Title Property: `text`, Not `title`
 
@@ -47,15 +47,15 @@ The title is a "localizable" static text, like any 4D label: it supports an XLIF
 | Property | JSON Name | Notes |
 |----------|-----------|-------|
 | Title | `text` | Group box label; see caveat above. Supports XLIFF reference syntax |
-| Font | `font` | |
+| Font | `fontFamily` | |
 | Font Size | `fontSize` | |
 | Font Color | `stroke` | JSON grammar key is `stroke`, not `fontColor` |
-| Bold | `bold` | |
-| Italic | `italic` | |
-| Underline | `underline` | |
-| Horizontal Alignment | `textAlign` | JSON grammar key is `textAlign`, not `horizontalAlign`; `"left"` / `"center"` / `"right"` / `"automatic"` / `"justify"` |
-| Horizontal Sizing | `horizontalSizing` | Resizing behavior |
-| Vertical Sizing | `verticalSizing` | Resizing behavior |
+| Bold | `fontWeight` | `"bold"` |
+| Italic | `fontStyle` | `"italic"` |
+| Underline | `textDecoration` | `"underline"` |
+| Horizontal Alignment | `textAlign` | JSON grammar key is `textAlign`, not `horizontalAlign`; `"left"` / `"center"` / `"right"` / `"automatic"` (no `"justify"` in the schema) |
+| Horizontal Sizing | `sizingX` | Resizing behavior |
+| Vertical Sizing | `sizingY` | Resizing behavior |
 | Visibility | `visibility` | `"visible"` / `"hidden"` |
 | CSS Class | `class` | CSS class hook |
 | Object Name | (JSON key) | Object identifier |
@@ -74,7 +74,7 @@ None. The group box overview documentation page has no "Supported Events" sectio
 
 - `"text": "Employee Info"` renders the title label inside the frame's top border. `"title": "Employee Info"` (the key used in the official doc's own example) renders **no label at all** -- confirming `text` is the correct key.
 - A group box with no `text` property at all renders a bare rounded rectangle frame with no label.
-- `bold`, `stroke` (font color), and `textAlign` are all honored: a bold, red (`"#FF0000"`), right-aligned title renders correctly positioned and styled within the frame.
+- `fontWeight`, `stroke` (font color), and `textAlign` are all honored: a bold, red (`"#FF0000"`), right-aligned title renders correctly positioned and styled within the frame.
 - Objects visually overlapping a group box's frame (e.g. input fields and their labels) render on top of the frame with no clipping or masking, confirming the group box is a pure visual backdrop rather than a true container.
 - A `":xliff:ResName"` reference in `text` resolves correctly to the referenced resource's translated string in the static template render, same as any other object's XLIFF-referenced label.
 

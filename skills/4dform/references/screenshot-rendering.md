@@ -40,32 +40,18 @@ is unavailable rather than manufacturing an equivalent result.
 
 ## Standalone PNG Preview -- No 4D Runtime
 
-`fourdform`, built from
-[miyako/4d-form](https://github.com/miyako/4d-form) and distributed in
-`miyako/skills` releases, renders a `.4DForm` file to an actual PNG on
-macOS 12+ or Windows 10+, arm64 or x64. The source pin is the merged
-Windows-support revision from
-[`miyako/4d-form#2`](https://github.com/miyako/4d-form/pull/2); the CLI
-version remains `0.1.0`. Use the invocation in
-`skills/4dform/SKILL.md`; installation belongs to `skills/4dtools/SKILL.md`.
-The parser and HTML renderer reuse pinned `4d-ql` libraries, with
-platform-specific raster adapters producing the image. Windows requires
-the Evergreen Microsoft Edge WebView2 Runtime and the packaged companion
-Swift/MSVC DLLs beside `fourdform.exe`. Linux is unavailable.
+`fourdform` renders a `.4DForm` file to an actual PNG on macOS 12+ or
+Windows 10+, arm64 or x64 (Linux is unavailable). Its parser and HTML
+renderer reuse pinned `4d-ql` libraries, with platform-specific raster
+adapters producing the image. The invocation, `--theme` values and
+defaults, and the known Windows approximations are in
+`skills/4dform/SKILL.md` ("Visual Assessment: Quick Preview First");
+installation, source pin and platform prerequisites belong to
+`skills/4dtools/SKILL.md`.
 
 This is a static reference preview, not `FORM SCREENSHOT`, not a real
 4D runtime capture or native screenshot, and not proof of pixel-identical
-native controls. Theme selection chooses the preview appearance:
-
-| Host | Accepted themes | Default |
-|---|---|---|
-| macOS | `classic-light`, `classic-dark`, `liquid-glass-light`, `liquid-glass-dark` | `classic-dark` if the form forces dark, otherwise `classic-light` |
-| Windows | `classic`, `fluent-light`, `fluent-dark` | `fluent-dark` if the form forces dark; otherwise `fluent-light` if `fluentUI` is set, otherwise `classic` |
-
-Cross-platform themes are rejected with exit code **2**, with no aliases
-and no Windows preview on macOS. An explicitly incompatible theme does
-not override a forced form color scheme. Windows tab controls and group
-boxes are approximate; popups display the object name, not runtime values.
+native controls.
 
 The preview does not run the form, execute `.4dm` methods, evaluate runtime
 data bindings, or verify every 4D stylesheet property. Report unsupported
@@ -143,11 +129,11 @@ For review or README images, capture the real window instead
 (`skills/4dcli/references/shared-desktop.md`): it has an opaque background
 and draws what the user sees. Keep `FORM SCREENSHOT` for layout checks.
 
-`project_form_to_image` and `print_form_to_file` are project-specific
-helper methods, not built-in 4D commands. A project that does not define
-them cannot be captured this way until they are installed -- the `4dcli`
-skill ships their source and the install procedure, see
-`skills/4dcli/SKILL.md`.
+`project_form_to_image` and `print_form_to_file` are helper project
+methods, not built-in 4D commands. A project that does not define them
+cannot be captured this way until they are installed -- the `4dcli` skill
+ships their source, their `--user-param` contracts and the install
+procedure, see `skills/4dcli/SKILL.md` ("Bundled Startup Methods").
 
 ## Static Template Behavior
 

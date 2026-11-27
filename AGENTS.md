@@ -72,6 +72,8 @@ The `4dtools` skill currently provisions tools such as:
   classic-language commands)
 - `4d-language-oop` (natural-language lookup service for the 4D object
   (OOP) language class reference)
+- `4d-catalog-diagram` (renders a `.4DCatalog` as an HTML diagram, SVG or
+  PNG)
 - `fourdform` (static `.4DForm` to PNG reference previews, macOS/Windows
   arm64/x64; not real 4D runtime captures or native screenshots)
 

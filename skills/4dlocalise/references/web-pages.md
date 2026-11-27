@@ -7,8 +7,10 @@ HTML stays untouched (verified on a 4D 21 R5 demo page with ~60 strings).
 
 ## Language from 4D
 
-Pass the UI language in the URL so the page matches the 4D window, not
-the browser:
+When the page must match the 4D window rather than the browser, pass the
+UI language in the URL (whether a demo page follows 4D or the browser
+language with its own selector is a decision: `demo-localise`,
+`references/browser-localisation.md`):
 
 ```4d
 $url+="&lang="+Get database localization(Current localization)

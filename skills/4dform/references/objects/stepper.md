@@ -23,7 +23,7 @@ Reference: https://developer.4d.com/docs/FormObjects/stepper
     "max": 100,
     "step": 1,
     "events": ["onDataChange"],
-    "dataSource": "Form:C1466.stepper"
+    "dataSource": "Form.stepper"
   }
 }
 ```
@@ -34,7 +34,7 @@ A stepper is a pair of up/down arrow buttons (like the end of a traditional scro
 
 **Vertical only** -- unlike rulers, there is no horizontal variant. The stepper always displays as a vertical pair of up/down arrows.
 
-The `width` controls the size of the stepper. Two size variants are visible in the user's form (width=14 and width=19).
+The `width` controls the size of the stepper. Two size variants were observed: width 14 and width 19.
 
 ## Data Source
 
@@ -46,12 +46,12 @@ Multiple steppers and other objects (e.g., inputs) can share the same data sourc
 {
   "Stepper": {
     "type": "stepper",
-    "dataSource": "Form:C1466.stepper",
+    "dataSource": "Form.stepper",
     "max": 100
   },
   "Input": {
     "type": "input",
-    "dataSource": "Form:C1466.stepper",
+    "dataSource": "Form.stepper",
     "dataSourceTypeHint": "integer"
   }
 }

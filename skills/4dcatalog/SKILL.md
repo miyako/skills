@@ -67,9 +67,6 @@ first by reading `skills/4dtools/SKILL.md`.
   This is normal and harmless. The `--dtdvalid` flag provides the real DTD.
   Check the exit code: 0 means validation passed.
 
-If `xmllint` is not available, provision it first by reading
-`skills/4dtools/SKILL.md`.
-
 ### When 4D refuses the catalog
 
 4D reports an unreadable catalog with generic messages (observed: "XML
@@ -95,10 +92,12 @@ grep -oE '<(base|table|field|index|relation) [^>]*uuid="[^"]*"' Project/Sources/
 The 4D Catalog DTD is:
 
 ```
-schemas/4dcatalog/base_core.dtd
+schemas/4dcatalog/base.dtd
 ```
 
-Use this DTD when validating a `.4DCatalog` file.
+Use this DTD when validating a `.4DCatalog` file. It pulls in
+`base_core.dtd` and `common.dtd` from the same folder; always pass
+`base.dtd` to `--dtdvalid`.
 
 Do not modify the DTD to make an invalid Catalog pass validation.
 

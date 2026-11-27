@@ -71,9 +71,10 @@ messages too), the languages (source + targets, keep existing ones?), any
 new per-language attributes, and whether displayed names should follow the
 UI language.
 
-**UI language and data language are separate decisions.** A demo whose
-data is Japanese may keep Japanese sample inputs (questions, search terms)
-in both UI languages; ask early instead of translating them by default.
+**UI language and data language are separate decisions.** Sample data
+and inputs may stay in their own language under every UI language; ask
+early instead of translating them by default (demos:
+`demo-presentation`, "Language Decisions").
 
 ### Following the OS language
 
@@ -274,7 +275,7 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
   moving it to XLIFF. A literal CR inside XML is normalised to LF by the
   parser, so write `&#13;` where a CR is required. Keep a multi-line string
   out of **window titles**: `SET WINDOW TITLE` renders the break as nothing
-  ("...Paddingin My Text Area..."), so a title needs its own single-line ID
+  ("First lineSecond line"), so a title needs its own single-line ID
   (or join the lines before `SET WINDOW TITLE`) while the form body keeps
   the two-line original.
 * **Escaping.** Escape `&`, `<` and `>` in XML text.
@@ -329,9 +330,10 @@ demo. Do not put `color:#000000` in spans: it stays black in dark mode
 (`4dcss`, `references/dark-mode.md`). Show it in an input with
 `"styledText": true`.
 
-**Byte order mark.** 4D writes some JSON files (`menus.json`, some forms)
-with a UTF-8 BOM. `jq` and `json.loads` on a `utf-8` read fail on it; read
-with `utf-8-sig`, or strip and restore it (both scripts keep it).
+**Byte order mark.** 4D writes some JSON files (`menus.json`, `tips.json`,
+some forms) with a UTF-8 BOM (`4dproject`, `references/menus.md`). Read
+with `utf-8-sig`, or strip and restore it: `localise_form_json.py` keeps
+it and `xliff_check.py` reads through it.
 
 **Converting form literals.** 4D-written `.4DForm` files round-trip
 byte-exactly through Python (`4dform`, "Modification"; all 15 forms of one
@@ -349,15 +351,15 @@ take the same path. Validate the result with `4dform`.
 
 **Converting `tips.json` tooltips.** Older projects localise tooltips through
 `Project/Sources/tips.json`: a form object carries
-`"tooltip": {"$ref": "/SOURCES/tips.json#<key>"}` and 4D resolves the key at
+`"tooltip": {"$ref": "/SOURCES/tips.json#/<key>"}` and 4D resolves the key at
 runtime. Convert these to plain `":xliff:<ID>"` strings in the form JSON and
 delete `tips.json`. Before converting, audit the file: `$ref` keys that name
 nothing in `tips.json` (or keys in `tips.json` no form references) are silent
 dead weight; map only the refs that resolve, and translate their text into the
-string table. A regex that replaces the `$ref` object with a string can
-consume the preceding `"tooltip":` key and produce invalid JSON -- repair by
-re-inserting the key on the generated `"tooltip": ":xliff:..."` lines, then
-`jq empty` every touched form.
+string table. Prefer a JSON-aware edit: a regex that replaces the `$ref`
+object with a string can consume the preceding `"tooltip":` key and produce
+invalid JSON. Run `jq empty` on every touched form, then validate with
+`4dform`.
 
 ## Verification
 

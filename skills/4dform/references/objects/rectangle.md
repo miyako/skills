@@ -46,6 +46,6 @@ A rectangle is a static (non-interactive) decorative object. It has no events, n
 ## Notes
 
 - No events are supported -- rectangles are purely decorative
-- The `borderRadius` property is unique to rectangles among shapes
+- Among shapes (rectangle, line, oval), only rectangles take `borderRadius`; text and input objects also take it
 - Use `fill: "transparent"` with a visible `stroke` for an outline-only rectangle
 - Rectangles are commonly used as visual grouping containers or background panels
