@@ -21,6 +21,15 @@ below. It replaces the instruction files of the archived `HDI_Template`
 repository (`startup`, `readme.structure`, `readme.branches`). Those
 files were a baseline: confirm current choices with the owner.
 
+`HDI_Template` is **archived and not canonical**: build a new splash from
+this skill instead of copying its form or assets. Copying the template
+splash wholesale carries stale artefacts that the skill does not describe
+(a v17-era 4D icon, XLIFF key names that predate the spec --
+`HDI_TxtTitle`/`HDI_Heading`/`HDI_ErrorMainText`/`HDI_ErrorSubText`
+instead of `HDI_Title`/`HDI_HowDoI`/`HDI_ErrorMain`/`HDI_ErrorSub`, keys
+split between the `HDI` pair and `messagesEN.xlf`, template-only objects).
+Found the hard way in [miyako/HDI_ManageIndexes](https://github.com/miyako/HDI_ManageIndexes).
+
 ## Related
 
 | Topic | Skill |
@@ -107,6 +116,18 @@ copied between HDI repositories.
 | `HDI_ErrorSub` | `Do not attempt to open this HDI in design mode using this version; if you do so, forms and/or methods could be altered because of missing functionality.` |
 | `ErrorViewProMain`, `ErrorViewProSub`, `ErrorWriteProMain`, `ErrorWriteProSub` | license errors for 4D View Pro / 4D Write Pro |
 
+The keys are not all in the same file: the splash form's own `:xliff:`
+references resolve from the `HDI` pair, but keys read from code with
+`Localized string()` -- `HDI_Title` and `HDI_Info` in the start method's
+options object, `BtnClose` in the error state -- may live in
+`messagesEN.xlf` instead. Verify where each key actually lives before
+adding a new one; a key present in only one file still resolves, but the
+split is easy to miss when copying the splash into a new repository.
+Consolidating every `HDI_*` key into the `HDI` pair (so both the form's
+`:xliff:` references and `Localized string()` calls resolve from one
+file) is the cleaner arrangement; a missing key fails silently --
+`Localized string` returns an empty string and the row renders blank.
+
 ### Language switch (optional)
 
 When the demo is presented in both languages, put an
@@ -124,6 +145,16 @@ Language at Runtime"; `4dstartup`, "Hub Start Screen").
 * The `.agents` skills submodule is a per-project choice: the template
   had it; a demo handed to attendees may leave it out
   (`demo-shareable-repo`, "Skills submodule").
+* **Regenerate the shipped data with the shipped generator before
+  release.** The committed data file may predate the final generator
+  code, so a generator bug surfaces only when a fresh clone first runs
+  (or when a schema change forces a regeneration) -- in
+  [miyako/HDI_ManageIndexes](https://github.com/miyako/HDI_ManageIndexes)
+  the generator subscripted 0-based collections with a 1-based index
+  (`[($i-1)%$length+1]`, error `-10713 Index in collection is out of
+  range` at the last element) and never wrote a field the UI needed;
+  the committed data predated both defects and hid them. Regenerate,
+  re-run the headless self-tests against the fresh file, then commit.
 
 ## README
 
