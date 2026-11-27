@@ -723,6 +723,12 @@ order -- each step costs one run and narrows the cause.
    the message is `Last errors[0].message`, and `Error formula` is the source
    text of the failing call.
 
+   A subroutine that ends with `ON ERR CALL("")` (the usual "clear my
+   handler" line) disarms the *caller's* handler for the rest of the
+   process: after the call, errors surface as raw `4DRT` alerts and the
+   test's `dump_on_err` never sees them. A subroutine that installs its
+   own handler should capture and restore the previous one instead.
+
 2. **Install the handler before anything can fail**, because the locations
    that fail silently are the ones a handler installed late never reaches:
    reading `--user-param`, resolving `Application file`, opening the first

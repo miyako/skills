@@ -145,6 +145,16 @@ Language at Runtime"; `4dstartup`, "Hub Start Screen").
 * The `.agents` skills submodule is a per-project choice: the template
   had it; a demo handed to attendees may leave it out
   (`demo-shareable-repo`, "Skills submodule").
+* **Regenerate the shipped data with the shipped generator before
+  release.** The committed data file may predate the final generator
+  code, so a generator bug surfaces only when a fresh clone first runs
+  (or when a schema change forces a regeneration) -- in
+  [miyako/HDI_ManageIndexes](https://github.com/miyako/HDI_ManageIndexes)
+  the generator subscripted 0-based collections with a 1-based index
+  (`[($i-1)%$length+1]`, error `-10713 Index in collection is out of
+  range` at the last element) and never wrote a field the UI needed;
+  the committed data predated both defects and hid them. Regenerate,
+  re-run the headless self-tests against the fresh file, then commit.
 
 ## README
 

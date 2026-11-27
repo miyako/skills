@@ -387,6 +387,8 @@ https://developer.4d.com/docs/Develop/processes
 | `Field(tableNum; fieldNum)` | Two **Integer** arguments return a field pointer; `Field(fieldPtr)` is the reverse lookup (returns the field number). A table Pointer as the first argument does not parse: `[58] A ")" was expected`. `Table number` does not exist -- enumerate with `Table name` over `Last table number`. Measured on 21 R5 (100189). |
 | `CREATE INDEX(aTable; ...)` | `aTable` is typed `Table` and accepts only a syntactic `[TableName]` reference: `Table($num)` inline or a Pointer variable abort with `[59] 4D was expecting a table`, unlike `GET TABLE PROPERTIES`, whose `Pointer`-typed parameter accepts the same pointer variable. For a runtime-resolved table, build a single-statement formula over an interprocess pointer array and `EXECUTE FORMULA` it. Measured on 21 R5 (100189). |
 | `EXECUTE FORMULA(code)` | One statement per call. Multi-statement formula text (separated with `Char(Carriage return)` or line feeds) fails with `[48] Syntax error` although each statement succeeds alone; build state in the caller and share it through process or interprocess variables. Measured on 21 R5 (100189). |
+| `CREATE INDEX` on an already-indexed field | **Silent no-op.** Creating an index whose field/type combination the field already carries (for example a second B-tree on `Companies.companyName` next to a named `Companies_companyName`) raises no error, creates no index and changes `getIndexes()` not at all -- a `done` status after the call proves nothing. Verify the round trip by re-reading `getIndexes()` and looking for the new name. Measured on 21 R5 (100189). |
+| `DELETE INDEX(name)` on a catalog-defined index | Transient. The index disappears from `getIndexes()` for the session, but the catalog definition recreates it at the next database open (the index builder logs it "built" again). Deleting a runtime-created index is permanent. Measured on 21 R5 (100189). |
 
 The `ISO` format constants produce full date+time strings, so a value destined
 for an API that wants `YYYY-MM-DD` or `HH:MM:SS` needs a slice
@@ -399,3 +401,12 @@ Measured on 21 R5 (100176).
   syntax error, not a continuation: long calls such as a single
   `New object(...)` with many properties must stay on one line. Break the
   value into variables or build the object with several assignments instead.
+* There is **no `Else If`**: `Else If ($x)` on one line after an `If` block is
+  a plain syntax error (`[37]`-family at parse time). Nest a second `If`
+  inside the `Else` branch instead.
+* `ON ERR CALL("")` is **not stacked**: a subroutine that clears the handler
+  (the usual last line of an error-trapping helper) disarms the *caller's*
+  handler for the rest of the process, so errors after the call surface as
+  raw `4DRT` alerts instead of reaching the test's `dump_on_err`. A method
+  that installs its own handler should capture and restore the previous one
+  with `Method called on error`. Measured on 21 R5 (100189).
