@@ -519,7 +519,7 @@ Do not install tool4d globally and do not modify the user's PATH.
 | `--dataless` | No data file. Use whenever the project may be open elsewhere, to avoid lock conflicts |
 | `--data` | Path to the data file (`.4DD`) to open |
 | `--create-data` | With `--data`: create the data file if it does not exist instead of failing. Easy to miss in `tool4d --help`; without it a fresh checkout fails with `[-10524] current data file not found` |
-| `--user-param` | A single text argument, read back with `Get database parameter(User param value; $text)` |
+| `--user-param` | A single text argument, read back with `Get database parameter(User param value; $text)` -- it is a **function**: capture the return value or the compiler rejects the bare procedure form (`skills/4dlang/references/pitfalls.md`) |
 | `--headless` | Full `4D` only: run without a GUI. Requires a license |
 | `--skip-onstartup` | Do not run the `On Startup` database method (which typically opens windows) before `--startup-method`. Without it, tool4d **and** full 4D run both: a start method called from `On Startup` and from the test method runs twice (`skills/4dstartup/SKILL.md`, "Why the check runs in the worker") |
 
@@ -1360,7 +1360,9 @@ This pattern requires `4D`, not `tool4d`, because it uses `DIALOG`:
 
 ```4d
 var $userParamValue : Text
-Get database parameter(User param value; $userParamValue)
+var $paramStatus : Integer
+  // a function: the bare procedure form fails Compile project
+$paramStatus:=Get database parameter(User param value; $userParamValue)
 var $params : Collection
 $params:=Split string($userParamValue; ":")
 // $params[0] = form name, $params[1] = page, $params[2] = output path
