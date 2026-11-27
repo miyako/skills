@@ -713,8 +713,8 @@ order -- each step costs one run and narrows the cause.
    var $first : Object
    ON ERR CALL(""; ek local)   // a failure in here must not re-enter
    $first:=Last errors[0]
-   LOG EVENT(Into system standard outputs; \
-   	"failed in "+Error method+":"+String(Error line)+" ("+String($first.errCode)+"): "+$first.message)
+   // one statement, one line: 4D has no line-continuation character
+   LOG EVENT(Into system standard outputs; "failed in "+Error method+":"+String(Error line)+" ("+String($first.errCode)+"): "+$first.message)
    ```
 
    `ek local` keeps the handler inside the method; restore it with
@@ -767,6 +767,27 @@ order -- each step costs one run and narrows the cause.
 With a handler installed, execution also **continues past** the statement
 that raised, so read the log as interleaved rather than sequential: the
 first error is the real one, and the ones after it are its consequences.
+
+### File-sandbox chokepoint: SIGSEGV at open
+
+Under a write-restricted file sandbox (a workspace-write policy that denies
+writes outside the workspace), both `tool4d` and full `4D` crash **at open**,
+before any method runs: exit code `139` (SIGSEGV) in
+`V4DPackageManager::CheckCacheFolder`, a null dereference reached because the
+process could not write its dependency cache. The diagnostic log names the
+real cause:
+
+```
+[602] Cannot open file inuse.txt (.../Library/Caches/4D/Dependencies)
+Operation not permitted
+```
+
+The crash reproduces on every build tried and on unrelated projects, so it
+reads as "this 4D build is broken" rather than "the sandbox did it". Run 4D
+invocations with filesystem write access to the user cache
+(`~/Library/Caches/4D`), not just the workspace. Measured on 21 R5
+(100175 / 100176 / 100189) in
+[miyako/HDI_ManageIndexes](https://github.com/miyako/HDI_ManageIndexes).
 
 ## Driving a GUI Form with Synthetic Clicks
 
@@ -1168,6 +1189,32 @@ return {}
 
 Keep the factory out of the committed project if it exists only for
 captures.
+
+**Caveat -- options-driven splash forms.** An HDI-style splash whose `On Load`
+hides rows when `Form.title` / `Form.info` / `Form.minimumVersion` are Null
+captures as a nearly empty card under `dialog_screenshot`, because the driver
+passes an empty form data object and every `Form.xxx=Null` branch fires. Use
+`dialog_screenshot_with_data` with a factory that rebuilds the options object
+the real start method passes:
+
+```4d
+#DECLARE($formName : Text) : Object
+If ($formName="HDI")
+	var $options : Object
+	$options:=New object  // declare-only leaves it Null; assigning a property on Null errors
+	$options.title:=Localized string("HDI_Title")
+	$options.info:=Localized string("HDI_Info")
+	$options.blog:="https://blog.4d.com/..."
+	$options.minimumVersion:="2150"
+	return $options
+End if
+return {}
+```
+
+Measured on 21 R5 (100189) in
+[miyako/HDI_ManageIndexes](https://github.com/miyako/HDI_ManageIndexes):
+`dialog_screenshot` OCR'd as only the series brand and the Demo button, the
+factory capture showed title, version, info and blog rows.
 
 **Caveat -- binary.** `dialog_screenshot` requires `4D` **without**
 `--headless`, and does not work under `tool4d` at all. Headless mode

@@ -107,6 +107,14 @@ copied between HDI repositories.
 | `HDI_ErrorSub` | `Do not attempt to open this HDI in design mode using this version; if you do so, forms and/or methods could be altered because of missing functionality.` |
 | `ErrorViewProMain`, `ErrorViewProSub`, `ErrorWriteProMain`, `ErrorWriteProSub` | license errors for 4D View Pro / 4D Write Pro |
 
+The keys are not all in the same file: the splash form's own `:xliff:`
+references resolve from the `HDI` pair, but keys read from code with
+`Localized string()` -- `HDI_Title` and `HDI_Info` in the start method's
+options object, `BtnClose` in the error state -- may live in
+`messagesEN.xlf` instead. Verify where each key actually lives before
+adding a new one; a key present in only one file still resolves, but the
+split is easy to miss when copying the splash into a new repository.
+
 ### Language switch (optional)
 
 When the demo is presented in both languages, put an

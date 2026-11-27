@@ -21,6 +21,7 @@ Some rules adapted from the 4d-depot agent instructions by Mathieu Ferry
 | No implicit number-to-text conversion | `"count: "+$count` fails (*These operators cannot be used together*, or a compile error on the analyzer): wrap every number, `"count: "+String($count)`. The same applies to `Real`, `Integer` and object/collection `.length` values. |
 | `~=` is not a regex or "matches" operator | Use `Match regex("^/"; $path)`; `$path~=^/` raises *These operators cannot be used together* [50]. 4D has no bare regex comparison operator. |
 | Ternary in an inferred declaration | `var $label:=$ok ? "Ready" : String($n)+" left"` was inferred as Variant (`check-syntax` 550.11). When the branches are expressions rather than literals, declare the type: `var $label : Text:=...`. |
+| Text `+` Boolean does not parse | `"found="+Bool($b)` aborts with `[15] This operation is not compatible with the two arguments` (Text + Boolean). The error is reported against an **earlier line** than the offending statement, which sends debugging in the wrong direction. Use `String($b)` or `Choose($b; "yes"; "no")`. Measured on 21 R5 (100189). |
 
 Reference: https://developer.4d.com/docs/Concepts/operators,
 https://developer.4d.com/docs/Concepts/string
@@ -383,8 +384,18 @@ https://developer.4d.com/docs/Develop/processes
 | `Current date` / `Current time` | **Local** date and time. A field labelled UTC (an RFC 3339 `...Z` stamp) built from `Current date` is a day off near local midnight. `Timestamp` is always UTC (`2026-11-26T05:13:17.085Z`): use `Date(Substring(Timestamp; 1; 10))` for the UTC date. Measured on 4D 21 R5 / tool4d. |
 | The command is `FORM GOTO PAGE`, not `GOTO PAGE` | `GOTO PAGE` does not exist. Inside `Formula(...)` / `CALL FORM(...; Formula(...))` the parser does not reject the unknown name -- it looks it up as a **project method** and fails with `The method cannot be executed. Project method not found. GOTO PAGE (3)`, which reads like a missing method, not a typo'd command. |
 | `OBJECT SET PADDING` right after `FORM LOAD` | On a loaded-but-never-displayed form, the **first** `OBJECT SET PADDING` on an object applies only `top` (`OBJECT Get padding` returns the other three as 0); the second call applies all four. On a displayed form the first call applies all four sides. When asserting padding headlessly, set twice or display the form. Measured on 21 R5 build 100189. |
+| `Field(tableNum; fieldNum)` | Two **Integer** arguments return a field pointer; `Field(fieldPtr)` is the reverse lookup (returns the field number). A table Pointer as the first argument does not parse: `[58] A ")" was expected`. `Table number` does not exist -- enumerate with `Table name` over `Last table number`. Measured on 21 R5 (100189). |
+| `CREATE INDEX(aTable; ...)` | `aTable` is typed `Table` and accepts only a syntactic `[TableName]` reference: `Table($num)` inline or a Pointer variable abort with `[59] 4D was expecting a table`, unlike `GET TABLE PROPERTIES`, whose `Pointer`-typed parameter accepts the same pointer variable. For a runtime-resolved table, build a single-statement formula over an interprocess pointer array and `EXECUTE FORMULA` it. Measured on 21 R5 (100189). |
+| `EXECUTE FORMULA(code)` | One statement per call. Multi-statement formula text (separated with `Char(Carriage return)` or line feeds) fails with `[48] Syntax error` although each statement succeeds alone; build state in the caller and share it through process or interprocess variables. Measured on 21 R5 (100189). |
 
 The `ISO` format constants produce full date+time strings, so a value destined
 for an API that wants `YYYY-MM-DD` or `HH:MM:SS` needs a slice
 (`Substring(String($d; ISO date); 1; 10)`) or the three-argument combined form.
 Measured on 21 R5 (100176).
+
+## Syntax
+
+* 4D has **no line-continuation character**. A `\` at the end of a line is a
+  syntax error, not a continuation: long calls such as a single
+  `New object(...)` with many properties must stay on one line. Break the
+  value into variables or build the object with several assignments instead.
