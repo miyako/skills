@@ -382,15 +382,15 @@ DELETE FROM LIST(list; itemRef {; *})
 | `GET LIST ITEM PROPERTIES` | Get enterable, style, icon, color |
 | `SET LIST ITEM PROPERTIES` | Set enterable, style, icon, color |
 | `SET LIST ITEM FONT` | Set font for a specific item |
+| `SET LIST ITEM ICON` | Set icon for a specific item |
+| `Count list items` | Count items (optionally only visible/expanded) |
+| `List item position` | Get position of item by reference |
+| `List item parent` | Get parent reference of an item |
 
 `GET LIST ITEM` signature — **note ref comes before text**:
 ```
 GET LIST ITEM(list; itemPos; var itemRef; var itemText {; var sublist; var expanded})
 ```
-| `SET LIST ITEM ICON` | Set icon for a specific item |
-| `Count list items` | Count items (optionally only visible/expanded) |
-| `List item position` | Get position of item by reference |
-| `List item parent` | Get parent reference of an item |
 
 ### Item Parameters
 
@@ -414,7 +414,7 @@ metadata (record IDs, categories, flags) to items without subclassing.
 ## lists.json Structure and Persistence
 
 `SAVE LIST` writes to `Project/Sources/lists.json`. Each named list is a top-level
-key containing an `items` array. Each item can have:
+key containing an `items` array; the list-level and per-item keys are listed below.
 
 ### Compiled Mode and Read-Only Structures
 
@@ -477,7 +477,8 @@ They are **not saved** by `SAVE LIST`:
 Use `path:` references for design-time icons; use `SET LIST ITEM ICON` for
 runtime-generated icons (SVG, loaded images, etc.).
 
-Only `"4D_standard_action_name"` persists as the `"action"` key.
+Of the item parameters, only `"4D_standard_action_name"` persists (as the
+`"action"` key).
 
 This means: if you need additional text, custom parameters, or per-item fonts/icons,
 you must set them **programmatically after `Load list`** — they cannot be defined
@@ -624,7 +625,7 @@ These generic object commands also work with hierarchical list form objects:
 | `OBJECT SET ENTERABLE` | Affects all representations |
 | `OBJECT SET VISIBLE` | Affects the specified representation |
 
-**Note**: except `OBJECT SET SCROLL POSITION`, these commands modify **all**
+**Note**: except `OBJECT SET SCROLL POSITION` and `OBJECT SET VISIBLE`, these commands modify **all**
 representations of the same list, even when targeting by object name.
 
 ## CLI Verification Notes

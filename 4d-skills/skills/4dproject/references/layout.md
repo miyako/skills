@@ -82,8 +82,8 @@ first open**:
 }
 ```
 
-Use the empty object `{}` (dependency on any version) and omit keys for
-components that are only vendored in `Components/`. If the schema version is
+The entry forms (`{}`, `github`, `version` pins) and the load priority of a
+vendored `Components/` copy are in `dependencies.md`. If the schema version is
 wrong, 4D either ignores the file or asks to install each dependency.
 
 **Why before first open:** a project without `Project/Sources/dependencies.json`
@@ -95,8 +95,10 @@ The file also makes the dependency list explicit for a reader.
 Do not add a dependency entry for a component whose release cannot be resolved
 (for example because the published package lacks a CLI for this platform): the
 Dependency manager reports the dependency as not found and a fresh checkout may
-fail to open. Bundling under `Components/` and keeping `dependencies` empty is
-the safer choice for a self-contained demo.
+fail to open. Fix or choose a resolvable release instead. Committing a copy
+under `Components/` with no declaration works but goes against the canonical
+`.gitignore` (`/Components/`, in `../SKILL.md`) and `demo-shareable-repo`, so
+do it only as an explicit, documented decision.
 
 ## menus.json
 
@@ -109,7 +111,7 @@ see `menus.md` before adding or changing menu items.
   "bars": [
     {
       "id": 1,
-      "name": "Barre #1",
+      "name": "Menu Bar #1",
       "items": [
         { "link": 32001 },
         { "link": 32002 },

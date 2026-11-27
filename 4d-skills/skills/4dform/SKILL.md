@@ -80,6 +80,9 @@ The reading budget for a whole task is:
 * `references/screenshot-rendering.md` -- only when rendering a capture
 * `references/async-ui.md` -- only when the form runs long work (timers,
   workers, HTTP callbacks)
+* `references/layout.md` -- only when setting or checking object geometry
+* `references/docs-index.md` -- only when the object file and
+  `references/property-reference.md` leave a question open
 
 You will never need more than three reference files for a single-object
 task. There is no prerequisite chain to follow and nothing to remember
@@ -179,6 +182,8 @@ Each of these is a real failure if omitted:
   `On Load` never fires and the code is silently dead.
 * `"method": "ObjectMethods/<Object>.4dm"` is what binds an object method,
   and `"events"` is what lets it receive anything.
+
+### The form method
 
 The form method is not an ordinary project method: **it receives no
 parameters.** Data reaches it as `Form`, which `DIALOG` sets from its second
@@ -282,8 +287,8 @@ It reports every `ObjectMethods/*.4dm` that no object references, every
 object has no `"events"`. An orphaned object method produces no error at
 all -- it is simply never called, so the form appears to load correctly and
 does nothing. Neither schema validation, `validate`/`check-syntax`, nor a
-headless self-test that calls the form's class directly can see it (seen on
-a demo whose 16 buttons all did nothing while every headless check passed).
+headless self-test that calls the form's class directly can see it (observed:
+a form whose buttons all did nothing while every headless check passed).
 Only a GUI click or this check does.
 
 **A fourth check is cheap and worth adding when 4D is available:** have a
@@ -387,7 +392,8 @@ When modifying a `.4DForm`:
 For scripted edits, Python round-trips a `.4DForm` byte-identically
 (verified on 4D 21 R5 forms): `json.load`, then write
 `json.dumps(obj, indent="\t", ensure_ascii=False)` and add a trailing
-newline only if the original had one. Diff an unmodified round-trip first;
+newline only if the original had one. Some 4D-written forms start with a
+UTF-8 BOM: read with `utf-8-sig` and write the BOM back if it was there. Diff an unmodified round-trip first;
 any change there is the script's, not yours.
 
 After modification, validate the resulting file against the 4D Form schema.
@@ -434,11 +440,7 @@ If `tools/4dform/boon` does not exist, follow the download procedure in
 `skills/4dtools/SKILL.md` to provision it.
 
 Use `tools/4dform/boon` (or `tools\4dform\boon.exe` on Windows) in all validation
-commands -- do not use a bare `boon`:
-
-```
-tools/4dform/boon schemas/4dform/formsSchema.json <file>
-```
+commands (as in "Validation" above) -- do not use a bare `boon`.
 
 Do not duplicate tool installation logic in this skill.
 
@@ -512,6 +514,11 @@ Windows tab controls and group boxes are approximate, and popups display
 the object name rather than runtime values. Neither a plausible preview
 nor a second-opinion capture replaces the done-gate.
 
+The standalone CLI supports macOS 12+ and Windows 10+, arm64/x64; Linux
+is unavailable. Do not download a different platform's binary or
+silently substitute HTML for PNG. See `skills/4dtools/SKILL.md` for
+platform prerequisites, release availability, and verified installation.
+
 ### Second Opinion with 4D/tool4d
 
 Use a 4D-produced capture when the quick preview is ambiguous, an object
@@ -567,11 +574,6 @@ Two traps, observed on 21.2 LTS (21.100694):
 
 `$names` also contains the page and canvas objects, so compare a required-name
 list against it rather than expecting an object count to match the form file.
-
-The standalone CLI supports macOS 12+ and Windows 10+, arm64/x64; Linux
-is unavailable. Do not download a different platform's binary or
-silently substitute HTML for PNG. See `skills/4dtools/SKILL.md` for
-platform prerequisites, release availability, and verified installation.
 
 ## Output
 

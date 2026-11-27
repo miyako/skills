@@ -22,7 +22,7 @@ Reference: https://developer.4d.com/docs/FormObjects/progressIndicator
     "min": 0,
     "max": 100,
     "enterable": true,
-    "dataSource": "Form:C1466.progress",
+    "dataSource": "Form.progress",
     "dataSourceTypeHint": "number"
   }
 }
@@ -85,11 +85,11 @@ Multiple progress indicators and other objects (e.g., inputs, rulers) can share 
     "type": "progress",
     "max": 100,
     "enterable": true,
-    "dataSource": "Form:C1466.progress"
+    "dataSource": "Form.progress"
   },
   "Input": {
     "type": "input",
-    "dataSource": "Form:C1466.progress"
+    "dataSource": "Form.progress"
   }
 }
 ```

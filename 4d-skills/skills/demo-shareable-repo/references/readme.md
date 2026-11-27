@@ -50,8 +50,8 @@ headings.
 | Running the demo | the live script: which sample to pick, what to toggle, what to compare; quote real numbers (hit counts, ms) |
 | How it works | real method/form names and the flow; the one piece of code worth reading |
 | Points of interest | optional: the few files worth reading, one line each |
-| Rebuilding the data | generator script + headless command line, or the in-app "regenerate" button (`demo-sample-data`); how to switch language |
-| References | 4D docs, components, model card **and** the exact GGUF repository used |
+| Rebuilding the data | which language the shipped data is in (when it depends on the UI language); generator script + headless command line, or the in-app "regenerate" button (`demo-sample-data`); how to regenerate it in the other language |
+| References | 4D docs, components; for a model, its model card **and** the exact GGUF repository used |
 | Modernisation notes | only for converted legacy demos: one row per branch **that exists on the remote**, linking the guiding skill |
 
 ## Rules
@@ -69,5 +69,3 @@ headings.
   the UI is localised, stored under `docs/images/` and linked by relative
   path. Never a static preview (`fourdform`) for a feature it cannot draw.
   The Japanese section shows the Japanese captures.
-* Say which language the shipped data is in when it differs by UI
-  language, and how to regenerate it in the other.

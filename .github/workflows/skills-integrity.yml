@@ -1,0 +1,47 @@
+name: Skills integrity
+
+# Runs on every pull request and push that touches the skillset:
+#   * validate_skills.py      -- each file is well formed; links and paths resolve
+#   * check_skill_integrity.py -- files agree with each other: section references,
+#     anchors, duplicate headings, README/AGENTS skill tables, the canonical
+#     .gitignore, form-example keys vs formsSchema.json, and no project-specific
+#     names leaking into skills.
+
+on:
+  pull_request:
+    paths:
+      - "4d-skills/**"
+      - "README.md"
+      - ".gitignore"
+      - ".github/scripts/validate_skills.py"
+      - ".github/scripts/check_skill_integrity.py"
+      - ".github/workflows/skills-integrity.yml"
+  push:
+    paths:
+      - "4d-skills/**"
+      - "README.md"
+      - ".gitignore"
+      - ".github/scripts/validate_skills.py"
+      - ".github/scripts/check_skill_integrity.py"
+      - ".github/workflows/skills-integrity.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          submodules: false
+
+      - name: Validate skills
+        run: |
+          python3 -m pip install --quiet pyyaml
+          python3 .github/scripts/validate_skills.py
+
+      - name: Check cross-file integrity
+        run: python3 .github/scripts/check_skill_integrity.py

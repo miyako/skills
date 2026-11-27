@@ -33,7 +33,7 @@ A drop-down list is a closed list of items presented as a single-line control; c
 
 A drop-down list is an active object like button, checkbox, and radio button:
 
-- `On Clicked` fires **on mouse-down** (press), not on mouse-up (release) -- same timing as buttons, checkboxes, and radio buttons.
+- `On Clicked` fires **on mouse-down** (press), not on mouse-up (release) -- unlike a button, whose `On Clicked` fires on mouse-up (`button.md`, "Events").
 - It supports `focusable` like a button. When focused: `Return`/`Tab` moves to the next object in tab order, `Shift+Return`/`Shift+Tab` moves to the previous object in tab order, and `Space` is equivalent to clicking it (opens the list).
 
 Like progress indicators and rulers, a drop-down list's data source can be a live expression, and the binding is **bidirectional**: the object reads its displayed state from the expression, and user interaction writes the selection back into the expression -- there is no need to trap `On Clicked`/`On Data Change` just to copy the value back manually (though those events are still available for reacting to a change).
@@ -157,7 +157,7 @@ Setting only `"dataSourceTypeHint": "integer"` (with `"type": "dropdown"` and no
 
 A hierarchical list can be attached in two ways:
 
-- **By name**: `OBJECT SET LIST BY NAME` (https://developer.4d.com/docs/commands/object-set-list-by-name) attaches a toolbox-defined list by name -- equivalent to setting that list's name directly in `choiceList`/`list`. 4D instantiates it when the form loads and clears it when the form unloads; no manual `Clear list` call is needed.
+- **By name**: `OBJECT SET LIST BY NAME` (https://developer.4d.com/docs/commands/object-set-list-by-name) attaches a toolbox-defined list by name -- equivalent to setting that list's name directly in `choiceList`. 4D instantiates it when the form loads and clears it when the form unloads; no manual `Clear list` call is needed.
 - **By reference**: build the list at runtime with `New list` (https://developer.4d.com/docs/commands/new-list) or `Load list` (https://developer.4d.com/docs/commands/load-list), each returning an integer list reference, and assign that reference directly to the object via `OBJECT SET LIST BY REFERENCE` (https://developer.4d.com/docs/commands/object-set-list-by-reference) or by assigning it to the data source expression. The dropdown retains its own reference count on the list, so the caller may call `Clear list` (https://developer.4d.com/docs/commands/clear-list) immediately after assigning it -- the list itself is only actually released once the dropdown's reference count reaches zero, which happens when the form is unloaded.
 
 ### Standard action (submenu-style)
@@ -198,15 +198,14 @@ Three named options, all controlled by the same `saveAs` JSON property:
 | Property | JSON Name | Type | Notes |
 |----------|-----------|------|-------|
 | Choice list | `choiceList` | list / collection | Inline static list, or the name of a toolbox list (`lists.json`) -- auto-instantiated on load, auto-cleared on unload |
-| Hierarchical list reference | `list` | list / collection | Also used when a hierarchical list is built by code (`New list`/`Load list`) and assigned by integer reference |
-| Data source hint | `dataSourceTypeHint` | text | `"object"`, `"arrayText"`, `"arrayNumber"`, `"arrayDate"`, `"arrayTime"`, or `"integer"` (hierarchical trigger) |
+| Data source hint | `dataSourceTypeHint` | text | `"object"`, `"arrayText"`, `"arrayNumber"`, `"arrayDate"`, `"arrayTime"`, `"text"`, or `"integer"` (hierarchical trigger) |
 | Save as | `saveAs` | text | `"value"` (default) or `"reference"` |
 
 ## Supported Properties Summary
 
 Alpha Format, Bold, Bottom, Button Style, Choice List, Class, Data Type (expression type), Data Type (list), Date Format, Expression Type, Focusable, Font, Font Color, Font Size, Height, Help Tip, Horizontal Alignment, Horizontal Sizing, Italic, Left, Not rendered, Object Name, Right, Standard action, Save value, Time Format, Top, Type, Underline, Variable or Expression, Vertical Sizing, Visibility, Width.
 
-`Button Style` (JSON `style`; https://developer.4d.com/docs/FormObjects/properties_TextAndPicture#button-style) is listed as officially supported for drop-down lists, and accepts the same enumeration as for buttons: `"regular"` (default), `"flat"`, `"toolbar"`, `"bevel"`, `"roundedBevel"`, `"gradientBevel"`, `"texturedBevel"`, `"office"`, `"help"`, `"circular"`, `"disclosure"`, `"roundedDisclosure"`, `"custom"`. In practice, setting any of these values on a drop-down list produces **no visible difference** -- every style renders as the same native pop-up-menu control (blue rounded rectangle with up/down chevrons on macOS). Unlike buttons, checkboxes, and radio buttons, where `style` dramatically changes appearance, a drop-down list's rendered chrome is controlled entirely by the platform/OS, not by this property.
+`Button Style` (https://developer.4d.com/docs/FormObjects/propertiesTextAndPicture#button-style) is listed in the 4D documentation as supported for drop-down lists, but the JSON schema defines no `style` key for `dropdown`. In practice, setting a `style` value on a drop-down list produces **no visible difference** -- every style renders as the same native pop-up-menu control (blue rounded rectangle with up/down chevrons on macOS). Unlike buttons, checkboxes, and radio buttons, where `style` dramatically changes appearance, a drop-down list's rendered chrome is controlled entirely by the platform/OS, not by this property.
 
 ## Supported Events
 
@@ -216,4 +215,4 @@ On After Edit, On After Keystroke, On Before Keystroke, On Begin Drag Over, On C
 
 `FORM SCREENSHOT` called with a form name (`FORM SCREENSHOT(formName; formPict; pageNum)`) renders the **Form Editor's static template** for that page, not a live/running form. It never executes `On Load` and never reflects any `Form.xxx` value, array content, or field value assigned by form-object-method code. Concretely, for every kind of drop-down list -- object-based, array-based, choice list (value or reference), and hierarchical -- the CLI screenshot renders the **literal `dataSource` expression text** as the visible label (e.g. `Form.dropFruit`, `asColor`, `Form.dropSaveValue`, `Form.dropHierarchical`), never a resolved value, never the first `choiceList` item, and never blank. Only a drop-down list with **no `dataSource` at all** (the `gotoPage` standard-action form, which needs none) renders differently: it shows its own **object name in quotes** (e.g. `"dropGotoPage"`), the generic fallback 4D uses for an unbound object in the editor template.
 
-There is no way to preview a drop-down list's actual populated/selected state -- for any of the five kinds -- without running the form interactively. See `../screenshot-rendering.md` for static template rendering rules, and `skills/4dcli/SKILL.md` for CLI version requirements.
+There is no way to preview a drop-down list's actual populated/selected state -- for any of the five kinds -- without running the form interactively. See `references/screenshot-rendering.md` for static template rendering rules, and `skills/4dcli/SKILL.md` for CLI version requirements.

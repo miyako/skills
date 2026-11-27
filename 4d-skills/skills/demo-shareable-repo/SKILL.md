@@ -68,16 +68,17 @@ owner's review.
    `4dstartup` pattern (worker, reuse an open window, menu bar, `DIALOG(*)`,
    localised window title).
 
-   An inherited HDI-template splash still has value as the **version
-   gate**: it shows the required version and turns its button into
-   "Close" when `Application version` is too old. Keep the form for that
-   case only -- open the demo directly when the version is new enough,
-   and show the splash when it is not. Then delete the splash code the
-   demo does not use (for example a ViewPro/WritePro licence block this
-   demo never triggers), and make the demo form's `On Close Box` return
-   to design mode unconditionally: the `CANCEL` that kept the window open
-   belonged to the splash-first chaining, and with straight entry it
-   would leave attendees unable to close the demo.
+   In a non-HDI demo, a splash inherited from a template (e.g.
+   HDI_Template) still has value as the **version gate**: it shows the
+   required version and turns its button into "Close" when
+   `Application version` is too old. Keep the form for that case only --
+   open the demo directly when the version is new enough, and show the
+   splash when it is not. Then delete the splash code the demo does not
+   use (for example a licence check for a product it never uses), and
+   make the demo form's `On Close Box` return to design mode
+   unconditionally: a `CANCEL` that kept the window open belonged to the
+   splash-first chaining, and with straight entry it would leave
+   attendees unable to close the demo.
 6. **First-launch downloads** (models, data) show size and progress, go
    to a stable per-user cache (e.g. `~/.GGUF/<repo>`), and are reused on
    later launches.
@@ -113,8 +114,7 @@ owner's review.
    `Settings/` folder when it holds machine-specific user settings.
 9. **Skills submodule (owner's choice).** Ask whether attendees should get
    the agent skills. A submodule is not included in GitHub's "Download
-   ZIP", and attendees who only run the demo do not need it; one owner
-   dropped it for a webinar. When kept: `.agents` is the `dist` branch of
+   ZIP", and attendees who only run the demo do not need it. When kept: `.agents` is the `dist` branch of
    miyako/skills (see the repository README); never edit inside
    `.agents`. Add `.github/workflows/update-skills.yml` (weekly bump of
    the submodule pointer) and `copilot-setup-steps.yml` with
@@ -122,7 +122,7 @@ owner's review.
 10. **README** (`references/readme.md`).
 11. **Verify like an attendee:** fresh clone in a temp folder, data from
     the release, open, first launch, search, quit; no orphan processes
-    afterwards (`4dcli`, `references/shared-desktop.md`). Also run every
+    afterwards (`4dcli`, `skills/4dcli/references/shared-desktop.md`). Also run every
     add/edit path and **cancel** it: nothing may be left behind (`4dorda`,
     "Save only on confirmation").
 

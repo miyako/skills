@@ -125,10 +125,14 @@ and to reading properties inside a preemptive process.
   Expected` in the GUI interpreter and as `[-9996] Stack is full (too much
   recursion or nested calls)` under tool4d 21.2 LTS (100694), both pointing
   at the same member access on a Text. Use the `Length(...)` command;
-  `.length` is valid on Collections and Objects only. Found in
-  [miyako/ldap-demo](https://github.com/miyako/ldap-demo): the headless smoke
-  passed 19/19 because the call lived in a form-path method tool4d never
-  parses (see the GUI-vs-tool4d note below).
+  `.length` is valid on Collections and Objects only. In interpreted runs
+  the failure is position-dependent: `$s[$s.length-1]` is fine, but a
+  comparison such as `If ($top.length>60)` throws `[-10716] Object or
+  Collection Expected` (with an error handler swallowing it, the branch is
+  skipped and truncation silently never happens); the analyzer reports no
+  diagnostic either way (tool4d 21 R5, 100189). A headless smoke suite can
+  miss it entirely when the call lives in a form method (see the
+  GUI-vs-tool4d note below).
 * Not every member returns `This`: `$e.fromObject($o)` returns nothing,
   so `$e.fromObject($o).save()` fails. Check the return type with
   `4dlang` before chaining.
@@ -137,14 +141,6 @@ and to reading properties inside a preemptive process.
   `.../cube` and a "file not found" from whatever consumes it. Use
   `.fullName` whenever the name must round-trip into a path, and
   `.extension` when only the suffix is wanted.
-* `.length` on a **Text** works in some positions and not others in
-  interpreted runs: `$s[$s.length-1]` is fine, but a comparison such as
-  `If ($top.length>60)` throws `[-10716] Object or Collection Expected`
-  (with an error handler swallowing it, the branch is skipped and
-  truncation silently never happens). `.length` on a collection or entity
-  selection in the same `If` is fine. Use `Length($text)` for text; the
-  analyzer reports no diagnostic either way. Measured on tool4d 21 R5
-  (100189).
 
 ## Value Types, Null and Guards
 
@@ -176,7 +172,8 @@ and to reading properties inside a preemptive process.
 * A process-scoped `var X : Type` declared inside a method persists between
   `CALL WORKER` messages **and starts as Null** in a fresh process, not as 0
   or empty. `If ($counter<$limit)` is then never true, and the loop silently
-  runs zero times: seed it (`If (Not(IsNumeric($counter))) $counter:=0`).
+  runs zero times: seed it (`If (Value type($counter)=Is null)` ...
+  `$counter:=0`).
 * An unassigned **typed object or class variable** reports
   `Value type(...)=Is object` (38) while `=Null` is also True (measured on
   tool4d 21R4 for `var $f : 4D.File` and `var $o : Object`). A guard such as
@@ -184,7 +181,7 @@ and to reading properties inside a preemptive process.
   a file that was never set and fails with `-10701 Undefined Object` on the
   member call. Guard with `$file#Null`.
 * Comparing anything with Null is False, including `$x>=0` and `$x#0`.
-  Null is only caught by an explicit `#Null` / `Value type($x)=Is Null` test.
+  Null is only caught by an explicit `#Null` / `Value type($x)=Is null` test.
 
 ## Instance checks and inheritance boundaries
 
@@ -333,15 +330,11 @@ https://developer.4d.com/docs/Develop/processes
   can only observe files the code writes itself, so design the run to publish
   a machine-readable report.
 * **tool4d never parses form-path methods** (the `method.4dm` inside a
-  `.4DForm` folder), so a headless smoke suite can pass 19/19 while the forms
-  crash on first open in the IDE. Measured on
-  [miyako/ldap-demo](https://github.com/miyako/ldap-demo) with tool4d 21.2
-  LTS (100694): five bugs lived exclusively in form-path methods or in code
-  only they call — a `Folder(Get 4D folder(...))` platform-path modal, a
-  `Text.length` member access, a certificate *path* passed where the
-  component wants PEM text, a write sequence that always collided with
-  itself, and a default search doomed by the fixture's own server-side size
-  limit. Budget a real GUI pass (drive the forms with a startup method that
+  `.4DForm` folder), so a headless smoke suite can pass completely while the
+  forms crash on first open in the IDE. Measured with tool4d 21.2 LTS
+  (100694): in one demo, five bugs lived exclusively in form-path methods or
+  in code only they call (among them a platform-path modal and a
+  `Text.length` member access, both above). Budget a real GUI pass (drive the forms with a startup method that
   reads `--user-param`, dumps the form as JSON and screenshots the window)
   for any form-driven demo; the smoke's coverage ends at the project
   boundary. GUI runtime-error dialogs expose nothing to Accessibility; read
@@ -356,16 +349,16 @@ https://developer.4d.com/docs/Develop/processes
 | `String(value)` and the locale | Single-argument `String` uses the host decimal separator, so a comma-decimal system emits `41,313` — fatal in a JSON number or an SVG coordinate. Normalise the separator before writing structured text. |
 | `String(value; format; separator)` | Not an overload: the third argument is not a decimal-separator argument, and this call fails compilation with `At least one parameter type does not match the prototype(s) of the function "String"` plus `Invalid constant type : Alphanumeric`. |
 | `String(n; "&x")` | Already returns the `0x` prefix, zero-padded to four digits: `String(81; "&x")` is `0x0051`. Prepending `"0x"` yourself prints `0x0x0051`. Measured on 21 R5 (100175). |
-| `Select document(...)` result | Returns Text, not a number: `Value type($r)=Is real` is never true and silently skips the whole branch. The text is the file **name** only (empty on Cancel), not a path; the full platform path is in the `DOCUMENT` system variable, so use `If ((OK=1) & ($r#""))` then `File(DOCUMENT; fk platform path)`. With multiple selection test `Size of array($paths)>0`; every element is a platform path (see the path section above). |
+| `Select document(...)` result | Returns Text, not a number: `Value type($r)=Is real` is never true and silently skips the whole branch. The text is empty on Cancel, so use `If ((OK=1) & ($r#""))`; it is the file **name** only, so build the `File` from `DOCUMENT` as described in the path section above. With multiple selection test `Size of array($paths)>0`. |
 | `Min(a; b)` / `Max(a; b)` | Array commands. With two scalars, compilation fails as `Impossible to cast Real to Array<Variant>.` / `Invalid constant type : Real` — the diagnostics never mention `Min`. Compare with `math` operators or a user helper. In an **interpreted** headless run the picture is worse: the analyzer reports 0 diagnostics, `Min(2; 4)` throws a recoverable `[59] 4D was expecting a field or a variable or a parameter` (fatal without an error handler, swallowed to a silent `0` with one), and `Min($x; $y)` returns `0` with no error at all. Compute a scalar bound with `If`/`Else` instead. Measured on tool4d 21 R5 (100189). |
 | `collection.slice(from; to)` | `to` is the **exclusive end index**, not a count (same as JavaScript): `slice(0; 128)` returns 128 items but `slice(128; 128)` returns an empty collection. Batch with `slice($start; $start+$size)` or plain index arithmetic, never `slice($start; $size)`. |
 | `4D.Folder.delete()` | Refuses a non-empty folder: `[651] Folder  not empty`. Use `DELETE FOLDER($folder.path; Delete with contents)` for scratch directories. The failure is catchable by `Try`, but `Last errors` is empty in that `Catch`. |
 | `Open document(path)` as a statement | It is a function: `This function has been called as a procedure.` Assign or discard the result (`$opened:=String(Open document($path))`). |
 | `CONFIRM(message {; okTitle {; cancelTitle}})` as a function | It is a procedure: it returns nothing and reports the choice in the `OK` system variable (`1` = OK button). Write `CONFIRM(...)` then `If (OK#1)`. The title order is OK first, then Cancel, so `CONFIRM($msg; "Cancel"; "Title")` labels the OK button "Cancel". `tool4d-lsp-stdio validate` returned 0 diagnostics for `If (Not(CONFIRM(...)))`, so the analyzer does not catch it; the dialog needs a person, so check the path by reading it, not by a headless run. |
 | `For each ($v; $array)` | `For each` accepts a collection or an object only; an array from `ARRAY TEXT` / `OB GET PROPERTY NAMES` fails at runtime with `"For each" statement expects a collection or an object`. Use `OB Keys($object)` for property names. |
-| `For each ($t : Text; $nested)` | The loop variable's declared type must accept the **items**: iterating `parseDN()`'s result — a collection of RDNs where each RDN is itself a collection of `{type, value}` pairs — into a Text variable hangs the form process under a local `ON ERR CALL` handler and raises `[54] Argument types are incompatible` without one (tool4d 21.2 LTS 100694 reproduces the error headlessly). Declare the loop variable as `Collection` and iterate the inner pairs with an `Object` variable. A `.length` assertion passes while the iteration fails — assert structure, not just cardinality. Found in [miyako/ldap-demo](https://github.com/miyako/ldap-demo). |
+| `For each ($t : Text; $nested)` | The loop variable's declared type must accept the **items**: iterating a nested collection — e.g. a collection whose items are themselves collections of `{type, value}` pairs — into a Text variable hangs the form process under a local `ON ERR CALL` handler and raises `[54] Argument types are incompatible` without one (tool4d 21.2 LTS 100694 reproduces the error headlessly). Declare the loop variable as `Collection` and iterate the inner pairs with an `Object` variable. A `.length` assertion passes while the iteration fails — assert structure, not just cardinality. |
 | Restoring an error handler | `ON ERR CALL($previous; ek local)` restores nothing if `$previous` was never assigned: an empty text removes the handler. Capture it first, `$previous:=Method called on error(ek local)`, then install yours. The analyzer reports no diagnostic for an unassigned `$previous`. Found by code review, not a measured run. |
-| `var` placement | A `var` inside an `If` or `For each` block compiles and is block-scoped; the "declarations must be at the top" rule forbids a redeclaration, not a block-local declaration. Keep declarations at the top by convention, and do not diagnose block-local `var` as a syntax error. |
+| `var` placement | A `var` inside an `If` or `For each` block compiles, but its scope is still the **whole method**, not the block: the "declarations must be at the top" rule forbids a redeclaration (the same name declared in two branches is a "Redefinition of variable"; `skills/4dmodernise/references/declarations.md`), not a declaration inside a block. Keep declarations at the top by convention, and do not diagnose a `var` inside a block as a syntax error. |
 
 ## Command Signatures Often Guessed Wrong
 

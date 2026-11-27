@@ -37,7 +37,7 @@ Calling an LLM through the 4D AI Kit component without blocking the UI:
 | Task involves | Open |
 |---|---|
 | Converting `create()` / `prompt()` calls to callbacks, streaming into web areas or inputs, HTML/JS helpers | `references/async-streaming.md` |
-| Rules, launcher, callback model | this file |
+| Rules, callback model | this file |
 
 References:
 - AI Kit overview: https://developer.4d.com/docs/aikit/overview

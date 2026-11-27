@@ -144,7 +144,7 @@ the fit problem; do not redesign the screenshot.
 Native capture is a verification/fallback path, **not an unconditional
 prerequisite** when text, fonts and rendering are already established.
 If the app, font, platform or matching version is missing, report exactly
-what is unavailable and use `ask_user` for the required evidence or manual
+what is unavailable and ask the user for the required evidence or manual
 confirmation. Do not download applications/fonts or claim fidelity.
 
 ## 4. Replace text mechanically
@@ -213,7 +213,7 @@ data before retaining or sharing evidence. A replacement native capture
 must match the original state, framing, dimensions, theme and scale; do
 not silently accept unrelated visual changes.
 
-If native rendering still cannot be established, use `ask_user` with the
+If native rendering still cannot be established, ask the user about the
 specific unresolved label/font/region and request manual confirmation or
 a matching capture. **Stop that figure** until answered. Mark manually
 accepted approximations as such; never describe them as runtime-verified.

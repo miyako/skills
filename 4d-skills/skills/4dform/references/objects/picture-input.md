@@ -93,8 +93,7 @@ Reference: https://developer.4d.com/docs/Events/onTimer
 The `On Mouse Up` event only fires while the pointer is within the picture
 object's bounds. If the user drags outside the object, `On Mouse Up` may not
 fire. For applications where the drag must continue even outside the object
-(e.g. a drawing tool), use **`On Timer`** with `SET TIMER` + `MOUSE POSITION` /
-`MOUSE POSITION` instead:
+(e.g. a drawing tool), use **`On Timer`** with `SET TIMER` + `MOUSE POSITION` instead:
 
 ```4d
 // Form method handles On Timer
@@ -191,36 +190,26 @@ Case of
 End case
 ```
 
-## Architecture: svgarea Component
+## Architecture: Interactive SVG Editor
 
-The svgarea project demonstrates a complete interactive SVG editor
-implemented as a 4D component (subform). Key architectural decisions:
-
-### Classes
-
-| Class | Responsibility |
-|-------|---------------|
-| `Area` | Holds DOM reference, document dimensions, grid; exports picture |
-| `Event` | Tracks interaction state: isResizing, isDrawing, isMoving, isSelecting; determines current tool; identifies clicked element via SVG hit-testing |
-| `Timer` | Wraps `SET TIMER(-1)` / `MOUSE POSITION` / `CONVERT COORDINATES`; polls mouse position and button state each tick |
-| `Selection` | Tracks which SVG element IDs are currently selected |
-| `Objects` | Registry of all user-created element IDs |
+The reference project (svgarea) implements a complete interactive SVG editor
+as a 4D component (subform). The general architecture:
 
 ### Event Flow
 
 ```
-On Clicked (object method "area.4dm"):
-  1. timer.start() — begins SET TIMER(-1) polling
-  2. Record ClickX/ClickY from timer.MouseX/MouseY
-  3. event.update() — SVG hit-test to find clicked element
+On Clicked (picture input's object method):
+  1. SET TIMER(-1) — start polling
+  2. Record the click position
+  3. SVG hit-test to find the clicked element
   4. Dispatch based on tool + state (select/draw/resize/move)
 
 On Timer (form method):
-  1. timer.update() — MOUSE POSITION, CONVERT COORDINATES, check button
+  1. MOUSE POSITION, CONVERT COORDINATES, check button
   2. If button still held:
      - SVG SET ATTRIBUTE(*; "area"; ...) — rendering tree only (fast)
   3. If button released:
-     - timer.stop()
+     - SET TIMER(0)
      - DOM SET XML ATTRIBUTE(...) — commit to DOM tree
      - SVG EXPORT TO PICTURE → Form.SVG — refresh display
      - Notify container (if used as subform)
@@ -228,7 +217,7 @@ On Timer (form method):
 
 ### Custom `editor:` Attributes
 
-The project stores original positions in custom namespaced attributes
+Store original positions in custom namespaced attributes
 (`editor:x`, `editor:y`, `editor:cx`, `editor:width`, etc.) alongside
 standard SVG attributes. During drag, the visual attributes are offset from
 the `editor:` values. On finalize, both are updated to the new position.
@@ -249,7 +238,7 @@ and provides a "last committed position" reference.
 
 ### Subform Container Communication
 
-The svgarea component uses `OBJECT SET SUBFORM CONTAINER VALUE` to push
+An editor packaged as a subform uses `OBJECT SET SUBFORM CONTAINER VALUE` to push
 the current picture/DOM back to the parent form. The parent binds a
 Picture or Text variable to the subform widget; the component updates it
 on every finalized interaction.

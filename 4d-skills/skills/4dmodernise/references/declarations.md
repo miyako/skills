@@ -15,10 +15,9 @@ Whether a project is at or above 20 R7 is decided by its
 "4D Version Detection" in `skills/4dproject/SKILL.md`. Do not compare the
 raw value as a number (`20A0` is 20 R10).
 
-Token suffixes on any command you touch follow the rules in "Token
-Suffixes" in `skills/4dproject/SKILL.md`. `var` and `#DECLARE` are keywords
-and never take a token; when you rewrite `C_LONGINT:Cnnn($x)` the old token
-simply disappears.
+Token suffixes on any command you touch -- including what happens to the
+token of a rewritten `C_*` line -- follow "Token Suffixes" in
+`skills/4dproject/SKILL.md`.
 
 ## Scanning
 

@@ -2,7 +2,7 @@
 object: "radio"
 json_type: "radio"
 keywords: ["radio button", "radioGroup", "mutual exclusion", "Form.property"]
-summary: "Radio button object: 12 styles, radioGroup semantics vs Form Editor groups, default selection behavior."
+summary: "Radio button object: 11 styles, radioGroup semantics vs Form Editor groups, default selection behavior."
 ---
 
 # 4D Radio Button Object
@@ -64,7 +64,7 @@ Radio buttons are closely related to buttons and checkboxes. They share most of 
 | Three-states | No | Yes | No |
 | Grouping | N/A | N/A | `radioGroup` property |
 | Pop-up menu | Yes (`popupPlacement`) | No | No |
-| Available styles | 11 styles | 12 styles (no `help`; adds `disclosure`, `collapseExpand`) | 12 styles (no `help`; adds `disclosure`, `collapseExpand`) |
+| Available styles | 11 styles | 11 styles (no `help` or `circular`; adds `disclosure`, `roundedDisclosure`) | 11 styles (no `help` or `circular`; adds `disclosure`, `roundedDisclosure`) |
 
 ## Radio Group
 
@@ -123,7 +123,7 @@ When the form's "Save Geometry" option is enabled, radio buttons support the `me
 
 ## Styles
 
-Radio buttons support 12 styles (all button styles except `help`, plus `disclosure` and `collapseExpand`):
+Radio buttons support 11 styles (the schema's `style` enum: all button styles except `help` and `circular`, plus `disclosure` and `roundedDisclosure`):
 
 | Style | Description |
 |-------|-------------|
@@ -135,9 +135,8 @@ Radio buttons support 12 styles (all button styles except `help`, plus `disclosu
 | `gradientBevel` | Rounded with subtle gradient fill. |
 | `texturedBevel` | Gray textured background. |
 | `office` | Light blue background with thin border. |
-| `circular` | Circular outline with text below. |
 | `disclosure` | Disclosure triangle style. |
-| `collapseExpand` | Collapse/expand toggle style. |
+| `roundedDisclosure` | Rounded disclosure style. |
 | `custom` | Fully customizable appearance using background picture. |
 
 ### Style Notes
@@ -145,7 +144,7 @@ Radio buttons support 12 styles (all button styles except `help`, plus `disclosu
 - **`regular` and `flat`**: Display the traditional radio button appearance (a small filled/empty circle next to the label text). Like checkboxes, the bullseye retains its native system appearance regardless of text styling.
 - **Other styles** (toolbar, bevel, etc.): Render as **toggle buttons** -- visually identical to their button/checkbox counterparts. They stay pressed/highlighted when selected. Usually associated with a multi-state icon (`iconFrames: 4` or more).
 - **`disclosure`**: Renders as a right-pointing triangle/chevron (`>`). Text is not displayed. Typically used for show/hide toggles. The chevron faces sideways (collapsed) or downwards (expanded). Note: disclosure only changes the icon -- it does not automatically push objects down to make space. The developer must implement object layout for disclosure behavior.
-- **`collapseExpand`**: Renders similar to a regular bullseye circle with text. Used for expand/collapse toggles. Same caveat as disclosure regarding layout management.
+- **`collapseExpand`** is not a valid `style` value (not in the schema): it was observed to render like a regular bullseye, the fallback for an unknown style. Use `disclosure` or `roundedDisclosure`; the same layout caveat applies.
 - **`custom`**: Fully customizable appearance using a background picture. Supports additional properties:
   - `customBackgroundPicture` (string) -- path to background image
   - `customBorderX` / `customBorderY` (number) -- horizontal/vertical margin in pixels
@@ -157,16 +156,7 @@ Radio buttons do **not** support `popupPlacement`. Pop-up menus are button-only.
 
 ### Icon States
 
-Same as checkboxes -- when using non-regular styles with an icon, up to 6 states (since v20):
-
-| Frames | States |
-|--------|--------|
-| 1 | Single image for all states |
-| 2 | Unchecked, Checked |
-| 3 | Unchecked, Checked, Rollover |
-| 4 | Unchecked, Checked, Rollover, Disabled |
-| 5 | Unchecked, Checked, True Rollover, False Rollover, Disabled |
-| 6 | Unchecked, Checked, True Rollover, False Rollover, True Disabled, False Disabled |
+Same as checkboxes -- up to 6 states with non-regular styles (since v20); table in `references/form-concepts.md`, "Icon States (Multi-State Icons)".
 
 ## Visual Properties
 
@@ -226,10 +216,7 @@ Radio buttons support the same click events as buttons and checkboxes:
 
 ### Event Execution Order
 
-Same as buttons and checkboxes:
-1. **Object method** runs first
-2. **Form method** runs second
-3. **Standard action** runs last
+Object method, then form method, then standard action (`references/form-concepts.md`, "Event Execution Order").
 
 ### Object Method Pattern
 
@@ -295,7 +282,7 @@ radio {
 
 ## Localization
 
-Same as buttons and checkboxes -- use `:xliff:` references:
+Same as buttons (`button.md`, "Localization") -- use `:xliff:` references:
 
 ```json
 { "text": ":xliff:RadioOptionSP" }

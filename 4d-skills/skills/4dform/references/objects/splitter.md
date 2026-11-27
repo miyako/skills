@@ -61,7 +61,7 @@ Regardless of visibility, the mouse cursor changes to a resize cursor when hover
 
 | Mode | JSON `splitterMode` | Behavior |
 |------|---------------------|----------|
-| Standard | (omitted or default) | Stops when meeting another splitter or the window border |
+| Standard | `"resize"` (default; may be omitted) | Stops when meeting another splitter or the window border |
 | Pusher | `"move"` | No stops when moving right/down -- can push objects indefinitely |
 
 A **pusher** splitter does not encounter stops when moving toward the right or downward. Objects are pushed continuously with no boundary constraint.
@@ -168,8 +168,6 @@ Objects that are only partially covered are **not moved or resized** by the spli
 
 For example, if a vertical splitter spans top=91 to bottom=257, a button at top=54, height=49 (bottom=103) extends above the splitter's top edge and is therefore **not affected**. A button at top=111, height=49 (bottom=160) is fully within range and **will be affected**.
 
-### Stops
-
 ### Sizing Behavior Summary
 
 | Object sizing | Position relative to splitter | Effect |
@@ -217,7 +215,7 @@ When an object sits between two splitters:
 |----------|-----------|------|-------------|
 | Border line style | `borderStyle` | string | `"none"`, `"solid"`, `"dotted"`, `"raised"`, `"sunken"` |
 | Line color | `stroke` | string | Color of the splitter line |
-| Pusher | `splitterMode` | string | `"move"` for pusher mode; omit for standard |
+| Pusher | `splitterMode` | string | `"move"` for pusher mode; `"resize"` (default) or omit for standard |
 | Horizontal sizing | `sizingX` | string | How the splitter itself resizes with the form |
 | Vertical sizing | `sizingY` | string | How the splitter itself resizes with the form |
 | Variable | `dataSource` | string | Process variable name (integer) |
@@ -232,7 +230,7 @@ When an object sits between two splitters:
 |--------|----------|--------|-------------|
 | Visual | Line or invisible | System-drawn styles | Transparent overlay |
 | Data source | Distance traveled (resets) | 0 or 1 toggle | Cell number (1-based) |
-| Must use variable | Yes | Yes (buttons) | Yes |
+| Must use variable | Yes | Yes (buttons) | No (variable or expression, see `button-grid.md`) |
 | Orientation | Determined by width vs height | N/A | N/A |
 | User interaction | Drag | Click | Click |
 

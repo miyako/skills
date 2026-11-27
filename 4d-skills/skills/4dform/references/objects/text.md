@@ -54,7 +54,7 @@ The text object's properties come from five sources in the schema:
 | `fontTheme` | `"normal"`, `"main"`, `"additional"` | Platform-adaptive font theme (see below) |
 | `textAlign` | `"automatic"`, `"right"`, `"center"`, `"justify"`, `"left"` | Horizontal text alignment |
 | `textAngle` | `0`, `90`, `180`, `270` | Rotation angle in degrees (see Rotation below) |
-| `borderRadius` | integer (≥ 0) | Corner radius for rounded borders. With a `fill`, paints `r` px outside the left and right edges (`../layout.md`) |
+| `borderRadius` | integer (≥ 0) | Corner radius for rounded borders. With a `fill`, paints `r` px outside the left and right edges (`references/layout.md`) |
 | `verticalAlign` | `"automatic"`, `"top"`, `"middle"`, `"bottom"` | 21 R5 for this object type. `automatic` = bottom for text |
 | `paddingLeft`, `paddingRight`, `paddingTop`, `paddingBottom` | integer (≥ 0) | 21 R5. Space between the edge and the text; replaces a rectangle drawn behind a borderless object |
 
@@ -114,7 +114,7 @@ Reference: https://developer.4d.com/docs/FormObjects/propertiesText#font-theme
 | `"main"` | San Francisco Regular 10pt | Segoe UI Semibold 10pt |
 | `"additional"` | San Francisco Regular 9pt | Segoe UI Regular 9pt |
 
-When `fontTheme` is set, `fontFamily`, `fontSize`, `fontWeight`, and `fontStyle` are ignored — the theme overrides them. To use custom font properties, leave `fontTheme` unset or set it to the value that matches the desired base, then override individual properties.
+`fontTheme` supplies the base font; an explicit `fontFamily` takes priority over it, and `fontSize: 0` means the theme's automatic size (schema comments). To customise, set the theme that matches the desired base, then override individual properties.
 
 ## Rotation (`textAngle`)
 

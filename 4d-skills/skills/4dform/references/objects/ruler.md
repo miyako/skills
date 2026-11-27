@@ -46,12 +46,12 @@ Multiple rulers can share the same data source and they will **stay in sync** --
 {
   "ruler1": {
     "type": "ruler",
-    "dataSource": "Form:C1466.ruler",
+    "dataSource": "Form.ruler",
     ...
   },
   "ruler2": {
     "type": "ruler",
-    "dataSource": "Form:C1466.ruler",
+    "dataSource": "Form.ruler",
     ...
   }
 }
@@ -137,7 +137,7 @@ Despite its name, On Data Change fires even if the new value equals the old valu
 
 ### Execute Object Method
 
-The `methodExecutionMode` property (called "Execute Object Method" in the form editor) enables On Data Change events. When enabled, both On Data Change and On Clicked events fire during interaction. When disabled, only On Clicked fires on mouse release.
+The `continuousExecution` property (called "Execute Object Method" in the form editor) enables On Data Change events. When enabled, both On Data Change and On Clicked events fire during interaction. When disabled, only On Clicked fires on mouse release.
 
 ### Mouse Wheel
 
@@ -176,7 +176,7 @@ At the end of a scroll sequence, On Data Change fires (if enabled).
 
 The ruler and thermometer (progress indicator) share the same scale properties (`min`, `max`, `step`, `showGraduations`, `graduationStep`, `labelsPlacement`). The difference is:
 
-- **Ruler**: always interactive (user drags cursor)
+- **Ruler**: interactive by default (user drags cursor); `enterable: false` makes it display-only
 - **Thermometer**: typically display-only (set by code), though it can be made enterable
 
 Reference: https://developer.4d.com/docs/FormObjects/progressIndicator#using-indicators

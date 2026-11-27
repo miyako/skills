@@ -30,20 +30,20 @@ per language (`nameEN` / `nameJA`).
 ## Variant: a numeric key whose label lives only in the data
 
 When the stored key is a number and the shipped data already carries a
-label (an HDI `INFO` table with `PageNumber` and `TabTitle`), keep the
-column as the **fallback** and prefer the XLIFF lookup, so the data file
-stays language-free:
+label (e.g. a page table with a page number and a stored tab title), keep
+the column as the **fallback** and prefer the XLIFF lookup, so the data
+file stays language-free:
 
 ```4d
-$id:="HDI2_Tab"+String($page)
+$id:="Page_Tab"+String($page)
 $title:=Localized string($id)
 If ($title="")
 	$title:=$storedTabTitle  // the ID is not in the XLIFF files
 End if
 ```
 
-`Localized string` returns `""` for a missing ID (verified on 21 R5
-build 100189), not the ID itself, so the empty-string test is the
-fallback trigger. The shipped data then needs no rebuild when a language
-is added: the `.lproj` files carry every label, and the stored labels
+`Localized string` returns `""` for a missing ID, not the ID itself
+(verified on 21 R5 build 100189; `../SKILL.md`, "Referencing Strings"),
+so the empty-string test is the fallback trigger. The shipped data then
+needs no rebuild when a language is added: the `.lproj` files carry every label, and the stored labels
 only matter for IDs that were never translated.

@@ -81,29 +81,8 @@ Every form must have:
 - A `destination` value
 - A `pages` array with at least 2 entries (page 0 and page 1)
 
-```json
-{
-  "$4d": {
-    "version": "1",
-    "kind": "form"
-  },
-  "windowSizingX": "variable",
-  "windowSizingY": "variable",
-  "windowMinWidth": 0,
-  "windowMinHeight": 0,
-  "windowMaxWidth": 32767,
-  "windowMaxHeight": 32767,
-  "rightMargin": 20,
-  "bottomMargin": 20,
-  "events": ["onLoad", "onUnload"],
-  "windowTitle": "window title",
-  "destination": "detailScreen",
-  "pages": [
-    { "objects": {} },
-    { "objects": {} }
-  ]
-}
-```
+The JSON to start from is the "Starting Skeleton" in
+`skills/4dform/SKILL.md`.
 
 ### Key Properties
 
@@ -113,7 +92,7 @@ Every form must have:
 | `windowSizingX/Y` | `"fixed"` or `"variable"` |
 | `windowMinWidth/Height` | Minimum window dimensions |
 | `windowMaxWidth/Height` | Maximum window dimensions (32767 = effectively unlimited) |
-| `rightMargin` / `bottomMargin` | Define form size relative to rightmost/bottommost object. The margin is part of the window: a full-bleed background rectangle does not cover it, so a fixed 1180x860 page with margins of 20 leaves an unpainted strip (observed at the bottom of a capture). Use `0` when a background rectangle spans the form. The same applies to a full-bleed header band: with `rightMargin` 20, a band whose width matches the content stops 20 px short of the window edge. Set `rightMargin: 0` and make the band's right edge = right-most content edge + the margin you wanted. |
+| `rightMargin` / `bottomMargin` | Define form size relative to rightmost/bottommost object. The margin is part of the window: a full-bleed background rectangle does not cover it, so a fixed-size page with margins of 20 leaves an unpainted strip along those edges (observed at the bottom of a capture). Use `0` when a background rectangle spans the form. The same applies to a full-bleed header band: with `rightMargin` 20, a band whose width matches the content stops 20 px short of the window edge. Set `rightMargin: 0` and make the band's right edge = right-most content edge + the margin you wanted. |
 | `width` / `height` | Explicit form size (alternative to margins) |
 | `destination` | `"detailScreen"`, `"listScreen"`, `"detailPrinter"`, `"listPrinter"` |
 | `geometryStamp` | Incremented by the form editor on each save |
@@ -234,6 +213,8 @@ These are fully independent. An object can be at the front visually (last in `"o
 - Entry order within a subform is defined in the subform itself (call the command from the subform context)
 - Invalid objects (non-existent, non-focusable, wrong page) are silently ignored
 
+## Form Events
+
 Forms subscribe to events via the `events` array. Only subscribed events will trigger a form event cycle.
 
 Reference: https://developer.4d.com/docs/Events/overview
@@ -337,7 +318,7 @@ When no `fontFamily`, `fontSize`, or `fontTheme` is explicitly set, the default 
 | Theme | Internal Name | Description |
 |-------|---------------|-------------|
 | `normal` | `__automatic__` | System default font. Adapts size to object height. |
-| `main` | `__system__` | System main font (typically larger). |
+| `main` | `__system__` | System main font (sizes per platform: `objects/text.md` "Font Theme"). |
 | `additional` | `__systemMini__` | Smaller system font. |
 
 The `"normal"` theme has a special behavior: **the system automatically reduces the font size** when the object height is too small for the normal font size. This is decided by the OS and applies to native controls like buttons, checkboxes, and radio buttons.
@@ -363,7 +344,7 @@ Buttons, checkboxes, and radio buttons can display icons. The `custom` style (re
 
 ### Picture Locations
 
-Images can be stored in two locations:
+Images can be referenced in three ways:
 
 1. **Resources folder**: `"/RESOURCES/Images/myIcon.png"` -- shared across all forms in the project
 2. **Adjacent to the form**: `"myIcon.png"` -- resolved relative to the form folder (e.g., `Forms/MyForm/myIcon.png`). Useful when the image should travel with the form.
@@ -416,6 +397,17 @@ Reference: https://developer.4d.com/docs/FormObjects/propertiesTextAndPicture#nu
 
 Icons can have multiple states stacked vertically in a single image. It is the **designer's responsibility** to ensure the source image contains exactly the correct number of frames to match the object's `iconFrames` value. Mismatched frames will cause images to display incorrectly.
 
+| Frames | States (buttons) | States (checkbox/radio) |
+|--------|-------------------|-------------------------|
+| 1 | Single image for all states | Single image for all states |
+| 2 | Normal, Clicked | Unchecked, Checked |
+| 3 | Normal, Clicked, Rollover | Unchecked, Checked, Rollover |
+| 4 | Normal, Clicked, Rollover, Disabled | Unchecked, Checked, Rollover, Disabled |
+| 5 | -- | Unchecked, Checked, True Rollover, False Rollover, Disabled |
+| 6 | -- | Unchecked, Checked, True Rollover, False Rollover, True Disabled, False Disabled |
+
+5 and 6-state icons are only available for checkboxes and radio buttons (since v20).
+
 **Supported image formats**: PNG, JPEG, SVG (preferred). TIFF, BMP, GIF are also supported.
 
 Reference: https://developer.4d.com/docs/Concepts/picture
@@ -465,17 +457,6 @@ You can also use CSS media queries to switch icons based on platform or color sc
 ```
 
 This gives explicit control over which icon is used per platform/theme, as an alternative to the automatic `_dark` naming convention.
-
-| Frames | States (buttons) | States (checkbox/radio) |
-|--------|-------------------|-------------------------|
-| 1 | Single image for all states | Single image for all states |
-| 2 | Normal, Clicked | Unchecked, Checked |
-| 3 | Normal, Clicked, Rollover | Unchecked, Checked, Rollover |
-| 4 | Normal, Clicked, Rollover, Disabled | Unchecked, Checked, Rollover, Disabled |
-| 5 | -- | Unchecked, Checked, True Rollover, False Rollover, Disabled |
-| 6 | -- | Unchecked, Checked, True Rollover, False Rollover, True Disabled, False Disabled |
-
-5 and 6-state icons are only available for checkboxes and radio buttons (since v20).
 
 ## CSS Stylesheets
 
@@ -690,7 +671,7 @@ see `skills/4dproject/SKILL.md`.
 
 To render a form to PNG or PDF from the command line, and to know what the
 static template actually shows per object type, see
-`screenshot-rendering.md`. For the tool4d binary itself -- version
+`references/screenshot-rendering.md`. For the tool4d binary itself -- version
 requirements, flags, startup methods, and the `DIALOG` + `CALL FORM` render
 cycle -- see the `4dcli` skill (`skills/4dcli/SKILL.md`).
 

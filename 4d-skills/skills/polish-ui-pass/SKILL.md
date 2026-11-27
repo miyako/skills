@@ -36,9 +36,9 @@ change behaviour in the same commit.
 
 * Header band: light `#0F3D6E`, dark `#12263D`; title `#FFFFFF` /
   `#F2F6FB`; subtitle `#C9DCF2` / `#9DB7D5`.
-* Feature-prefixed typography classes in `styleSheets.css` (`tfHeaderTitle`
-  22 px bold, `tfHeaderSubtitle` 13 px, `tfQuery` 15 px, `tfCaption`
-  12 px) instead of per-object fonts; colours only inside the
+* Feature-prefixed typography classes in `styleSheets.css` (e.g.
+  `<prefix>HeaderTitle` 22 px bold, `<prefix>HeaderSubtitle` 13 px,
+  `<prefix>Query` 15 px, `<prefix>Caption` 12 px) instead of per-object fonts; colours only inside the
   `prefers-color-scheme` blocks.
 * List box class: `alternateFill: automaticAlternate`, transparent grid
   lines, `verticalAlign: middle`.
@@ -57,8 +57,8 @@ change behaviour in the same commit.
 
 Each Japanese glyph is about one font size wide, whatever the word. Budget
 `width ≥ characters × fontSize + horizontal padding` for a Japanese label,
-button or tab, and check the English width separately. Leave `fontFamily`
-unset (`4dcss`, "Fonts"). Measure in a runtime capture.
+button or tab, and check the English width separately. Measure in a
+runtime capture.
 
 ## Exemption: colours that are the feature
 

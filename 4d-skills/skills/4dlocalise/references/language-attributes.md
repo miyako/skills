@@ -38,8 +38,9 @@ Function orderBy name($event : Object) : Text
 * **Always add `orderBy`.** Without it, sorting on `name` runs the getter on
   every entity (sequential sort); with it, the sort runs on the stored,
   indexed attribute.
-* **Querying** a computed attribute needs a `query` function too. Without
-  one, keep queries on the stored attributes (`query("nameJA = :1"; ...)`).
+* **Querying** a computed attribute without a `query` function is
+  sequential too (`4dorda`, "Entity Classes and Computed Attributes"): add
+  one, or keep queries on the stored attributes (`query("nameJA = :1"; ...)`).
 * If the dataclass already has a stored `name` attribute, ask the user
   before introducing a computed one.
 * Then replace `nameEN` (and similar) with `name` in list box columns, sorts

@@ -10,10 +10,10 @@ summary: "Cross-reference of form object properties from three angles: JSON key,
 Every form object property can be viewed from three angles:
 
 1. **JSON schema** — the key name in the form's `.4DForm` file
-2. **CSS stylesheet** — some properties have CSS equivalents usable in `.css` stylesheets applied via the `class` property
+2. **CSS stylesheet** — in 4D CSS the property name is the JSON key itself (`skills/4dcss/SKILL.md`, "Syntax"); a few also accept a web-style alias
 3. **Runtime commands** — `OBJECT SET …` / `OBJECT Get …` commands that read or modify properties at runtime
 
-The tables below cross-reference all three. Not every property has a CSS name or a runtime command.
+The tables below cross-reference all three. The **CSS Name** column lists the web-style alias only: `—` means there is no alias, not that the property cannot be set from CSS (those exceptions are listed at the end). Not every property has a runtime command.
 
 ## Abbreviation Key
 
@@ -64,7 +64,7 @@ The tables below cross-reference all three. Not every property has a CSS name or
 | JSON Key | Doc Name | CSS Name | Applicable Types | Getter | Setter |
 |---|---|---|---|---|---|
 | `borderStyle` | Border Style | `border-style` | txt, inp, btn, web, vp, wp, sub, plug, spl, bg, prog, rul, spin, step, lst, pbtn, ppop, lb | `OBJECT Get border style` | `OBJECT SET BORDER STYLE` |
-| `borderRadius` | Corner Radius | — | txt, inp | — | `OBJECT SET CORNER RADIUS` |
+| `borderRadius` | Corner Radius | — | txt, rect, inp, btn (21 R5 custom style) | — | `OBJECT SET CORNER RADIUS` |
 | `fill` | Background Color | `background-color` | txt, rect, ovl, inp, lst, lb, lbc, lbf | — | `OBJECT SET RGB COLORS` |
 | `stroke` | Font/Line Color | `color` | txt, ln, rect, ovl, grp, inp, btn, chk, rad, dd, cmb, spl, prog, rul, lst, lb, lbc, lbh, lbf | — | `OBJECT SET COLOR` / `OBJECT SET RGB COLORS` |
 | `visibility` | Visibility | — | all | `OBJECT Get visible` | `OBJECT SET VISIBLE` |
@@ -88,7 +88,7 @@ The tables below cross-reference all three. Not every property has a CSS name or
 |---|---|---|---|---|---|
 | `text` | Title | — | txt, grp, btn, chk, rad, lbh | `OBJECT Get title` | `OBJECT SET TITLE` |
 | `textAlign` | Horizontal Alignment | `text-align` | txt, grp, inp, btn, chk, rad, dd, cmb, lb, lbc, lbh, lbf | `OBJECT Get horizontal alignment` | `OBJECT SET HORIZONTAL ALIGNMENT` |
-| `verticalAlign` | Vertical Alignment | `vertical-align` | txt, inp (21 R5+), lb, lbc, lbh, lbf | `OBJECT Get vertical alignment` | `OBJECT SET VERTICAL ALIGNMENT` |
+| `verticalAlign` | Vertical Alignment | `vertical-align` | lb, lbc, lbh, lbf; txt, inp (21 R5+) | `OBJECT Get vertical alignment` | `OBJECT SET VERTICAL ALIGNMENT` |
 | `textAngle` | Text Orientation | — | txt, inp | `OBJECT Get text orientation` | `OBJECT SET TEXT ORIENTATION` |
 | `placeholder` | Placeholder | — | inp, cmb | `OBJECT Get placeholder` | `OBJECT SET PLACEHOLDER` |
 | `fontTheme` | Font Theme | — | txt, inp | — | — |
@@ -183,7 +183,7 @@ The tables below cross-reference all three. Not every property has a CSS name or
 
 | JSON Key | Doc Name | CSS Name | Applicable Types | Getter | Setter |
 |---|---|---|---|---|---|
-| `style` | Button Style | — | btn, chk, rad | — | — |
+| `style` | Button Style | — | btn, chk, rad (enums differ: chk/rad add `disclosure`, `roundedDisclosure` and lack `help`, `circular`) | — | — |
 | `defaultButton` | Default Button | — | btn | — | — |
 | `display` | Display | — | btn, dd | — | — |
 | `textPlacement` | Title/Picture Position | — | btn, chk, rad | — | — |
@@ -373,10 +373,7 @@ The tables below cross-reference all three. Not every property has a CSS name or
 
 ## Properties NOT Settable via CSS
 
-The following properties have **no CSS equivalent** and must be set in the JSON form definition or via runtime commands:
-
-- **`method`** — object method (project method name)
-- **`type`** — object type discriminator
-- **`class`** — applies a CSS stylesheet but is not itself a CSS property
-- **`events`** — event array
-- **List-type properties** — `choiceList`, `requiredList`, `excludedList`, `labels`, `list`
+`method`, `type`, `class`, `events` and the list attributes cannot be set
+from CSS; the list, and which properties should stay in JSON even though
+CSS could set them, are owned by `skills/4dcss/SKILL.md` ("Limits", "What
+stays in JSON").

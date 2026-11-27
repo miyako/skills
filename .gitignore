@@ -1,2 +1,6 @@
-tools/
+# Tools provisioned by the 4D skills (see 4d-skills/skills/4dproject, ".gitignore")
+/tools/4dcatalog/
 /tools/4dform/
+/tools/4dlsp/
+/tools/4dlang/
+/tools/4dcli/
